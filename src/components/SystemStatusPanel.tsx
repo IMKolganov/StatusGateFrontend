@@ -1,0 +1,258 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { api, ApiError, type PublicDayBar, type PublicSystemStatus } from '../api/client'
+
+const DEFAULT_DAYS = 90
+
+function formatDayLabel(value: string): string {
+  return new Date(`${value}T00:00:00Z`).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+function toIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}
+
+function startOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
+
+type TimelineTooltipProps = {
+  day: PublicDayBar
+  anchorRect: DOMRect
+}
+
+function TimelineTooltip({ day, anchorRect }: TimelineTooltipProps) {
+  const left = anchorRect.left + anchorRect.width / 2
+  const top = anchorRect.top - 8
+
+  return (
+    <div
+      className="status-timeline-tooltip"
+      style={{ left, top }}
+      role="tooltip"
+    >
+      <div className="status-timeline-tooltip-date">{formatDayLabel(day.date)}</div>
+      {day.incidents?.length === 0 || !day.incidents ? (
+        <p className="status-timeline-tooltip-empty">No incidents</p>
+      ) : (
+        <ul className="status-timeline-tooltip-list">
+          {day.incidents.map((incident, index) => (
+            <li key={`${incident.posted_at}-${index}`}>
+              <div className="status-timeline-tooltip-title">{incident.title}</div>
+              <div className="status-timeline-tooltip-message">{incident.message}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+type DayBarsProps = {
+  days: PublicDayBar[]
+  onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect) => void
+}
+
+function DayBars({ days, onHoverDay }: DayBarsProps) {
+  return (
+    <div className="status-timeline-bars" aria-hidden={days.length === 0}>
+      {days.map((day) => (
+        <span
+          key={day.date}
+          className={`status-bar status-bar-${day.status}`}
+          onMouseEnter={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
+          onMouseLeave={() => onHoverDay(null)}
+          onFocus={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
+          onBlur={() => onHoverDay(null)}
+          tabIndex={0}
+          aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
+        />
+      ))}
+    </div>
+  )
+}
+
+type TimelineRowProps = {
+  title: string
+  meta?: string
+  uptimePercent: number | null | undefined
+  days: PublicDayBar[]
+  onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect) => void
+  nested?: boolean
+}
+
+function TimelineRow({ title, meta, uptimePercent, days, onHoverDay, nested }: TimelineRowProps) {
+  return (
+    <div className={`status-timeline-row${nested ? ' status-timeline-row-nested' : ''}`}>
+      <div className="status-timeline-label">
+        <div className="status-timeline-title">{title}</div>
+        {meta && <div className="status-timeline-meta">{meta}</div>}
+      </div>
+      {uptimePercent != null && (
+        <div className="status-timeline-uptime">{uptimePercent.toFixed(2)}% uptime</div>
+      )}
+      <DayBars days={days} onHoverDay={onHoverDay} />
+    </div>
+  )
+}
+
+type SystemStatusPanelProps = {
+  slug: string
+}
+
+export function SystemStatusPanel({ slug }: SystemStatusPanelProps) {
+  const today = useMemo(() => startOfUtcDay(new Date()), [])
+  const [rangeEnd, setRangeEnd] = useState(today)
+  const [systemStatus, setSystemStatus] = useState<PublicSystemStatus | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
+  const [tooltip, setTooltip] = useState<{ day: PublicDayBar; anchorRect: DOMRect } | null>(null)
+
+  const canMoveForward = rangeEnd.getTime() < today.getTime()
+
+  useEffect(() => {
+    setLoading(true)
+    setError(null)
+    void api
+      .getPublicSystemStatus(slug, { end: toIsoDate(rangeEnd), days: DEFAULT_DAYS })
+      .then(setSystemStatus)
+      .catch((err: unknown) => {
+        setSystemStatus(null)
+        setError(err instanceof ApiError ? err.message : 'Failed to load system status')
+      })
+      .finally(() => setLoading(false))
+  }, [slug, rangeEnd])
+
+  const handleHoverDay = useCallback((day: PublicDayBar | null, anchor?: DOMRect) => {
+    if (day && anchor) {
+      setTooltip({ day, anchorRect: anchor })
+      return
+    }
+    setTooltip(null)
+  }, [])
+
+  const moveRange = (direction: -1 | 1) => {
+    setRangeEnd((current) => {
+      const next = new Date(current)
+      next.setUTCDate(next.getUTCDate() + direction * DEFAULT_DAYS)
+      if (next.getTime() > today.getTime()) {
+        return today
+      }
+      return next
+    })
+  }
+
+  const toggleGroup = (name: string) => {
+    setExpandedGroups((current) => ({ ...current, [name]: !current[name] }))
+  }
+
+  return (
+    <section className="system-status">
+      <div className="system-status-header">
+        <h2>System status</h2>
+        <div className="system-status-nav">
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm system-status-nav-btn"
+            aria-label="Previous period"
+            onClick={() => moveRange(-1)}
+          >
+            ←
+          </button>
+          <span className="system-status-range">
+            {systemStatus?.range_label ?? `${DEFAULT_DAYS} days`}
+          </span>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm system-status-nav-btn"
+            aria-label="Next period"
+            onClick={() => moveRange(1)}
+            disabled={!canMoveForward}
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      {loading && <p className="muted">Loading timeline...</p>}
+      {error && <div className="alert error">{error}</div>}
+
+      {systemStatus && !loading && (
+        <>
+          {(systemStatus.active_alerts?.length ?? 0) > 0 && (
+            <div className="system-status-alerts">
+              <div className="system-status-alerts-title">We&apos;re currently experiencing issues</div>
+              <ul className="system-status-alerts-list">
+                {systemStatus.active_alerts?.map((alert) => (
+                  <li key={`${alert.title}-${alert.since ?? alert.status}`}>
+                    <div className="system-status-alert-title">{alert.title}</div>
+                    <div className="system-status-alert-message">{alert.message}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {systemStatus.groups.length === 0 ? (
+            <div className="status-card">
+              <p>No monitored services in this project yet.</p>
+            </div>
+          ) : (
+            <div className="status-timeline-groups">
+              {systemStatus.groups.map((group) => {
+                const expanded = expandedGroups[group.name] ?? false
+                const meta = `${group.component_count} component${group.component_count === 1 ? '' : 's'}`
+                return (
+                  <div key={group.name} className="status-timeline-group">
+                    <div className="status-timeline-group-header">
+                      <button
+                        type="button"
+                        className="status-timeline-chevron-btn"
+                        aria-expanded={expanded}
+                        aria-label={`${expanded ? 'Collapse' : 'Expand'} ${group.name}`}
+                        onClick={() => toggleGroup(group.name)}
+                      >
+                        <span className={`status-timeline-chevron${expanded ? ' expanded' : ''}`} aria-hidden>
+                          ›
+                        </span>
+                      </button>
+                      <TimelineRow
+                        title={group.name}
+                        meta={meta}
+                        uptimePercent={group.uptime_percent}
+                        days={group.days}
+                        onHoverDay={handleHoverDay}
+                      />
+                    </div>
+                    {expanded && (
+                      <div className="status-timeline-services">
+                        {group.services.map((service) => (
+                          <TimelineRow
+                            key={service.id}
+                            title={service.name}
+                            uptimePercent={service.uptime_percent}
+                            days={service.days}
+                            onHoverDay={handleHoverDay}
+                            nested
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {tooltip && <TimelineTooltip day={tooltip.day} anchorRect={tooltip.anchorRect} />}
+    </section>
+  )
+}
