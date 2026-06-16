@@ -1,6 +1,5 @@
 import { PublicLayout } from '../components/PublicLayout'
 import { brandConfig } from '../brand/config'
-import { contactIntro, contactOutro, projectContacts } from '../config/contacts'
 import './public.css'
 
 export function AboutPage() {
@@ -27,22 +26,6 @@ export function AboutPage() {
             it, audit the code, and customize what your users see without relying on opaque third-party tools.
           </p>
         </div>
-
-        <section className="about-contact">
-          <h2>Contact</h2>
-          <p>{contactIntro}</p>
-          <ul className="about-contact-list">
-            {projectContacts.map((contact) => (
-              <li key={contact.label}>
-                <span className="about-contact-label">{contact.label}:</span>{' '}
-                <a href={contact.href} target="_blank" rel="noopener noreferrer">
-                  {contact.value}
-                </a>
-              </li>
-            ))}
-          </ul>
-          <p>{contactOutro}</p>
-        </section>
       </article>
     </PublicLayout>
   )

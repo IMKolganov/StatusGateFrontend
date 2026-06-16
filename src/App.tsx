@@ -15,6 +15,7 @@ import { MonitoringSettingsPage } from './pages/MonitoringSettingsPage'
 import { ReferencePage } from './pages/ReferencePage'
 import { RegisterCompletePage } from './pages/RegisterCompletePage'
 import { AboutPage } from './pages/AboutPage'
+import { ContactPage } from './pages/ContactPage'
 import PublicHome from './pages/PublicHome'
 import { ProjectHistoryPage } from './pages/ProjectHistoryPage'
 import { ProjectStatusPage } from './pages/ProjectStatusPage'
@@ -29,6 +30,7 @@ function App() {
         <Routes>
           <Route path="/" element={<PublicHome />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route path="/projects/:slug" element={<ProjectStatusPage />} />
           <Route path="/projects/:slug/history" element={<ProjectHistoryPage />} />
           <Route path="/login" element={<LoginPage />} />

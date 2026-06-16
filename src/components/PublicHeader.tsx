@@ -12,6 +12,9 @@ export function PublicHeader() {
       <Link to="/about" className="nav-text">
         About
       </Link>
+      <Link to="/contact" className="nav-text">
+        Contact
+      </Link>
       {loading ? (
         <span className="muted site-header__placeholder">...</span>
       ) : account ? (
