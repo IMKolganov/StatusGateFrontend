@@ -103,9 +103,10 @@ function TimelineRow({ title, meta, uptimePercent, days, onHoverDay, nested }: T
 
 type SystemStatusPanelProps = {
   slug: string
+  embedded?: boolean
 }
 
-export function SystemStatusPanel({ slug }: SystemStatusPanelProps) {
+export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelProps) {
   const today = useMemo(() => startOfUtcDay(new Date()), [])
   const [rangeEnd, setRangeEnd] = useState(today)
   const [systemStatus, setSystemStatus] = useState<PublicSystemStatus | null>(null)
@@ -153,7 +154,7 @@ export function SystemStatusPanel({ slug }: SystemStatusPanelProps) {
   }
 
   return (
-    <section className="system-status">
+    <section className={`system-status${embedded ? ' system-status--embedded' : ''}`}>
       <div className="system-status-header">
         <h2>System status</h2>
         <div className="system-status-nav">

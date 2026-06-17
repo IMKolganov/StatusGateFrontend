@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, ApiError, type PublicProjectSummary } from '../api/client'
 import { useAuth } from '../auth/useAuth'
 import { hasAdminPanelAccess } from '../auth/roles'
 import { PublicLayout } from '../components/PublicLayout'
-import { averageUptimePercent, formatUptimePercent } from '../utils/uptime'
+import { SystemStatusPanel } from '../components/SystemStatusPanel'
 import './public.css'
 
 function PublicHome() {
@@ -12,11 +12,6 @@ function PublicHome() {
   const [projects, setProjects] = useState<PublicProjectSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const overallUptime = useMemo(
-    () => averageUptimePercent(projects.map((project) => project.uptime_percent)),
-    [projects],
-  )
 
   useEffect(() => {
     void api
@@ -64,30 +59,26 @@ function PublicHome() {
           <p className="muted">Projects will appear here once they are published in the admin panel.</p>
         </div>
       ) : (
-        <>
-          <div className="status-card home-uptime-summary">
-            <div>
-              <div className="home-uptime-summary__label">Overall uptime</div>
-              <div className="home-uptime-summary__hint muted">Last 90 days across all projects</div>
-            </div>
-            <div className="home-uptime-summary__value">{formatUptimePercent(overallUptime)}</div>
-          </div>
+        <ul className="project-list">
+          {projects.map((project) => (
+            <li key={project.id}>
+              <article className="project-card">
+                <div className="project-card-top">
+                  <Link to={`/projects/${project.slug}`} className="project-card-title-link">
+                    <h2 className="project-card-name">{project.name}</h2>
+                  </Link>
+                  {project.description && <p className="project-card-desc">{project.description}</p>}
+                </div>
 
-          <ul className="project-list">
-            {projects.map((project) => (
-              <li key={project.id}>
-                <Link to={`/projects/${project.slug}`} className="project-card">
-                  <div className="project-card__content">
-                    <span className="project-card-name">{project.name}</span>
-                    {project.description && <span className="project-card-desc">{project.description}</span>}
-                    <span className="project-card-action">View services →</span>
-                  </div>
-                  <span className="project-card-uptime">{formatUptimePercent(project.uptime_percent)}</span>
+                <SystemStatusPanel slug={project.slug} embedded />
+
+                <Link to={`/projects/${project.slug}`} className="project-card-action">
+                  View services →
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </>
+              </article>
+            </li>
+          ))}
+        </ul>
       )}
     </PublicLayout>
   )
