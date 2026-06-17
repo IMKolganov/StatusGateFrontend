@@ -80,7 +80,7 @@ import {
   getPublicSystemStatusApiStatusProjectsSlugSystemStatusGet,
   listPublicProjectsApiStatusProjectsGet,
 } from './generated/public-status/public-status'
-import { ApiError } from './mutator'
+import customFetch, { ApiError } from './mutator'
 
 export type Account = AccountResponse
 export type Project = ProjectResponse
@@ -140,6 +140,14 @@ async function call<T>(request: () => Promise<unknown>): Promise<T> {
 export const api = {
   registrationStatus: (): Promise<RegistrationStatusResponse> =>
     call(() => registrationStatusApiAuthRegistrationStatusGet()),
+
+  googleLogin: (idToken: string): Promise<ApiResponseLoginResultData> =>
+    call(() =>
+      customFetch<ApiResponseLoginResultData>('/api/auth/google-login', {
+        method: 'POST',
+        body: JSON.stringify({ idToken }),
+      }),
+    ),
 
   register: (payload: { email: string; password: string; full_name?: string }) =>
     call<AccountResponse>(() => registerApiAuthRegisterPost(payload)),

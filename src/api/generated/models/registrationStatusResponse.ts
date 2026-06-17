@@ -8,4 +8,6 @@
 export interface RegistrationStatusResponse {
   allow_registration: boolean;
   require_email_verification: boolean;
+  google_oauth_enabled: boolean;
+  google_client_id: string;
 }

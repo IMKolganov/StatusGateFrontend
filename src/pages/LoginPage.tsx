@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/useAuth'
 import { BrandLogo } from '../components/BrandLogo'
+import { GoogleLoginForm } from '../components/auth/GoogleLoginForm'
+import { getRuntimeEnv } from '../utils/runtimeEnv'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { brandConfig } from '../brand/config'
 import '../pages/admin.css'
@@ -13,7 +15,7 @@ function postLoginPath(from: string | undefined): string {
 }
 
 export function LoginPage() {
-  const { login, verifyMfa, account } = useAuth()
+  const { login, verifyMfa, account, completeLogin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -26,6 +28,11 @@ export function LoginPage() {
   const [duplicateEmail, setDuplicateEmail] = useState(false)
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [allowRegistration, setAllowRegistration] = useState(false)
+  const [googleOauthEnabled, setGoogleOauthEnabled] = useState(false)
+  const [googleClientIdFromApi, setGoogleClientIdFromApi] = useState('')
+
+  const googleClientId = getRuntimeEnv().googleClientId || googleClientIdFromApi
+  const showGoogleLogin = googleOauthEnabled && Boolean(googleClientId)
 
   const redirectTo = (from: string | undefined) => {
     navigate(postLoginPath(from), { replace: true })
@@ -38,7 +45,11 @@ export function LoginPage() {
   }, [account, location.state])
 
   useEffect(() => {
-    void api.registrationStatus().then((s) => setAllowRegistration(s.allow_registration))
+    void api.registrationStatus().then((s) => {
+      setAllowRegistration(s.allow_registration)
+      setGoogleOauthEnabled(s.google_oauth_enabled)
+      setGoogleClientIdFromApi(s.google_client_id)
+    })
   }, [])
 
   const handleSubmit = async (event: FormEvent) => {
@@ -110,10 +121,23 @@ export function LoginPage() {
         </form>
         {!mfaToken && (
           <>
-            <div className="divider">or</div>
-            <a className="btn btn-secondary btn-block" href="/api/auth/google/login">
-              Continue with Google
-            </a>
+            {showGoogleLogin && (
+              <>
+                <div className="divider">or</div>
+                <div className="social-login">
+                  <div className="social-login-item">
+                    <GoogleLoginForm
+                      clientId={googleClientId}
+                      onSuccess={async () => {
+                        await completeLogin()
+                        redirectTo((location.state as { from?: { pathname?: string } } | null)?.from?.pathname)
+                      }}
+                      onMfaRequired={setMfaToken}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
             {allowRegistration && (
               <button type="button" className="btn btn-ghost btn-block" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
                 {mode === 'login' ? 'Create an account' : 'Already have an account? Sign in'}

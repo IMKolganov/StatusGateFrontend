@@ -31,6 +31,50 @@
   margin-bottom: var(--sg-space-1);
 }
 
+.google-login-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sg-space-2);
+}
+
+.login-item {
+  width: 100%;
+}
+
+.google-login-wrapper {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: stretch;
+}
+
+.google-login-loading {
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.google-login-error {
+  margin: 0;
+  padding: var(--sg-space-3) var(--sg-space-4);
+  border-radius: var(--sg-radius);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  background: var(--sg-error-bg);
+  border: 1px solid #fecaca;
+  color: var(--sg-error-text);
+}
+
+.social-login {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sg-space-2);
+}
+
+.social-login-item {
+  width: 100%;
+}
+
 .panel {
   padding: var(--sg-space-5);
   display: flex;
