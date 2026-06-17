@@ -1,40 +1,40 @@
-import { Link } from 'react-router-dom'
-import { hasAdminPanelAccess } from '../auth/roles'
+import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { HeaderUserMenu } from './HeaderUserMenu'
 import { SiteHeader } from './SiteHeader'
 import '../pages/public.css'
+
+function navClassName({ isActive }: { isActive: boolean }) {
+  return isActive ? 'nav-text is-active' : 'nav-text'
+}
 
 export function PublicHeader() {
   const { account, loading, logout } = useAuth()
 
   return (
     <SiteHeader>
-      <Link to="/about" className="nav-text">
+      <NavLink to="/" className={navClassName} end>
+        Home
+      </NavLink>
+      <NavLink to="/about" className={navClassName}>
         About
-      </Link>
-      <Link to="/contact" className="nav-text">
+      </NavLink>
+      <NavLink to="/contact" className={navClassName}>
         Contact
-      </Link>
+      </NavLink>
       {loading ? (
         <span className="muted site-header__placeholder">...</span>
       ) : account ? (
         <>
-          <Link to="/account" className="nav-text nav-truncate" title={account.email}>
-            {account.email}
-          </Link>
-          {hasAdminPanelAccess(account) && (
-            <Link to="/admin" className="nav-text">
-              Admin panel
-            </Link>
-          )}
+          <HeaderUserMenu account={account} />
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => void logout()}>
             Sign out
           </button>
         </>
       ) : (
-        <Link to="/login" className="btn btn-primary btn-sm">
+        <NavLink to="/login" className="btn btn-primary btn-sm">
           Sign in
-        </Link>
+        </NavLink>
       )}
     </SiteHeader>
   )

@@ -10,6 +10,7 @@ export interface AccountResponse {
   id: string;
   email: string;
   full_name: AccountResponseFullName;
+  avatar_url?: string | null;
   access_roles: string[];
   is_totp_enabled: boolean;
   has_password: boolean;

@@ -1,6 +1,4 @@
-import { Link } from 'react-router-dom'
 import { AccountLayout } from '../components/AccountLayout'
-import { hasAdminPanelAccess } from '../auth/roles'
 import { useAuth } from '../auth/useAuth'
 import './admin.css'
 
@@ -30,17 +28,6 @@ export function AccountPage() {
         <p className="muted">
           Subscribe to email or webhook notifications when component status changes — coming soon.
         </p>
-      </section>
-
-      <section className="panel account-links">
-        <Link to="/account/security" className="text-link">
-          Security &amp; 2FA
-        </Link>
-        {hasAdminPanelAccess(account) && (
-          <Link to="/admin" className="text-link">
-            Open admin panel
-          </Link>
-        )}
       </section>
     </AccountLayout>
   )
