@@ -33,9 +33,10 @@
 }
 
 .project-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sg-space-2);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--sg-space-4);
   padding: var(--sg-space-5);
   border: 1px solid var(--sg-border);
   border-radius: var(--sg-radius-lg);
@@ -47,6 +48,58 @@
     border-color 0.15s ease,
     box-shadow 0.15s ease,
     transform 0.15s ease;
+}
+
+.project-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sg-space-2);
+  min-width: 0;
+}
+
+.project-card-uptime {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sg-text-muted);
+  white-space: nowrap;
+}
+
+.home-uptime-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sg-space-4);
+}
+
+.home-uptime-summary__label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--sg-text-heading);
+}
+
+.home-uptime-summary__hint {
+  margin-top: var(--sg-space-1);
+  font-size: 0.875rem;
+}
+
+.home-uptime-summary__value {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--sg-text-heading);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .project-card {
+    grid-template-columns: 1fr;
+    gap: var(--sg-space-2);
+  }
+
+  .home-uptime-summary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .project-card:hover {

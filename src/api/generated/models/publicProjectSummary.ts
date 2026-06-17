@@ -11,4 +11,5 @@ export interface PublicProjectSummary {
   name: string;
   slug: string;
   description: PublicProjectSummaryDescription;
+  uptime_percent?: number | null;
 }
