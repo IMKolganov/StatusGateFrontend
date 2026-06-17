@@ -46,7 +46,19 @@
   width: 100%;
   min-width: 0;
   display: flex;
-  justify-content: stretch;
+  justify-content: center;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.google-login-wrapper > div {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.google-login-wrapper iframe {
+  display: block;
+  margin: 0 auto;
 }
 
 .google-login-loading {

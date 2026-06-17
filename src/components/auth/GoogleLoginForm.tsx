@@ -112,7 +112,7 @@ export function GoogleLoginForm({ clientId, onSuccess, onMfaRequired }: GoogleLo
       window.google.accounts.id.renderButton(buttonContainer, {
         type: 'standard',
         theme: 'filled_black',
-        size: 'large',
+        size: 'medium',
         text: 'signin_with',
         shape: 'rectangular',
         width,
@@ -145,6 +145,7 @@ export function GoogleLoginForm({ clientId, onSuccess, onMfaRequired }: GoogleLo
 
         window.google.accounts.id.initialize({
           client_id: clientId,
+          auto_select: false,
           callback: (response: GoogleCredentialResponse) => {
             if (response?.credential) {
               void handleGoogleCredential(response.credential)
