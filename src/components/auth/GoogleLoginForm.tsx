@@ -11,6 +11,7 @@ declare global {
           initialize: (config: {
             client_id: string
             callback: (response: GoogleCredentialResponse) => void
+            auto_select?: boolean
           }) => void
           renderButton: (el: HTMLElement, opts: Record<string, unknown>) => void
         }
