@@ -570,45 +570,31 @@
   width: 100%;
 }
 
-.status-timeline-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  min-height: 1.75rem;
-  min-width: 0;
+.status-timeline-gradient-bar {
+  position: relative;
   width: 100%;
-}
-
-.status-bar {
-  flex: 1 1 0;
-  min-width: 2px;
-  max-width: 6px;
-  height: 100%;
-  min-height: 0.75rem;
-  border-radius: 1px;
-  cursor: pointer;
+  min-height: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--sg-radius-sm);
+  cursor: crosshair;
   outline: none;
+  overflow: hidden;
 }
 
-.status-bar:focus-visible {
+.status-timeline-gradient-bar:focus-visible {
   box-shadow: 0 0 0 2px var(--sg-primary);
 }
 
-.status-bar-operational {
-  background: #22c55e;
-}
-
-.status-bar-degraded {
-  background: #eab308;
-}
-
-.status-bar-outage {
-  background: #ef4444;
-}
-
-.status-bar-no_data {
-  background: var(--sg-border);
-  opacity: 0.55;
+.status-timeline-gradient-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--sg-text-heading);
+  opacity: 0.85;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
 }
 
 .status-timeline-services {
@@ -782,20 +768,8 @@
     min-width: 0;
   }
 
-  .status-timeline-bars {
-    gap: 1px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    padding-bottom: var(--sg-space-1);
-  }
-
-  .status-bar {
-    flex: 0 0 3px;
-    width: 3px;
-    min-width: 3px;
-    max-width: 3px;
+  .status-timeline-gradient-bar {
+    min-height: 1.5rem;
+    height: 1.5rem;
   }
 }

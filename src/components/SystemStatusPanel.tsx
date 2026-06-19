@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { api, ApiError, type PublicDayBar, type PublicSystemStatus } from '../api/client'
+import { useTheme } from '../brand/theme'
+import {
+  buildTimelineGradient,
+  dayIndexFromPointer,
+  markerPositionPercent,
+} from './statusTimelineGradient'
 
 const DEFAULT_DAYS = 90
 
@@ -58,25 +64,96 @@ type DayBarsProps = {
 }
 
 function DayBars({ days, onHoverDay }: DayBarsProps) {
+  const { theme } = useTheme()
+  const barRef = useRef<HTMLDivElement>(null)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+
+  const gradient = useMemo(() => buildTimelineGradient(days, theme), [days, theme])
+
+  const updateActiveDay = useCallback(
+    (index: number | null) => {
+      if (index == null || index < 0 || index >= days.length) {
+        setActiveIndex(null)
+        onHoverDay(null)
+        return
+      }
+      setActiveIndex(index)
+      const bar = barRef.current
+      if (!bar) {
+        onHoverDay(days[index])
+        return
+      }
+      const rect = bar.getBoundingClientRect()
+      const left = rect.left + (rect.width * (index + 0.5)) / days.length
+      onHoverDay(days[index], new DOMRect(left - 1, rect.top, 2, rect.height))
+    },
+    [days, onHoverDay],
+  )
+
+  const handlePointer = useCallback(
+    (clientX: number) => {
+      const bar = barRef.current
+      if (!bar || days.length === 0) {
+        return
+      }
+      const index = dayIndexFromPointer(clientX, bar.getBoundingClientRect(), days.length)
+      updateActiveDay(index)
+    },
+    [days.length, updateActiveDay],
+  )
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (days.length === 0) {
+      return
+    }
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      event.preventDefault()
+      const current = activeIndex ?? 0
+      const next = event.key === 'ArrowRight' ? Math.min(days.length - 1, current + 1) : Math.max(0, current - 1)
+      updateActiveDay(next)
+    }
+  }
+
+  useEffect(() => {
+    setActiveIndex(null)
+    onHoverDay(null)
+  }, [days, onHoverDay])
+
   return (
     <div className="status-timeline-bars-shell">
       <div
-        className="status-timeline-bars"
-        aria-hidden={days.length === 0}
+        ref={barRef}
+        className="status-timeline-gradient-bar"
+        style={{ background: gradient }}
+        role="img"
         aria-label="Daily uptime timeline"
+        tabIndex={days.length > 0 ? 0 : -1}
+        onMouseMove={(event) => handlePointer(event.clientX)}
+        onMouseLeave={() => updateActiveDay(null)}
+        onFocus={() => updateActiveDay(activeIndex ?? 0)}
+        onBlur={() => updateActiveDay(null)}
+        onKeyDown={handleKeyDown}
+        onTouchStart={(event) => {
+          const touch = event.touches[0]
+          if (touch) {
+            handlePointer(touch.clientX)
+          }
+        }}
+        onTouchMove={(event) => {
+          const touch = event.touches[0]
+          if (touch) {
+            handlePointer(touch.clientX)
+          }
+        }}
+        onTouchEnd={() => updateActiveDay(null)}
       >
-        {days.map((day) => (
+        {activeIndex != null && days.length > 0 && (
           <span
-            key={day.date}
-            className={`status-bar status-bar-${day.status}`}
-            onMouseEnter={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
-            onMouseLeave={() => onHoverDay(null)}
-            onFocus={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
-            onBlur={() => onHoverDay(null)}
-            tabIndex={0}
-            aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
+            className="status-timeline-gradient-marker"
+            style={{ left: `${markerPositionPercent(activeIndex, days.length)}%` }}
+            aria-hidden
           />
-        ))}
+        )}
       </div>
     </div>
   )
