@@ -80,6 +80,16 @@ function PublicHome() {
           ))}
         </ul>
       )}
+
+      <aside className="public-oss-banner" aria-label="Open source">
+        <p>
+          Like this project? You can use StatusGate for your own services or business —{' '}
+          <a href="https://github.com/IMKolganov/StatusGate" target="_blank" rel="noreferrer">
+            view it on GitHub
+          </a>
+          .
+        </p>
+      </aside>
     </PublicLayout>
   )
 }
