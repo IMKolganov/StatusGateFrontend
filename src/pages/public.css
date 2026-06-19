@@ -478,13 +478,18 @@
   white-space: nowrap;
 }
 
+.status-timeline-bars-shell {
+  min-width: 0;
+  width: 100%;
+}
+
 .status-timeline-bars {
   display: flex;
   align-items: flex-end;
   gap: 2px;
   min-height: 1.75rem;
   min-width: 0;
-  overflow: hidden;
+  width: 100%;
 }
 
 .status-bar {
@@ -673,5 +678,30 @@
 
   .status-timeline-row-nested {
     padding-left: var(--sg-space-4);
+  }
+
+  .status-timeline-group-header {
+    min-width: 0;
+  }
+
+  .status-timeline-group-header .status-timeline-row {
+    min-width: 0;
+  }
+
+  .status-timeline-bars {
+    gap: 1px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: var(--sg-space-1);
+  }
+
+  .status-bar {
+    flex: 0 0 3px;
+    width: 3px;
+    min-width: 3px;
+    max-width: 3px;
   }
 }
