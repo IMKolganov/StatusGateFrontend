@@ -579,7 +579,7 @@
   height: 0.625rem;
   min-height: 0.625rem;
   border-radius: 1px;
-  background-color: var(--sg-surface-muted);
+  background-color: var(--sg-status-track);
   cursor: pointer;
   outline: none;
   overflow: hidden;

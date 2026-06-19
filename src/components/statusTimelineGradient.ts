@@ -3,16 +3,18 @@ import type { ThemeMode } from '../brand/theme'
 
 const FALLBACK_COLORS: Record<ThemeMode, Record<string, string>> = {
   light: {
-    operational: '#059669',
-    degraded: '#d97706',
-    outage: '#dc2626',
-    no_data: '#cbd5e1',
+    operational: '#22c55e',
+    degraded: '#eab308',
+    outage: '#ef4444',
+    no_data: 'rgba(221, 227, 237, 0.75)',
+    track: '#f8fafc',
   },
   dark: {
-    operational: '#34d399',
-    degraded: '#fbbf24',
-    outage: '#f87171',
-    no_data: '#475569',
+    operational: '#22c55e',
+    degraded: '#eab308',
+    outage: '#ef4444',
+    no_data: 'rgba(42, 53, 69, 0.85)',
+    track: '#1e2736',
   },
 }
 
@@ -28,6 +30,7 @@ export function readStatusTimelineColors(theme: ThemeMode): Record<string, strin
     degraded: style.getPropertyValue('--sg-status-degraded').trim() || fallback.degraded,
     outage: style.getPropertyValue('--sg-status-outage').trim() || fallback.outage,
     no_data: style.getPropertyValue('--sg-status-no-data').trim() || fallback.no_data,
+    track: style.getPropertyValue('--sg-status-track').trim() || fallback.track,
   }
 }
 
@@ -59,7 +62,7 @@ export function buildTimelineGradient(days: PublicDayBar[], theme: ThemeMode): s
 
     if (index < days.length - 1) {
       const gapEnd = position + gap
-      stops.push(`transparent ${position.toFixed(4)}% ${gapEnd.toFixed(4)}%`)
+      stops.push(`${palette.track} ${position.toFixed(4)}% ${gapEnd.toFixed(4)}%`)
       position = gapEnd
     }
   })
