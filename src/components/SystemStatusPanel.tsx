@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, ApiError, type PublicDayBar, type PublicSystemStatus } from '../api/client'
 
-const DEFAULT_DAYS = 30
-
 function formatDayLabel(value: string): string {
   return new Date(`${value}T00:00:00Z`).toLocaleDateString(undefined, {
     weekday: 'short',
@@ -19,6 +17,30 @@ function toIsoDate(date: Date): string {
 
 function startOfUtcDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
+
+function startOfUtcMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1))
+}
+
+function endOfUtcMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0))
+}
+
+function daysInclusive(start: Date, end: Date): number {
+  return Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1
+}
+
+function formatMonthLabel(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+function isSameUtcMonth(left: Date, right: Date): boolean {
+  return left.getUTCFullYear() === right.getUTCFullYear() && left.getUTCMonth() === right.getUTCMonth()
 }
 
 type TimelineTooltipProps = {
@@ -113,27 +135,33 @@ type SystemStatusPanelProps = {
 
 export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelProps) {
   const today = useMemo(() => startOfUtcDay(new Date()), [])
-  const [rangeEnd, setRangeEnd] = useState(today)
+  const [viewMonth, setViewMonth] = useState(() => startOfUtcMonth(new Date()))
   const [systemStatus, setSystemStatus] = useState<PublicSystemStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [tooltip, setTooltip] = useState<{ day: PublicDayBar; anchorRect: DOMRect } | null>(null)
 
-  const canMoveForward = rangeEnd.getTime() < today.getTime()
+  const rangeEnd = useMemo(() => {
+    const monthEnd = endOfUtcMonth(viewMonth)
+    return monthEnd.getTime() > today.getTime() ? today : monthEnd
+  }, [viewMonth, today])
+
+  const dayCount = useMemo(() => daysInclusive(viewMonth, rangeEnd), [viewMonth, rangeEnd])
+  const canMoveForward = !isSameUtcMonth(viewMonth, today)
 
   useEffect(() => {
     setLoading(true)
     setError(null)
     void api
-      .getPublicSystemStatus(slug, { end: toIsoDate(rangeEnd), days: DEFAULT_DAYS })
+      .getPublicSystemStatus(slug, { end: toIsoDate(rangeEnd), days: dayCount })
       .then(setSystemStatus)
       .catch((err: unknown) => {
         setSystemStatus(null)
         setError(err instanceof ApiError ? err.message : 'Failed to load system status')
       })
       .finally(() => setLoading(false))
-  }, [slug, rangeEnd])
+  }, [slug, rangeEnd, dayCount])
 
   const handleHoverDay = useCallback((day: PublicDayBar | null, anchor?: DOMRect) => {
     if (day && anchor) {
@@ -144,11 +172,10 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
   }, [])
 
   const moveRange = (direction: -1 | 1) => {
-    setRangeEnd((current) => {
-      const next = new Date(current)
-      next.setUTCDate(next.getUTCDate() + direction * DEFAULT_DAYS)
-      if (next.getTime() > today.getTime()) {
-        return today
+    setViewMonth((current) => {
+      const next = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + direction, 1))
+      if (direction > 0 && next.getTime() > startOfUtcMonth(today).getTime()) {
+        return startOfUtcMonth(today)
       }
       return next
     })
@@ -172,7 +199,7 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
             ←
           </button>
           <span className="system-status-range">
-            {systemStatus?.range_label ?? '30 days'}
+            {systemStatus?.range_label ?? formatMonthLabel(viewMonth)}
           </span>
           <button
             type="button"
