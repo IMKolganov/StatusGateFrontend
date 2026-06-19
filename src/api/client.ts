@@ -66,7 +66,7 @@ import type { PaginatedProjectResponse } from './generated/models/paginatedProje
 import type { ProjectCreate } from './generated/models/projectCreate'
 import type { ProjectResponse } from './generated/models/projectResponse'
 import type { ProjectUpdate } from './generated/models/projectUpdate'
-import type { PublicDayBar } from './generated/models/publicDayBar'
+import type { PublicDayBar as PublicDayBarGenerated } from './generated/models/publicDayBar'
 import type { PublicProjectHistory } from './generated/models/publicProjectHistory'
 import type { PublicProjectStatus as PublicProjectStatusGenerated } from './generated/models/publicProjectStatus'
 import type { PublicProjectSummary } from './generated/models/publicProjectSummary'
@@ -121,6 +121,13 @@ export type PublicServiceStatus = PublicServiceStatusGenerated & {
   network_summary?: NetworkSummary | null
 }
 
+export type PublicDayBar = PublicDayBarGenerated & {
+  check_count?: number
+  failed_count?: number
+  degraded_count?: number
+  availability_percent?: number | null
+}
+
 export type PublicProjectStatus = Omit<PublicProjectStatusGenerated, 'services'> & {
   services: PublicServiceStatus[]
 }
@@ -163,7 +170,6 @@ export type {
   ProjectUpdate,
   PublicProjectHistory,
   PublicProjectSummary,
-  PublicDayBar,
   PublicSystemStatus,
   TwoFactorSetupResponse,
 }

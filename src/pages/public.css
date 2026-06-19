@@ -612,6 +612,13 @@
   margin-bottom: var(--sg-space-2);
 }
 
+.status-timeline-tooltip-summary {
+  margin: 0 0 var(--sg-space-2);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--sg-text);
+}
+
 .status-timeline-tooltip-empty {
   margin: 0;
   font-size: 0.875rem;
