@@ -89,6 +89,12 @@ export type MonitoredComponent = MonitoredComponentResponse & {
   check_config?: { config_text?: string } | null
   latest_error_message?: string | null
   latest_log_tail?: string | null
+  latest_network_summary?: Record<string, unknown> | null
+}
+
+export type PurgeCheckHistoryResult = {
+  deleted_count: number
+  remaining_count: number
 }
 
 export type NetworkSummary = {
@@ -269,6 +275,14 @@ export const api = {
       listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGet(componentId, {
         limit,
       }),
+    ),
+
+  purgeCheckHistory: (componentId: string, keep = 0): Promise<PurgeCheckHistoryResult> =>
+    call(() =>
+      customFetch<PurgeCheckHistoryResult>(
+        `/api/admin/monitoring/monitored-components/${componentId}/check-results?keep=${keep}`,
+        { method: 'DELETE' },
+      ),
     ),
 
   listProjectIncidents: (projectId: string): Promise<IncidentResponse[]> =>
