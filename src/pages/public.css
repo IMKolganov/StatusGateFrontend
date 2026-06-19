@@ -284,6 +284,32 @@
   margin-top: var(--sg-space-3);
 }
 
+.public-oss-banner {
+  margin-top: auto;
+  padding: var(--sg-space-4) var(--sg-space-5);
+  border: 1px solid var(--sg-border);
+  border-radius: var(--sg-radius-md);
+  background: var(--sg-surface);
+  text-align: center;
+}
+
+.public-oss-banner p {
+  margin: 0;
+  color: var(--sg-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.public-oss-banner a {
+  color: var(--sg-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.public-oss-banner a:hover {
+  text-decoration: underline;
+}
+
 .page-header-row {
   display: flex;
   align-items: flex-start;
