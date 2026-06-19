@@ -575,7 +575,7 @@
   grid-template-columns: repeat(var(--timeline-days, 30), minmax(0, 1fr));
   gap: 2px;
   align-items: stretch;
-  min-height: 1.75rem;
+  min-height: 1rem;
   min-width: 0;
   width: 100%;
 }
