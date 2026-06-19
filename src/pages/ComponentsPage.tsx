@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type NetworkSummary, type Project } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
-import { CheckDiagnostics, logTailFromDetails } from '../components/CheckDiagnostics'
+import { CheckDiagnostics, logTailFromDetails, networkSummaryFromRecord } from '../components/CheckDiagnostics'
 import { formatApiError } from '../utils/apiError'
 import { slugFromName } from '../utils/slug'
 import './admin.css'
@@ -54,25 +54,25 @@ function networkSummaryFromDetails(details: Record<string, unknown> | null | und
     ? (network.speed_test as Record<string, unknown>)
     : {}
 
-  return {
-    interface: typeof network.interface === 'string' ? network.interface : undefined,
-    ipv4_address: typeof network.ipv4_address === 'string' ? network.ipv4_address : undefined,
-    gateway: typeof network.gateway === 'string' ? network.gateway : undefined,
-    dns_servers: Array.isArray(network.dns_servers) ? network.dns_servers.filter((item): item is string => typeof item === 'string') : undefined,
-    mtu: typeof network.mtu === 'number' ? network.mtu : undefined,
-    connect_time_ms: typeof network.connect_time_ms === 'number' ? network.connect_time_ms : undefined,
-    proxy_url: typeof network.proxy_url === 'string' ? network.proxy_url : undefined,
-    inbound_protocol: typeof network.inbound_protocol === 'string' ? network.inbound_protocol : undefined,
-    probe_url: typeof probe.url === 'string' ? probe.url : undefined,
-    exit_ip: typeof probe.exit_ip === 'string' ? probe.exit_ip : undefined,
-    probe_latency_ms: typeof probe.latency_ms === 'number' ? probe.latency_ms : undefined,
-    gateway_ping_avg_ms: typeof gatewayPing.avg_ms === 'number' ? gatewayPing.avg_ms : undefined,
-    gateway_ping_loss_percent: typeof gatewayPing.loss_percent === 'number' ? gatewayPing.loss_percent : undefined,
-    gateway_ping_jitter_ms: typeof gatewayPing.jitter_ms === 'number' ? gatewayPing.jitter_ms : undefined,
-    download_mbps: typeof speedTest.mbps === 'number' ? speedTest.mbps : undefined,
-    download_bytes: typeof speedTest.bytes === 'number' ? speedTest.bytes : undefined,
-    download_duration_ms: typeof speedTest.duration_ms === 'number' ? speedTest.duration_ms : undefined,
-  }
+  return networkSummaryFromRecord({
+    interface: network.interface,
+    ipv4_address: network.ipv4_address,
+    gateway: network.gateway,
+    dns_servers: network.dns_servers,
+    mtu: network.mtu,
+    connect_time_ms: network.connect_time_ms,
+    proxy_url: network.proxy_url,
+    inbound_protocol: network.inbound_protocol,
+    probe_url: probe.url,
+    exit_ip: probe.exit_ip,
+    probe_latency_ms: probe.latency_ms,
+    gateway_ping_avg_ms: gatewayPing.avg_ms,
+    gateway_ping_loss_percent: gatewayPing.loss_percent,
+    gateway_ping_jitter_ms: gatewayPing.jitter_ms,
+    download_mbps: speedTest.mbps,
+    download_bytes: speedTest.bytes,
+    download_duration_ms: speedTest.duration_ms,
+  })
 }
 
 export function ComponentsPage() {
@@ -84,6 +84,7 @@ export function ComponentsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingSlug, setEditingSlug] = useState<string | null>(null)
   const [checkingId, setCheckingId] = useState<string | null>(null)
+  const [purgingId, setPurgingId] = useState<string | null>(null)
   const [lastManualResult, setLastManualResult] = useState<CheckResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -216,6 +217,28 @@ export function ComponentsPage() {
     }
   }
 
+  const onClearHistory = async (item: MonitoredComponent) => {
+    const confirmed = window.confirm(
+      `Delete all check history for "${item.name}"?\n\nThis removes stored check results and timelines for this service. It cannot be undone.`,
+    )
+    if (!confirmed) return
+
+    setPurgingId(item.id)
+    setError(null)
+    try {
+      const result = await api.purgeCheckHistory(item.id)
+      if (lastManualResult?.monitored_component_id === item.id) {
+        setLastManualResult(null)
+      }
+      load()
+      window.alert(`Deleted ${result.deleted_count} check result(s).`)
+    } catch (err) {
+      setError(formatApiError(err, 'Failed to clear history'))
+    } finally {
+      setPurgingId(null)
+    }
+  }
+
   const lastNetworkSummary = networkSummaryFromDetails(lastManualResult?.details as Record<string, unknown> | undefined)
   const lastLogTail = logTailFromDetails(lastManualResult?.details as Record<string, unknown> | undefined)
 
@@ -233,6 +256,7 @@ export function ComponentsPage() {
             errorMessage={lastManualResult.error_message}
             logTail={lastLogTail}
             networkSummary={lastNetworkSummary}
+            collapsible
           />
         </div>
       )}
@@ -378,10 +402,20 @@ export function ComponentsPage() {
                     outcome={item.latest_outcome}
                     errorMessage={item.latest_error_message}
                     logTail={item.latest_log_tail}
+                    networkSummary={networkSummaryFromRecord(item.latest_network_summary ?? undefined)}
+                    collapsible
                   />
                 </td>
                 <td className="mono wrap">{item.check_url}</td>
                 <td className="row-actions">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={purgingId === item.id}
+                    onClick={() => void onClearHistory(item)}
+                  >
+                    {purgingId === item.id ? 'Clearing…' : 'Clear history'}
+                  </button>
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"

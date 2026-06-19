@@ -17,6 +17,11 @@
   margin-top: var(--sg-space-2);
 }
 
+.check-diagnostics__details {
+  margin-top: var(--sg-space-2);
+}
+
+.check-diagnostics__details > summary,
 .check-diagnostics__logs summary {
   cursor: pointer;
   font-size: 0.8125rem;
