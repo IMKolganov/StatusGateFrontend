@@ -159,6 +159,37 @@
   margin-top: var(--sg-space-3);
 }
 
+.network-summary-details {
+  margin-top: var(--sg-space-3);
+}
+
+.network-summary-details > summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sg-text-muted);
+  user-select: none;
+  list-style: none;
+}
+
+.network-summary-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.network-summary-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.network-summary-details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.network-summary-details .network-summary {
+  margin-top: var(--sg-space-2);
+}
+
 .service-status {
   display: flex;
   flex-direction: column;
