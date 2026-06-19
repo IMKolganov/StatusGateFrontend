@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, ApiError, type PublicProjectStatus } from '../api/client'
 import { PublicLayout } from '../components/PublicLayout'
+import { VpnNetworkDetails } from '../components/VpnNetworkDetails'
 import { SystemStatusPanel } from '../components/SystemStatusPanel'
 import './public.css'
 
@@ -81,6 +82,9 @@ export function ProjectStatusPage() {
                           {service.environment ? ` · ${service.environment}` : ''}
                         </div>
                         {service.description && <div className="service-desc">{service.description}</div>}
+                        {service.network_summary && (
+                          <VpnNetworkDetails summary={service.network_summary} className="network-summary--service" />
+                        )}
                       </div>
                     </div>
                     <div className="service-status">

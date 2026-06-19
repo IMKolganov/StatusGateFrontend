@@ -68,9 +68,9 @@ import type { ProjectResponse } from './generated/models/projectResponse'
 import type { ProjectUpdate } from './generated/models/projectUpdate'
 import type { PublicDayBar } from './generated/models/publicDayBar'
 import type { PublicProjectHistory } from './generated/models/publicProjectHistory'
-import type { PublicProjectStatus } from './generated/models/publicProjectStatus'
+import type { PublicProjectStatus as PublicProjectStatusGenerated } from './generated/models/publicProjectStatus'
 import type { PublicProjectSummary } from './generated/models/publicProjectSummary'
-import type { PublicServiceStatus } from './generated/models/publicServiceStatus'
+import type { PublicServiceStatus as PublicServiceStatusGenerated } from './generated/models/publicServiceStatus'
 import type { PublicSystemStatus } from './generated/models/publicSystemStatus'
 import type { RegistrationStatusResponse as GeneratedRegistrationStatusResponse } from './generated/models/registrationStatusResponse'
 import type { TwoFactorSetupResponse } from './generated/models/twoFactorSetupResponse'
@@ -85,7 +85,31 @@ import customFetch, { ApiError } from './mutator'
 export type Account = AccountResponse
 export type Project = ProjectResponse
 export type ComponentKind = ComponentKindResponse
-export type MonitoredComponent = MonitoredComponentResponse
+export type MonitoredComponent = MonitoredComponentResponse & {
+  check_config?: { config_text?: string } | null
+}
+
+export type NetworkSummary = {
+  interface?: string
+  ipv4_address?: string
+  gateway?: string
+  dns_servers?: string[]
+  connect_time_ms?: number
+  proxy_url?: string
+  inbound_protocol?: string
+  probe_url?: string
+  exit_ip?: string
+  probe_latency_ms?: number
+}
+
+export type PublicServiceStatus = PublicServiceStatusGenerated & {
+  network_summary?: NetworkSummary | null
+}
+
+export type PublicProjectStatus = Omit<PublicProjectStatusGenerated, 'services'> & {
+  services: PublicServiceStatus[]
+}
+
 export type CheckResult = CheckResultResponse
 export type MonitoringSettings = MonitoringSettingsResponse
 export type Incident = IncidentResponse
@@ -123,10 +147,8 @@ export type {
   ProjectCreate,
   ProjectUpdate,
   PublicProjectHistory,
-  PublicProjectStatus,
   PublicProjectSummary,
   PublicDayBar,
-  PublicServiceStatus,
   PublicSystemStatus,
   TwoFactorSetupResponse,
 }

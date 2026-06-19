@@ -129,6 +129,36 @@
   line-height: 1.45;
 }
 
+.network-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--sg-space-2) var(--sg-space-4);
+}
+
+.network-summary__row {
+  margin: 0;
+}
+
+.network-summary dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--sg-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.network-summary dd {
+  margin: var(--sg-space-1) 0 0;
+  font-size: 0.875rem;
+  color: var(--sg-text-heading);
+  word-break: break-word;
+}
+
+.network-summary--service {
+  margin-top: var(--sg-space-3);
+}
+
 .service-status {
   display: flex;
   flex-direction: column;

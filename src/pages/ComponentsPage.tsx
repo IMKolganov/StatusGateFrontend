@@ -1,7 +1,8 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type Project } from '../api/client'
+import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type NetworkSummary, type Project } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
+import { VpnNetworkDetails } from '../components/VpnNetworkDetails'
 import { formatApiError } from '../utils/apiError'
 import { slugFromName } from '../utils/slug'
 import './admin.css'
@@ -10,7 +11,11 @@ const CHECK_TYPES = [
   { value: 'http_status', label: 'HTTP status code' },
   { value: 'json', label: 'JSON response (HTTP 200 + valid JSON)' },
   { value: 'xml', label: 'XML response (HTTP 200 + valid XML)' },
+  { value: 'openvpn', label: 'OpenVPN connection' },
+  { value: 'xray', label: 'Xray connection' },
 ] as const
+
+const VPN_KIND_SLUGS = new Set(['openvpn', 'xray'])
 
 const emptyForm = {
   component_kind_id: '',
@@ -20,6 +25,7 @@ const emptyForm = {
   check_url: '',
   check_method: 'GET',
   check_type: 'http_status',
+  vpn_config_text: '',
   expected_status_code: 200,
   timeout_seconds: 10,
   poll_interval_seconds: '' as number | '',
@@ -31,6 +37,29 @@ function statusClass(outcome: string | null | undefined): string {
   if (outcome === 'up') return 'status-up'
   if (outcome === 'degraded') return 'status-degraded'
   return 'status-down'
+}
+
+function checkTypeLabel(value: string): string {
+  return CHECK_TYPES.find((t) => t.value === value)?.label ?? value
+}
+
+function networkSummaryFromDetails(details: Record<string, unknown> | null | undefined): NetworkSummary | null {
+  if (!details || typeof details.network !== 'object' || details.network === null) return null
+  const network = details.network as Record<string, unknown>
+  const probe = typeof network.probe === 'object' && network.probe !== null ? (network.probe as Record<string, unknown>) : {}
+
+  return {
+    interface: typeof network.interface === 'string' ? network.interface : undefined,
+    ipv4_address: typeof network.ipv4_address === 'string' ? network.ipv4_address : undefined,
+    gateway: typeof network.gateway === 'string' ? network.gateway : undefined,
+    dns_servers: Array.isArray(network.dns_servers) ? network.dns_servers.filter((item): item is string => typeof item === 'string') : undefined,
+    connect_time_ms: typeof network.connect_time_ms === 'number' ? network.connect_time_ms : undefined,
+    proxy_url: typeof network.proxy_url === 'string' ? network.proxy_url : undefined,
+    inbound_protocol: typeof network.inbound_protocol === 'string' ? network.inbound_protocol : undefined,
+    probe_url: typeof probe.url === 'string' ? probe.url : undefined,
+    exit_ip: typeof probe.exit_ip === 'string' ? probe.exit_ip : undefined,
+    probe_latency_ms: typeof probe.latency_ms === 'number' ? probe.latency_ms : undefined,
+  }
 }
 
 export function ComponentsPage() {
@@ -67,6 +96,8 @@ export function ComponentsPage() {
     load()
   }, [projectId])
 
+  const kindById = useMemo(() => new Map(kinds.map((k) => [k.id, k])), [kinds])
+
   const projectNameById = useMemo(
     () => new Map(projects.map((p) => [p.id, p.name])),
     [projects],
@@ -77,6 +108,10 @@ export function ComponentsPage() {
     [kinds],
   )
 
+  const selectedKindSlug = kindById.get(form.component_kind_id)?.slug
+  const isVpnKind = selectedKindSlug ? VPN_KIND_SLUGS.has(selectedKindSlug) : false
+  const isOpenVpn = selectedKindSlug === 'openvpn'
+
   const resetForm = () => {
     setForm(emptyForm)
     setEditingId(null)
@@ -84,10 +119,43 @@ export function ComponentsPage() {
     setLastManualResult(null)
   }
 
+  const onKindChange = (componentKindId: string) => {
+    const slug = kindById.get(componentKindId)?.slug
+    if (slug === 'openvpn') {
+      setForm((current) => ({
+        ...current,
+        component_kind_id: componentKindId,
+        check_type: 'openvpn',
+        check_url: current.check_url || 'https://ifconfig.me/ip',
+        timeout_seconds: Math.max(current.timeout_seconds, 60),
+      }))
+      return
+    }
+    if (slug === 'xray') {
+      setForm((current) => ({
+        ...current,
+        component_kind_id: componentKindId,
+        check_type: 'xray',
+        check_url: current.check_url || 'https://ifconfig.me/ip',
+        timeout_seconds: Math.max(current.timeout_seconds, 60),
+      }))
+      return
+    }
+    setForm((current) => ({
+      ...current,
+      component_kind_id: componentKindId,
+      check_type: current.check_type === 'openvpn' || current.check_type === 'xray' ? 'http_status' : current.check_type,
+    }))
+  }
+
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
     if (!projectId) {
       setError('Choose a project first.')
+      return
+    }
+    if (isVpnKind && !form.vpn_config_text.trim()) {
+      setError(isOpenVpn ? 'Paste an OpenVPN .ovpn config.' : 'Paste an Xray JSON config.')
       return
     }
     setError(null)
@@ -99,9 +167,10 @@ export function ComponentsPage() {
       slug,
       description: form.description || null,
       environment: form.environment || null,
-      check_url: form.check_url,
+      check_url: form.check_url || (isVpnKind ? 'https://ifconfig.me/ip' : ''),
       check_method: form.check_method,
       check_type: form.check_type,
+      check_config: isVpnKind ? { config_text: form.vpn_config_text.trim() } : null,
       expected_status_code: form.expected_status_code,
       timeout_seconds: form.timeout_seconds,
       poll_interval_seconds: form.poll_interval_seconds === '' ? null : Number(form.poll_interval_seconds),
@@ -134,14 +203,19 @@ export function ComponentsPage() {
     }
   }
 
+  const lastNetworkSummary = networkSummaryFromDetails(lastManualResult?.details as Record<string, unknown> | undefined)
+
   return (
     <AdminLayout title="Services" subtitle="Health checks per project — background worker polls active services automatically">
       {error && <div className="alert error">{error}</div>}
       {lastManualResult && (
         <div className={`alert ${lastManualResult.outcome === 'up' ? 'success' : 'error'}`}>
-          Last check: <strong>{lastManualResult.outcome}</strong>
-          {lastManualResult.latency_ms != null && ` · ${lastManualResult.latency_ms} ms`}
-          {lastManualResult.error_message && ` · ${lastManualResult.error_message}`}
+          <div>
+            Last check: <strong>{lastManualResult.outcome}</strong>
+            {lastManualResult.latency_ms != null && ` · ${lastManualResult.latency_ms} ms`}
+            {lastManualResult.error_message && ` · ${lastManualResult.error_message}`}
+          </div>
+          {lastNetworkSummary && <VpnNetworkDetails summary={lastNetworkSummary} className="network-summary--alert" />}
         </div>
       )}
 
@@ -177,25 +251,63 @@ export function ComponentsPage() {
               Type
               <select
                 value={form.component_kind_id}
-                onChange={(e) => setForm({ ...form, component_kind_id: e.target.value })}
+                onChange={(e) => onKindChange(e.target.value)}
                 required
               >
                 <option value="">Select type…</option>
                 {kinds.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
               </select>
             </label>
-            <label>Name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Dashboard API" required /></label>
-            <label>
-              Check type
-              <select value={form.check_type} onChange={(e) => setForm({ ...form, check_type: e.target.value })}>
-                {CHECK_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
-            </label>
+            <label>Name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Norway OpenVPN" required /></label>
+
+            {!isVpnKind && (
+              <label>
+                Check type
+                <select value={form.check_type} onChange={(e) => setForm({ ...form, check_type: e.target.value })}>
+                  {CHECK_TYPES.filter((t) => t.value !== 'openvpn' && t.value !== 'xray').map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             <label>Environment<input value={form.environment} onChange={(e) => setForm({ ...form, environment: e.target.value })} placeholder="production" /></label>
-            <label>Check URL<input value={form.check_url} onChange={(e) => setForm({ ...form, check_url: e.target.value })} placeholder="https://example.com/health" required /></label>
-            <label>Method<input value={form.check_method} onChange={(e) => setForm({ ...form, check_method: e.target.value })} /></label>
-            <label>Expected HTTP status<input type="number" value={form.expected_status_code} onChange={(e) => setForm({ ...form, expected_status_code: Number(e.target.value) })} /></label>
-            <label>Timeout (sec)<input type="number" value={form.timeout_seconds} onChange={(e) => setForm({ ...form, timeout_seconds: Number(e.target.value) })} /></label>
+
+            {isVpnKind && (
+              <label className="full-width">
+                {isOpenVpn ? 'OpenVPN config (.ovpn)' : 'Xray config (JSON)'}
+                <textarea
+                  value={form.vpn_config_text}
+                  onChange={(e) => setForm({ ...form, vpn_config_text: e.target.value })}
+                  rows={12}
+                  spellCheck={false}
+                  placeholder={isOpenVpn ? 'client\ndev tun\nproto udp\n...' : '{\n  "inbounds": [...],\n  "outbounds": [...]\n}'}
+                  required
+                />
+                <span className="field-hint">
+                  StatusGate connects using this config, collects network parameters, then probes the URL below through the tunnel/proxy.
+                </span>
+              </label>
+            )}
+
+            <label className={isVpnKind ? 'full-width' : undefined}>
+              {isVpnKind ? 'Probe URL (through VPN)' : 'Check URL'}
+              <input
+                value={form.check_url}
+                onChange={(e) => setForm({ ...form, check_url: e.target.value })}
+                placeholder={isVpnKind ? 'https://ifconfig.me/ip' : 'https://example.com/health'}
+                required={!isVpnKind}
+              />
+            </label>
+
+            {!isVpnKind && (
+              <>
+                <label>Method<input value={form.check_method} onChange={(e) => setForm({ ...form, check_method: e.target.value })} /></label>
+                <label>Expected HTTP status<input type="number" value={form.expected_status_code} onChange={(e) => setForm({ ...form, expected_status_code: Number(e.target.value) })} /></label>
+              </>
+            )}
+
+            <label>Timeout (sec)<input type="number" min={isVpnKind ? 30 : 1} value={form.timeout_seconds} onChange={(e) => setForm({ ...form, timeout_seconds: Number(e.target.value) })} /></label>
             <label>
               Poll every (sec)
               <input
@@ -228,7 +340,7 @@ export function ComponentsPage() {
               <th>Type</th>
               <th>Check</th>
               <th>Status</th>
-              <th>URL</th>
+              <th>Target</th>
               <th />
             </tr>
           </thead>
@@ -238,7 +350,7 @@ export function ComponentsPage() {
                 {!projectId && <td>{projectNameById.get(item.project_id) ?? '—'}</td>}
                 <td>{item.name}</td>
                 <td>{kindNameById.get(item.component_kind_id) ?? '—'}</td>
-                <td>{CHECK_TYPES.find((t) => t.value === item.check_type)?.label ?? item.check_type}</td>
+                <td>{checkTypeLabel(item.check_type ?? 'http_status')}</td>
                 <td>
                   <span className={`status-pill ${statusClass(item.latest_outcome)}`}>
                     {item.latest_outcome ?? 'unknown'}
@@ -270,6 +382,7 @@ export function ComponentsPage() {
                         check_url: item.check_url,
                         check_method: item.check_method,
                         check_type: item.check_type ?? 'http_status',
+                        vpn_config_text: item.check_config?.config_text ?? '',
                         expected_status_code: item.expected_status_code,
                         timeout_seconds: item.timeout_seconds,
                         poll_interval_seconds: item.poll_interval_seconds ?? '',
