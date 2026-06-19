@@ -169,7 +169,7 @@ export function ComponentsPage() {
       return
     }
     if (isVpnKind && !form.vpn_config_text.trim()) {
-      setError(isOpenVpn ? 'Paste an OpenVPN .ovpn config.' : 'Paste an Xray JSON config.')
+      setError(isOpenVpn ? 'Paste an OpenVPN .ovpn config.' : 'Paste a vless:// share link or Xray JSON config.')
       return
     }
     setError(null)
@@ -317,17 +317,23 @@ export function ComponentsPage() {
 
             {isVpnKind && (
               <label className="full-width">
-                {isOpenVpn ? 'OpenVPN config (.ovpn)' : 'Xray config (JSON)'}
+                {isOpenVpn ? 'OpenVPN config (.ovpn)' : 'Xray config (vless:// or JSON)'}
                 <textarea
                   value={form.vpn_config_text}
                   onChange={(e) => setForm({ ...form, vpn_config_text: e.target.value })}
                   rows={12}
                   spellCheck={false}
-                  placeholder={isOpenVpn ? 'client\ndev tun\nproto udp\n...' : '{\n  "inbounds": [...],\n  "outbounds": [...]\n}'}
+                  placeholder={
+                    isOpenVpn
+                      ? 'client\ndev tun\nproto udp\n...'
+                      : 'vless://uuid@host:port?encryption=none&security=tls&sni=host&type=tcp#name'
+                  }
                   required
                 />
                 <span className="field-hint">
-                  StatusGate connects using this config, collects network parameters, then probes the URL below through the tunnel/proxy.
+                  {isOpenVpn
+                    ? 'StatusGate connects using this config, collects network parameters, then probes the URL below through the tunnel/proxy.'
+                    : 'Paste a vless:// share link (like .ovpn for OpenVPN) or full Xray JSON. StatusGate starts a local proxy and probes the URL below through it.'}
                 </span>
               </label>
             )}
