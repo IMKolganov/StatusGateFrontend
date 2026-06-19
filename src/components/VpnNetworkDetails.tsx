@@ -21,6 +21,9 @@ export type NetworkSummary = {
 type NetworkDetailsProps = {
   summary: NetworkSummary
   className?: string
+  collapsible?: boolean
+  defaultOpen?: boolean
+  summaryLabel?: string
 }
 
 function formatBytes(value: number): string {
@@ -29,7 +32,13 @@ function formatBytes(value: number): string {
   return `${value} B`
 }
 
-export function VpnNetworkDetails({ summary, className = '' }: NetworkDetailsProps) {
+export function VpnNetworkDetails({
+  summary,
+  className = '',
+  collapsible = false,
+  defaultOpen = false,
+  summaryLabel = 'Network details',
+}: NetworkDetailsProps) {
   const rows: Array<[string, string]> = []
 
   if (summary.interface) rows.push(['Interface', summary.interface])
@@ -53,8 +62,8 @@ export function VpnNetworkDetails({ summary, className = '' }: NetworkDetailsPro
 
   if (rows.length === 0) return null
 
-  return (
-    <dl className={`network-summary ${className}`.trim()}>
+  const content = (
+    <dl className={collapsible ? 'network-summary' : `network-summary ${className}`.trim()}>
       {rows.map(([label, value]) => (
         <div key={label} className="network-summary__row">
           <dt>{label}</dt>
@@ -62,5 +71,14 @@ export function VpnNetworkDetails({ summary, className = '' }: NetworkDetailsPro
         </div>
       ))}
     </dl>
+  )
+
+  if (!collapsible) return content
+
+  return (
+    <details className={`network-summary-details ${className}`.trim()} open={defaultOpen}>
+      <summary>{summaryLabel}</summary>
+      {content}
+    </details>
   )
 }

@@ -83,7 +83,12 @@ export function ProjectStatusPage() {
                         </div>
                         {service.description && <div className="service-desc">{service.description}</div>}
                         {service.network_summary && (
-                          <VpnNetworkDetails summary={service.network_summary} className="network-summary--service" />
+                          <VpnNetworkDetails
+                            summary={service.network_summary}
+                            className="network-summary--service"
+                            collapsible
+                            defaultOpen={service.status !== 'up' && service.status !== 'degraded'}
+                          />
                         )}
                       </div>
                     </div>
