@@ -29,6 +29,11 @@
   --sg-warning-title: #854d0e;
   --sg-warning-text: #713f12;
 
+  --sg-status-operational: #059669;
+  --sg-status-degraded: #d97706;
+  --sg-status-outage: #dc2626;
+  --sg-status-no-data: #cbd5e1;
+
   --sg-radius-sm: 6px;
   --sg-radius: 8px;
   --sg-radius-md: 6px;
@@ -103,6 +108,11 @@
   --sg-warning-border: #a16207;
   --sg-warning-title: #fde68a;
   --sg-warning-text: #fef3c7;
+
+  --sg-status-operational: #34d399;
+  --sg-status-degraded: #fbbf24;
+  --sg-status-outage: #f87171;
+  --sg-status-no-data: #475569;
   --sg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --sg-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   --sg-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);

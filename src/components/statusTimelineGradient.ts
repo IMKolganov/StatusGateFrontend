@@ -1,19 +1,34 @@
 import type { PublicDayBar } from '../api/client'
 import type { ThemeMode } from '../brand/theme'
 
-const STATUS_COLORS: Record<ThemeMode, Record<string, string>> = {
+const FALLBACK_COLORS: Record<ThemeMode, Record<string, string>> = {
   light: {
-    operational: '#22c55e',
-    degraded: '#eab308',
-    outage: '#ef4444',
-    no_data: 'rgba(203, 213, 225, 0.9)',
+    operational: '#059669',
+    degraded: '#d97706',
+    outage: '#dc2626',
+    no_data: '#cbd5e1',
   },
   dark: {
-    operational: '#22c55e',
-    degraded: '#eab308',
-    outage: '#ef4444',
-    no_data: 'rgba(58, 71, 92, 0.9)',
+    operational: '#34d399',
+    degraded: '#fbbf24',
+    outage: '#f87171',
+    no_data: '#475569',
   },
+}
+
+export function readStatusTimelineColors(theme: ThemeMode): Record<string, string> {
+  const fallback = FALLBACK_COLORS[theme]
+  if (typeof document === 'undefined') {
+    return fallback
+  }
+
+  const style = getComputedStyle(document.documentElement)
+  return {
+    operational: style.getPropertyValue('--sg-status-operational').trim() || fallback.operational,
+    degraded: style.getPropertyValue('--sg-status-degraded').trim() || fallback.degraded,
+    outage: style.getPropertyValue('--sg-status-outage').trim() || fallback.outage,
+    no_data: style.getPropertyValue('--sg-status-no-data').trim() || fallback.no_data,
+  }
 }
 
 function timelineLayout(dayCount: number): { gap: number; segment: number } {
@@ -30,7 +45,7 @@ export function buildTimelineGradient(days: PublicDayBar[], theme: ThemeMode): s
     return 'transparent'
   }
 
-  const palette = STATUS_COLORS[theme]
+  const palette = readStatusTimelineColors(theme)
   const { gap, segment } = timelineLayout(days.length)
   const stops: string[] = []
   let position = 0

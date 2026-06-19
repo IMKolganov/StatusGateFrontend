@@ -222,7 +222,7 @@
 }
 
 .status-dot.status-up {
-  background: #22c55e;
+  background: var(--sg-status-operational);
 }
 
 .status-down {
