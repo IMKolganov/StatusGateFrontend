@@ -32,8 +32,6 @@
   --sg-status-operational: #22c55e;
   --sg-status-degraded: #eab308;
   --sg-status-outage: #ef4444;
-  --sg-status-no-data: rgba(221, 227, 237, 0.75);
-  --sg-status-track: #f8fafc;
 
   --sg-radius-sm: 6px;
   --sg-radius: 8px;
@@ -113,8 +111,6 @@
   --sg-status-operational: #22c55e;
   --sg-status-degraded: #eab308;
   --sg-status-outage: #ef4444;
-  --sg-status-no-data: rgba(42, 53, 69, 0.85);
-  --sg-status-track: #1e2736;
   --sg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --sg-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   --sg-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);

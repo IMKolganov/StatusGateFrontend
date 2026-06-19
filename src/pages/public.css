@@ -566,39 +566,49 @@
 }
 
 .status-timeline-bars-shell {
-  display: flex;
-  align-items: center;
   min-width: 0;
   width: 100%;
-  min-height: 0.875rem;
 }
 
-.status-timeline-gradient-bar {
-  position: relative;
+.status-timeline-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  min-height: 1.75rem;
+  min-width: 0;
   width: 100%;
-  height: 0.625rem;
-  min-height: 0.625rem;
+}
+
+.status-bar {
+  flex: 1 1 0;
+  min-width: 2px;
+  max-width: 6px;
+  height: 100%;
+  min-height: 0.75rem;
   border-radius: 1px;
-  background-color: var(--sg-status-track);
   cursor: pointer;
   outline: none;
-  overflow: hidden;
 }
 
-.status-timeline-gradient-bar:focus-visible {
+.status-bar:focus-visible {
   box-shadow: 0 0 0 2px var(--sg-primary);
 }
 
-.status-timeline-gradient-marker {
-  position: absolute;
-  top: -0.125rem;
-  bottom: -0.125rem;
-  width: 1px;
-  transform: translateX(-50%);
-  background: var(--sg-text-heading);
-  opacity: 0.9;
-  pointer-events: none;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sg-surface) 70%, transparent);
+.status-bar-operational {
+  background: var(--sg-status-operational);
+}
+
+.status-bar-degraded {
+  background: var(--sg-status-degraded);
+}
+
+.status-bar-outage {
+  background: var(--sg-status-outage);
+}
+
+.status-bar-no_data {
+  background: var(--sg-border);
+  opacity: 0.55;
 }
 
 .status-timeline-services {
