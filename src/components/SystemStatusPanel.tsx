@@ -60,19 +60,25 @@ type DayBarsProps = {
 
 function DayBars({ days, onHoverDay }: DayBarsProps) {
   return (
-    <div className="status-timeline-bars" aria-hidden={days.length === 0}>
-      {days.map((day) => (
-        <span
-          key={day.date}
-          className={`status-bar status-bar-${day.status}`}
-          onMouseEnter={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
-          onMouseLeave={() => onHoverDay(null)}
-          onFocus={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
-          onBlur={() => onHoverDay(null)}
-          tabIndex={0}
-          aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
-        />
-      ))}
+    <div className="status-timeline-bars-shell">
+      <div
+        className="status-timeline-bars"
+        aria-hidden={days.length === 0}
+        aria-label="Daily uptime timeline"
+      >
+        {days.map((day) => (
+          <span
+            key={day.date}
+            className={`status-bar status-bar-${day.status}`}
+            onMouseEnter={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
+            onMouseLeave={() => onHoverDay(null)}
+            onFocus={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
+            onBlur={() => onHoverDay(null)}
+            tabIndex={0}
+            aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
