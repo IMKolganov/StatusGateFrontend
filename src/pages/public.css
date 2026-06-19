@@ -571,19 +571,19 @@
 }
 
 .status-timeline-bars {
-  display: flex;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(var(--timeline-days, 30), minmax(0, 1fr));
   gap: 2px;
+  align-items: stretch;
   min-height: 1.75rem;
   min-width: 0;
   width: 100%;
 }
 
 .status-bar {
-  flex: 1 1 0;
-  min-width: 2px;
-  max-width: 6px;
-  height: 100%;
+  display: block;
+  min-width: 0;
+  width: 100%;
   min-height: 0.75rem;
   border-radius: 1px;
   cursor: pointer;
@@ -609,6 +609,12 @@
 .status-bar-no_data {
   background: var(--sg-border);
   opacity: 0.55;
+}
+
+.status-bar-future {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
 }
 
 .status-timeline-services {

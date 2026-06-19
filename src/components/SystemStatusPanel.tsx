@@ -76,29 +76,42 @@ function TimelineTooltip({ day, anchorRect }: TimelineTooltipProps) {
 
 type DayBarsProps = {
   days: PublicDayBar[]
+  todayIso: string
   onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect) => void
 }
 
-function DayBars({ days, onHoverDay }: DayBarsProps) {
+function DayBars({ days, todayIso, onHoverDay }: DayBarsProps) {
   return (
     <div className="status-timeline-bars-shell">
       <div
         className="status-timeline-bars"
+        style={{ ['--timeline-days' as string]: String(Math.max(days.length, 1)) }}
         aria-hidden={days.length === 0}
         aria-label="Daily uptime timeline"
       >
-        {days.map((day) => (
-          <span
-            key={day.date}
-            className={`status-bar status-bar-${day.status}`}
-            onMouseEnter={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
-            onMouseLeave={() => onHoverDay(null)}
-            onFocus={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
-            onBlur={() => onHoverDay(null)}
-            tabIndex={0}
-            aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
-          />
-        ))}
+        {days.map((day) => {
+          const isFuture = day.date > todayIso
+          return (
+            <span
+              key={day.date}
+              className={`status-bar status-bar-${day.status}${isFuture ? ' status-bar-future' : ''}`}
+              onMouseEnter={(event) => {
+                if (!isFuture) {
+                  onHoverDay(day, event.currentTarget.getBoundingClientRect())
+                }
+              }}
+              onMouseLeave={() => onHoverDay(null)}
+              onFocus={(event) => {
+                if (!isFuture) {
+                  onHoverDay(day, event.currentTarget.getBoundingClientRect())
+                }
+              }}
+              onBlur={() => onHoverDay(null)}
+              tabIndex={isFuture ? -1 : 0}
+              aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
+            />
+          )
+        })}
       </div>
     </div>
   )
@@ -109,11 +122,12 @@ type TimelineRowProps = {
   meta?: string
   uptimePercent: number | null | undefined
   days: PublicDayBar[]
+  todayIso: string
   onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect) => void
   nested?: boolean
 }
 
-function TimelineRow({ title, meta, uptimePercent, days, onHoverDay, nested }: TimelineRowProps) {
+function TimelineRow({ title, meta, uptimePercent, days, todayIso, onHoverDay, nested }: TimelineRowProps) {
   return (
     <div className={`status-timeline-row${nested ? ' status-timeline-row-nested' : ''}`}>
       <div className="status-timeline-label">
@@ -123,7 +137,7 @@ function TimelineRow({ title, meta, uptimePercent, days, onHoverDay, nested }: T
       {uptimePercent != null && (
         <div className="status-timeline-uptime">{uptimePercent.toFixed(2)}% uptime</div>
       )}
-      <DayBars days={days} onHoverDay={onHoverDay} />
+      <DayBars days={days} todayIso={todayIso} onHoverDay={onHoverDay} />
     </div>
   )
 }
@@ -142,26 +156,23 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [tooltip, setTooltip] = useState<{ day: PublicDayBar; anchorRect: DOMRect } | null>(null)
 
-  const rangeEnd = useMemo(() => {
-    const monthEnd = endOfUtcMonth(viewMonth)
-    return monthEnd.getTime() > today.getTime() ? today : monthEnd
-  }, [viewMonth, today])
-
-  const dayCount = useMemo(() => daysInclusive(viewMonth, rangeEnd), [viewMonth, rangeEnd])
+  const todayIso = toIsoDate(today)
+  const monthEnd = useMemo(() => endOfUtcMonth(viewMonth), [viewMonth])
+  const dayCount = useMemo(() => daysInclusive(viewMonth, monthEnd), [viewMonth, monthEnd])
   const canMoveForward = !isSameUtcMonth(viewMonth, today)
 
   useEffect(() => {
     setLoading(true)
     setError(null)
     void api
-      .getPublicSystemStatus(slug, { end: toIsoDate(rangeEnd), days: dayCount })
+      .getPublicSystemStatus(slug, { end: toIsoDate(monthEnd), days: dayCount })
       .then(setSystemStatus)
       .catch((err: unknown) => {
         setSystemStatus(null)
         setError(err instanceof ApiError ? err.message : 'Failed to load system status')
       })
       .finally(() => setLoading(false))
-  }, [slug, rangeEnd, dayCount])
+  }, [slug, monthEnd, dayCount])
 
   const handleHoverDay = useCallback((day: PublicDayBar | null, anchor?: DOMRect) => {
     if (day && anchor) {
@@ -260,6 +271,7 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
                         meta={meta}
                         uptimePercent={group.uptime_percent}
                         days={group.days}
+                        todayIso={todayIso}
                         onHoverDay={handleHoverDay}
                       />
                     </div>
@@ -271,6 +283,7 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
                             title={service.name}
                             uptimePercent={service.uptime_percent}
                             days={service.days}
+                            todayIso={todayIso}
                             onHoverDay={handleHoverDay}
                             nested
                           />
