@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type NetworkSummary, type Project } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
-import { VpnNetworkDetails } from '../components/VpnNetworkDetails'
+import { CheckDiagnostics, logTailFromDetails } from '../components/CheckDiagnostics'
 import { formatApiError } from '../utils/apiError'
 import { slugFromName } from '../utils/slug'
 import './admin.css'
@@ -47,18 +47,31 @@ function networkSummaryFromDetails(details: Record<string, unknown> | null | und
   if (!details || typeof details.network !== 'object' || details.network === null) return null
   const network = details.network as Record<string, unknown>
   const probe = typeof network.probe === 'object' && network.probe !== null ? (network.probe as Record<string, unknown>) : {}
+  const gatewayPing = typeof network.gateway_ping === 'object' && network.gateway_ping !== null
+    ? (network.gateway_ping as Record<string, unknown>)
+    : {}
+  const speedTest = typeof network.speed_test === 'object' && network.speed_test !== null
+    ? (network.speed_test as Record<string, unknown>)
+    : {}
 
   return {
     interface: typeof network.interface === 'string' ? network.interface : undefined,
     ipv4_address: typeof network.ipv4_address === 'string' ? network.ipv4_address : undefined,
     gateway: typeof network.gateway === 'string' ? network.gateway : undefined,
     dns_servers: Array.isArray(network.dns_servers) ? network.dns_servers.filter((item): item is string => typeof item === 'string') : undefined,
+    mtu: typeof network.mtu === 'number' ? network.mtu : undefined,
     connect_time_ms: typeof network.connect_time_ms === 'number' ? network.connect_time_ms : undefined,
     proxy_url: typeof network.proxy_url === 'string' ? network.proxy_url : undefined,
     inbound_protocol: typeof network.inbound_protocol === 'string' ? network.inbound_protocol : undefined,
     probe_url: typeof probe.url === 'string' ? probe.url : undefined,
     exit_ip: typeof probe.exit_ip === 'string' ? probe.exit_ip : undefined,
     probe_latency_ms: typeof probe.latency_ms === 'number' ? probe.latency_ms : undefined,
+    gateway_ping_avg_ms: typeof gatewayPing.avg_ms === 'number' ? gatewayPing.avg_ms : undefined,
+    gateway_ping_loss_percent: typeof gatewayPing.loss_percent === 'number' ? gatewayPing.loss_percent : undefined,
+    gateway_ping_jitter_ms: typeof gatewayPing.jitter_ms === 'number' ? gatewayPing.jitter_ms : undefined,
+    download_mbps: typeof speedTest.mbps === 'number' ? speedTest.mbps : undefined,
+    download_bytes: typeof speedTest.bytes === 'number' ? speedTest.bytes : undefined,
+    download_duration_ms: typeof speedTest.duration_ms === 'number' ? speedTest.duration_ms : undefined,
   }
 }
 
@@ -204,6 +217,7 @@ export function ComponentsPage() {
   }
 
   const lastNetworkSummary = networkSummaryFromDetails(lastManualResult?.details as Record<string, unknown> | undefined)
+  const lastLogTail = logTailFromDetails(lastManualResult?.details as Record<string, unknown> | undefined)
 
   return (
     <AdminLayout title="Services" subtitle="Health checks per project — background worker polls active services automatically">
@@ -213,9 +227,13 @@ export function ComponentsPage() {
           <div>
             Last check: <strong>{lastManualResult.outcome}</strong>
             {lastManualResult.latency_ms != null && ` · ${lastManualResult.latency_ms} ms`}
-            {lastManualResult.error_message && ` · ${lastManualResult.error_message}`}
           </div>
-          {lastNetworkSummary && <VpnNetworkDetails summary={lastNetworkSummary} className="network-summary--alert" />}
+          <CheckDiagnostics
+            outcome={lastManualResult.outcome}
+            errorMessage={lastManualResult.error_message}
+            logTail={lastLogTail}
+            networkSummary={lastNetworkSummary}
+          />
         </div>
       )}
 
@@ -351,11 +369,16 @@ export function ComponentsPage() {
                 <td>{item.name}</td>
                 <td>{kindNameById.get(item.component_kind_id) ?? '—'}</td>
                 <td>{checkTypeLabel(item.check_type ?? 'http_status')}</td>
-                <td>
+                <td className="status-cell">
                   <span className={`status-pill ${statusClass(item.latest_outcome)}`}>
                     {item.latest_outcome ?? 'unknown'}
                   </span>
                   {item.latest_latency_ms != null && <span className="muted"> {item.latest_latency_ms}ms</span>}
+                  <CheckDiagnostics
+                    outcome={item.latest_outcome}
+                    errorMessage={item.latest_error_message}
+                    logTail={item.latest_log_tail}
+                  />
                 </td>
                 <td className="mono wrap">{item.check_url}</td>
                 <td className="row-actions">
