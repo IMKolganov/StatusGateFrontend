@@ -87,6 +87,8 @@ export type Project = ProjectResponse
 export type ComponentKind = ComponentKindResponse
 export type MonitoredComponent = MonitoredComponentResponse & {
   check_config?: { config_text?: string } | null
+  latest_error_message?: string | null
+  latest_log_tail?: string | null
 }
 
 export type NetworkSummary = {
@@ -94,12 +96,19 @@ export type NetworkSummary = {
   ipv4_address?: string
   gateway?: string
   dns_servers?: string[]
+  mtu?: number
   connect_time_ms?: number
   proxy_url?: string
   inbound_protocol?: string
   probe_url?: string
   exit_ip?: string
   probe_latency_ms?: number
+  gateway_ping_avg_ms?: number
+  gateway_ping_loss_percent?: number
+  gateway_ping_jitter_ms?: number
+  download_mbps?: number
+  download_bytes?: number
+  download_duration_ms?: number
 }
 
 export type PublicServiceStatus = PublicServiceStatusGenerated & {

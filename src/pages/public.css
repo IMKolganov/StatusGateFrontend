@@ -393,15 +393,15 @@
 
 .system-status-alerts {
   padding: var(--sg-space-4);
-  border: 1px solid #ca8a04;
+  border: 1px solid var(--sg-warning-border);
   border-radius: var(--sg-radius-md);
-  background: #fefce8;
+  background: var(--sg-warning-bg);
 }
 
 .system-status-alerts-title {
   font-weight: 600;
   margin-bottom: var(--sg-space-2);
-  color: #854d0e;
+  color: var(--sg-warning-title);
 }
 
 .system-status-alerts-list {
@@ -415,11 +415,11 @@
 
 .system-status-alert-title {
   font-weight: 600;
-  color: var(--sg-text-heading);
+  color: var(--sg-warning-title);
 }
 
 .system-status-alert-message {
-  color: var(--sg-text-muted);
+  color: var(--sg-warning-text);
   font-size: 0.9375rem;
   line-height: 1.45;
 }
