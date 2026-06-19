@@ -37,9 +37,8 @@ function TimelineTooltip({ day, anchorRect }: TimelineTooltipProps) {
       role="tooltip"
     >
       <div className="status-timeline-tooltip-date">{formatDayLabel(day.date)}</div>
-      {day.incidents?.length === 0 || !day.incidents ? (
-        <p className="status-timeline-tooltip-empty">No incidents</p>
-      ) : (
+      <p className="status-timeline-tooltip-summary">{day.tooltip}</p>
+      {day.incidents && day.incidents.length > 0 && (
         <ul className="status-timeline-tooltip-list">
           {day.incidents.map((incident, index) => (
             <li key={`${incident.posted_at}-${index}`}>
