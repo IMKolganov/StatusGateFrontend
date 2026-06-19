@@ -566,17 +566,21 @@
 }
 
 .status-timeline-bars-shell {
+  display: flex;
+  align-items: center;
   min-width: 0;
   width: 100%;
+  min-height: 0.875rem;
 }
 
 .status-timeline-gradient-bar {
   position: relative;
   width: 100%;
-  min-height: 1.75rem;
-  height: 1.75rem;
-  border-radius: var(--sg-radius-sm);
-  cursor: crosshair;
+  height: 0.625rem;
+  min-height: 0.625rem;
+  border-radius: 1px;
+  background-color: var(--sg-surface-muted);
+  cursor: pointer;
   outline: none;
   overflow: hidden;
 }
@@ -587,14 +591,14 @@
 
 .status-timeline-gradient-marker {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
+  top: -0.125rem;
+  bottom: -0.125rem;
+  width: 1px;
   transform: translateX(-50%);
   background: var(--sg-text-heading);
-  opacity: 0.85;
+  opacity: 0.9;
   pointer-events: none;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sg-surface) 70%, transparent);
 }
 
 .status-timeline-services {
@@ -766,10 +770,5 @@
 
   .status-timeline-group-header .status-timeline-row {
     min-width: 0;
-  }
-
-  .status-timeline-gradient-bar {
-    min-height: 1.5rem;
-    height: 1.5rem;
   }
 }

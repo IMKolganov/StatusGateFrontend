@@ -6,14 +6,23 @@ const STATUS_COLORS: Record<ThemeMode, Record<string, string>> = {
     operational: '#22c55e',
     degraded: '#eab308',
     outage: '#ef4444',
-    no_data: 'rgba(221, 227, 237, 0.55)',
+    no_data: 'rgba(203, 213, 225, 0.9)',
   },
   dark: {
     operational: '#22c55e',
     degraded: '#eab308',
     outage: '#ef4444',
-    no_data: 'rgba(42, 53, 69, 0.75)',
+    no_data: 'rgba(58, 71, 92, 0.9)',
   },
+}
+
+function timelineLayout(dayCount: number): { gap: number; segment: number } {
+  if (dayCount <= 0) {
+    return { gap: 0, segment: 0 }
+  }
+  const gap = dayCount > 45 ? 0.06 : 0.1
+  const segment = (100 - gap * (dayCount - 1)) / dayCount
+  return { gap, segment }
 }
 
 export function buildTimelineGradient(days: PublicDayBar[], theme: ThemeMode): string {
@@ -22,14 +31,22 @@ export function buildTimelineGradient(days: PublicDayBar[], theme: ThemeMode): s
   }
 
   const palette = STATUS_COLORS[theme]
-  const step = 100 / days.length
+  const { gap, segment } = timelineLayout(days.length)
   const stops: string[] = []
+  let position = 0
 
   days.forEach((day, index) => {
     const color = palette[day.status] ?? palette.no_data
-    const start = (index * step).toFixed(4)
-    const end = ((index + 1) * step).toFixed(4)
-    stops.push(`${color} ${start}% ${end}%`)
+    const start = position
+    const end = position + segment
+    stops.push(`${color} ${start.toFixed(4)}% ${end.toFixed(4)}%`)
+    position = end
+
+    if (index < days.length - 1) {
+      const gapEnd = position + gap
+      stops.push(`transparent ${position.toFixed(4)}% ${gapEnd.toFixed(4)}%`)
+      position = gapEnd
+    }
   })
 
   return `linear-gradient(to right, ${stops.join(', ')})`
@@ -40,14 +57,18 @@ export function dayIndexFromPointer(clientX: number, rect: DOMRect, dayCount: nu
     return 0
   }
 
-  const ratio = (clientX - rect.left) / rect.width
-  const clamped = Math.min(1, Math.max(0, ratio))
-  return Math.min(dayCount - 1, Math.floor(clamped * dayCount))
+  const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) * 100
+  const { gap, segment } = timelineLayout(dayCount)
+  const step = segment + gap
+
+  return Math.min(dayCount - 1, Math.max(0, Math.floor(ratio / step)))
 }
 
 export function markerPositionPercent(index: number, dayCount: number): number {
   if (dayCount <= 0) {
     return 0
   }
-  return ((index + 0.5) / dayCount) * 100
+
+  const { gap, segment } = timelineLayout(dayCount)
+  return index * (segment + gap) + segment / 2
 }
