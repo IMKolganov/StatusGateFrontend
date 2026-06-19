@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, ApiError, type PublicDayBar, type PublicSystemStatus } from '../api/client'
 
-const DEFAULT_DAYS = 90
-
 function formatDayLabel(value: string): string {
   return new Date(`${value}T00:00:00Z`).toLocaleDateString(undefined, {
     weekday: 'short',
@@ -19,6 +17,30 @@ function toIsoDate(date: Date): string {
 
 function startOfUtcDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
+
+function startOfUtcMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1))
+}
+
+function endOfUtcMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0))
+}
+
+function daysInclusive(start: Date, end: Date): number {
+  return Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1
+}
+
+function formatMonthLabel(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+function isSameUtcMonth(left: Date, right: Date): boolean {
+  return left.getUTCFullYear() === right.getUTCFullYear() && left.getUTCMonth() === right.getUTCMonth()
 }
 
 type TimelineTooltipProps = {
@@ -54,29 +76,42 @@ function TimelineTooltip({ day, anchorRect }: TimelineTooltipProps) {
 
 type DayBarsProps = {
   days: PublicDayBar[]
+  todayIso: string
   onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect) => void
 }
 
-function DayBars({ days, onHoverDay }: DayBarsProps) {
+function DayBars({ days, todayIso, onHoverDay }: DayBarsProps) {
   return (
     <div className="status-timeline-bars-shell">
       <div
         className="status-timeline-bars"
+        style={{ ['--timeline-days' as string]: String(Math.max(days.length, 1)) }}
         aria-hidden={days.length === 0}
         aria-label="Daily uptime timeline"
       >
-        {days.map((day) => (
-          <span
-            key={day.date}
-            className={`status-bar status-bar-${day.status}`}
-            onMouseEnter={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
-            onMouseLeave={() => onHoverDay(null)}
-            onFocus={(event) => onHoverDay(day, event.currentTarget.getBoundingClientRect())}
-            onBlur={() => onHoverDay(null)}
-            tabIndex={0}
-            aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
-          />
-        ))}
+        {days.map((day) => {
+          const isFuture = day.date > todayIso
+          return (
+            <span
+              key={day.date}
+              className={`status-bar status-bar-${day.status}${isFuture ? ' status-bar-future' : ''}`}
+              onMouseEnter={(event) => {
+                if (!isFuture) {
+                  onHoverDay(day, event.currentTarget.getBoundingClientRect())
+                }
+              }}
+              onMouseLeave={() => onHoverDay(null)}
+              onFocus={(event) => {
+                if (!isFuture) {
+                  onHoverDay(day, event.currentTarget.getBoundingClientRect())
+                }
+              }}
+              onBlur={() => onHoverDay(null)}
+              tabIndex={isFuture ? -1 : 0}
+              aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
+            />
+          )
+        })}
       </div>
     </div>
   )
@@ -87,11 +122,12 @@ type TimelineRowProps = {
   meta?: string
   uptimePercent: number | null | undefined
   days: PublicDayBar[]
+  todayIso: string
   onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect) => void
   nested?: boolean
 }
 
-function TimelineRow({ title, meta, uptimePercent, days, onHoverDay, nested }: TimelineRowProps) {
+function TimelineRow({ title, meta, uptimePercent, days, todayIso, onHoverDay, nested }: TimelineRowProps) {
   return (
     <div className={`status-timeline-row${nested ? ' status-timeline-row-nested' : ''}`}>
       <div className="status-timeline-label">
@@ -101,7 +137,7 @@ function TimelineRow({ title, meta, uptimePercent, days, onHoverDay, nested }: T
       {uptimePercent != null && (
         <div className="status-timeline-uptime">{uptimePercent.toFixed(2)}% uptime</div>
       )}
-      <DayBars days={days} onHoverDay={onHoverDay} />
+      <DayBars days={days} todayIso={todayIso} onHoverDay={onHoverDay} />
     </div>
   )
 }
@@ -113,27 +149,30 @@ type SystemStatusPanelProps = {
 
 export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelProps) {
   const today = useMemo(() => startOfUtcDay(new Date()), [])
-  const [rangeEnd, setRangeEnd] = useState(today)
+  const [viewMonth, setViewMonth] = useState(() => startOfUtcMonth(new Date()))
   const [systemStatus, setSystemStatus] = useState<PublicSystemStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [tooltip, setTooltip] = useState<{ day: PublicDayBar; anchorRect: DOMRect } | null>(null)
 
-  const canMoveForward = rangeEnd.getTime() < today.getTime()
+  const todayIso = toIsoDate(today)
+  const monthEnd = useMemo(() => endOfUtcMonth(viewMonth), [viewMonth])
+  const dayCount = useMemo(() => daysInclusive(viewMonth, monthEnd), [viewMonth, monthEnd])
+  const canMoveForward = !isSameUtcMonth(viewMonth, today)
 
   useEffect(() => {
     setLoading(true)
     setError(null)
     void api
-      .getPublicSystemStatus(slug, { end: toIsoDate(rangeEnd), days: DEFAULT_DAYS })
+      .getPublicSystemStatus(slug, { end: toIsoDate(monthEnd), days: dayCount })
       .then(setSystemStatus)
       .catch((err: unknown) => {
         setSystemStatus(null)
         setError(err instanceof ApiError ? err.message : 'Failed to load system status')
       })
       .finally(() => setLoading(false))
-  }, [slug, rangeEnd])
+  }, [slug, monthEnd, dayCount])
 
   const handleHoverDay = useCallback((day: PublicDayBar | null, anchor?: DOMRect) => {
     if (day && anchor) {
@@ -144,11 +183,10 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
   }, [])
 
   const moveRange = (direction: -1 | 1) => {
-    setRangeEnd((current) => {
-      const next = new Date(current)
-      next.setUTCDate(next.getUTCDate() + direction * DEFAULT_DAYS)
-      if (next.getTime() > today.getTime()) {
-        return today
+    setViewMonth((current) => {
+      const next = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + direction, 1))
+      if (direction > 0 && next.getTime() > startOfUtcMonth(today).getTime()) {
+        return startOfUtcMonth(today)
       }
       return next
     })
@@ -166,18 +204,18 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
           <button
             type="button"
             className="btn btn-secondary btn-sm system-status-nav-btn"
-            aria-label="Previous period"
+            aria-label="Previous month"
             onClick={() => moveRange(-1)}
           >
             ←
           </button>
           <span className="system-status-range">
-            {systemStatus?.range_label ?? `${DEFAULT_DAYS} days`}
+            {systemStatus?.range_label ?? formatMonthLabel(viewMonth)}
           </span>
           <button
             type="button"
             className="btn btn-secondary btn-sm system-status-nav-btn"
-            aria-label="Next period"
+            aria-label="Next month"
             onClick={() => moveRange(1)}
             disabled={!canMoveForward}
           >
@@ -233,6 +271,7 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
                         meta={meta}
                         uptimePercent={group.uptime_percent}
                         days={group.days}
+                        todayIso={todayIso}
                         onHoverDay={handleHoverDay}
                       />
                     </div>
@@ -244,6 +283,7 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
                             title={service.name}
                             uptimePercent={service.uptime_percent}
                             days={service.days}
+                            todayIso={todayIso}
                             onHoverDay={handleHoverDay}
                             nested
                           />
