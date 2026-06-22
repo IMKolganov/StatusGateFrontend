@@ -8,6 +8,8 @@ import type { MonitoredComponentResponseDescription } from './monitoredComponent
 import type { MonitoredComponentResponseEnvironment } from './monitoredComponentResponseEnvironment';
 import type { MonitoredComponentResponseCheckConfig } from './monitoredComponentResponseCheckConfig';
 import type { MonitoredComponentResponseSpeedTestBytes } from './monitoredComponentResponseSpeedTestBytes';
+import type { MonitoredComponentResponseSpeedTestUrlTemplate } from './monitoredComponentResponseSpeedTestUrlTemplate';
+import type { MonitoredComponentResponseSpeedTestIntervalSeconds } from './monitoredComponentResponseSpeedTestIntervalSeconds';
 import type { MonitoredComponentResponsePollIntervalSeconds } from './monitoredComponentResponsePollIntervalSeconds';
 import type { MonitoredComponentResponseLastCheckedAt } from './monitoredComponentResponseLastCheckedAt';
 import type { MonitoredComponentResponseLatestOutcome } from './monitoredComponentResponseLatestOutcome';
@@ -30,6 +32,9 @@ export interface MonitoredComponentResponse {
   check_type: string;
   check_config: MonitoredComponentResponseCheckConfig;
   speed_test_bytes: MonitoredComponentResponseSpeedTestBytes;
+  speed_test_url_template: MonitoredComponentResponseSpeedTestUrlTemplate;
+  speed_test_interval_seconds: MonitoredComponentResponseSpeedTestIntervalSeconds;
+  speed_test_enabled: boolean;
   expected_status_code: number;
   timeout_seconds: number;
   poll_interval_seconds: MonitoredComponentResponsePollIntervalSeconds;

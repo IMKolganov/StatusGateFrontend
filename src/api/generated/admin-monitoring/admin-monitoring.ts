@@ -6,12 +6,14 @@
  */
 import type {
   CheckResultResponse,
+  GetSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGetParams,
   ListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetParams,
   MonitoringSettingsResponse,
   MonitoringSettingsUpdate,
   PaginatedCheckResultResponse,
   PurgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDeleteParams,
-  PurgeCheckHistoryResponse
+  PurgeCheckHistoryResponse,
+  SpeedTestAdvisoryResponse
 } from '.././models';
 
 import { customFetch } from '../../mutator';
@@ -59,6 +61,36 @@ export const updateMonitoringSettingsApiAdminMonitoringSettingsPatch = async (mo
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
       monitoringSettingsUpdate,)
+  }
+);}
+
+
+/**
+ * @summary Get Speed Test Advisory
+ */
+export const getGetSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGetUrl = (params?: GetSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/monitoring/speed-test-advisory?${stringifiedParams}` : `/api/admin/monitoring/speed-test-advisory`
+}
+
+export const getSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGet = async (params?: GetSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGetParams, options?: RequestInit): Promise<SpeedTestAdvisoryResponse> => {
+  
+  return customFetch<SpeedTestAdvisoryResponse>(getGetSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGetUrl(params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
   }
 );}
 

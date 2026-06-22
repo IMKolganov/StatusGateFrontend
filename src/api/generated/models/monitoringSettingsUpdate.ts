@@ -6,8 +6,12 @@
  */
 import type { MonitoringSettingsUpdateDefaultPollIntervalSeconds } from './monitoringSettingsUpdateDefaultPollIntervalSeconds';
 import type { MonitoringSettingsUpdateSchedulerIntervalSeconds } from './monitoringSettingsUpdateSchedulerIntervalSeconds';
+import type { MonitoringSettingsUpdateDefaultSpeedTestUrlTemplate } from './monitoringSettingsUpdateDefaultSpeedTestUrlTemplate';
+import type { MonitoringSettingsUpdateDefaultSpeedTestIntervalSeconds } from './monitoringSettingsUpdateDefaultSpeedTestIntervalSeconds';
 
 export interface MonitoringSettingsUpdate {
   default_poll_interval_seconds?: MonitoringSettingsUpdateDefaultPollIntervalSeconds;
   scheduler_interval_seconds?: MonitoringSettingsUpdateSchedulerIntervalSeconds;
+  default_speed_test_url_template?: MonitoringSettingsUpdateDefaultSpeedTestUrlTemplate;
+  default_speed_test_interval_seconds?: MonitoringSettingsUpdateDefaultSpeedTestIntervalSeconds;
 }

@@ -15,6 +15,9 @@ import type { MonitoredComponentUpdateCheckMethod } from './monitoredComponentUp
 import type { MonitoredComponentUpdateCheckType } from './monitoredComponentUpdateCheckType';
 import type { MonitoredComponentUpdateCheckConfig } from './monitoredComponentUpdateCheckConfig';
 import type { MonitoredComponentUpdateSpeedTestBytes } from './monitoredComponentUpdateSpeedTestBytes';
+import type { MonitoredComponentUpdateSpeedTestUrlTemplate } from './monitoredComponentUpdateSpeedTestUrlTemplate';
+import type { MonitoredComponentUpdateSpeedTestIntervalSeconds } from './monitoredComponentUpdateSpeedTestIntervalSeconds';
+import type { MonitoredComponentUpdateSpeedTestEnabled } from './monitoredComponentUpdateSpeedTestEnabled';
 import type { MonitoredComponentUpdateExpectedStatusCode } from './monitoredComponentUpdateExpectedStatusCode';
 import type { MonitoredComponentUpdateTimeoutSeconds } from './monitoredComponentUpdateTimeoutSeconds';
 import type { MonitoredComponentUpdatePollIntervalSeconds } from './monitoredComponentUpdatePollIntervalSeconds';
@@ -32,6 +35,9 @@ export interface MonitoredComponentUpdate {
   check_type?: MonitoredComponentUpdateCheckType;
   check_config?: MonitoredComponentUpdateCheckConfig;
   speed_test_bytes?: MonitoredComponentUpdateSpeedTestBytes;
+  speed_test_url_template?: MonitoredComponentUpdateSpeedTestUrlTemplate;
+  speed_test_interval_seconds?: MonitoredComponentUpdateSpeedTestIntervalSeconds;
+  speed_test_enabled?: MonitoredComponentUpdateSpeedTestEnabled;
   expected_status_code?: MonitoredComponentUpdateExpectedStatusCode;
   timeout_seconds?: MonitoredComponentUpdateTimeoutSeconds;
   poll_interval_seconds?: MonitoredComponentUpdatePollIntervalSeconds;

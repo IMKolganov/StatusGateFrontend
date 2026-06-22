@@ -26,6 +26,7 @@ import {
 } from './generated/admin-incidents/admin-incidents'
 import {
   getMonitoringSettingsApiAdminMonitoringSettingsGet,
+  getSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGet,
   listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGet,
   purgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDelete,
   runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPost,
@@ -77,6 +78,7 @@ import type { PublicSystemStatus } from './generated/models/publicSystemStatus'
 import type { PurgeCheckHistoryResponse } from './generated/models/purgeCheckHistoryResponse'
 import type { RegistrationStatusResponse } from './generated/models/registrationStatusResponse'
 import type { RegisterRequest } from './generated/models/registerRequest'
+import type { SpeedTestAdvisoryResponse } from './generated/models/speedTestAdvisoryResponse'
 import type { TwoFactorSetupResponse } from './generated/models/twoFactorSetupResponse'
 import type { VpnCheckConfig } from './generated/models/vpnCheckConfig'
 import {
@@ -86,6 +88,7 @@ import {
   listPublicProjectsApiStatusProjectsGet,
 } from './generated/public-status/public-status'
 import { ApiError } from './mutator'
+import { DEFAULT_SPEED_TEST_URL_TEMPLATE } from '../utils/speedTestConfig'
 
 export type Account = AccountResponse
 export type Project = ProjectResponse
@@ -93,6 +96,7 @@ export type ComponentKind = ComponentKindResponse
 export type MonitoredComponent = MonitoredComponentResponse
 export type CheckResult = CheckResultResponse
 export type MonitoringSettings = MonitoringSettingsResponse
+export type SpeedTestAdvisory = SpeedTestAdvisoryResponse
 export type Incident = IncidentResponse
 
 export type {
@@ -124,9 +128,12 @@ export type {
   PurgeCheckHistoryResponse,
   RegistrationStatusResponse,
   RegisterRequest,
+  SpeedTestAdvisoryResponse,
   TwoFactorSetupResponse,
   VpnCheckConfig,
 }
+
+export { DEFAULT_SPEED_TEST_URL_TEMPLATE }
 
 export { ApiError }
 
@@ -207,10 +214,16 @@ export const api = {
     await deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDelete(id)
   },
 
-  getMonitoringSettings: (): Promise<MonitoringSettingsResponse> => getMonitoringSettingsApiAdminMonitoringSettingsGet(),
+  getMonitoringSettings: (): Promise<MonitoringSettingsResponse> =>
+    getMonitoringSettingsApiAdminMonitoringSettingsGet(),
 
   updateMonitoringSettings: (payload: MonitoringSettingsUpdate): Promise<MonitoringSettingsResponse> =>
     updateMonitoringSettingsApiAdminMonitoringSettingsPatch(payload),
+
+  getSpeedTestAdvisory: (projectId?: string): Promise<SpeedTestAdvisoryResponse> =>
+    getSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGet(
+      projectId ? { project_id: projectId } : undefined,
+    ),
 
   runManualCheck: (componentId: string): Promise<CheckResultResponse> =>
     runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPost(componentId),

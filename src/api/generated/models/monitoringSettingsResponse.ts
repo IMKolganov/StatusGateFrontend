@@ -8,5 +8,7 @@
 export interface MonitoringSettingsResponse {
   default_poll_interval_seconds: number;
   scheduler_interval_seconds: number;
+  default_speed_test_url_template: string;
+  default_speed_test_interval_seconds: number;
   updated_at: string;
 }
