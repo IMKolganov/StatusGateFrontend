@@ -1703,6 +1703,56 @@
         }
       }
     },
+    "/api/admin/monitoring/speed-test-advisory": {
+      "get": {
+        "tags": [
+          "admin-monitoring"
+        ],
+        "summary": "Get Speed Test Advisory",
+        "operationId": "get_speed_test_advisory_api_admin_monitoring_speed_test_advisory_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_SpeedTestAdvisoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/monitoring/monitored-components/{component_id}/check": {
       "post": {
         "tags": [
@@ -2909,6 +2959,42 @@
             ],
             "title": "Speed Test Bytes"
           },
+          "speed_test_url_template": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Url Template"
+          },
+          "speed_test_interval_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Interval Seconds"
+          },
+          "speed_test_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Enabled"
+          },
           "expected_status_code": {
             "type": "integer",
             "maximum": 599.0,
@@ -3030,6 +3116,32 @@
               }
             ],
             "title": "Speed Test Bytes"
+          },
+          "speed_test_url_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Url Template"
+          },
+          "speed_test_interval_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Interval Seconds"
+          },
+          "speed_test_enabled": {
+            "type": "boolean",
+            "title": "Speed Test Enabled"
           },
           "expected_status_code": {
             "type": "integer",
@@ -3157,6 +3269,9 @@
           "check_type",
           "check_config",
           "speed_test_bytes",
+          "speed_test_url_template",
+          "speed_test_interval_seconds",
+          "speed_test_enabled",
           "expected_status_code",
           "timeout_seconds",
           "poll_interval_seconds",
@@ -3302,6 +3417,42 @@
             ],
             "title": "Speed Test Bytes"
           },
+          "speed_test_url_template": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Url Template"
+          },
+          "speed_test_interval_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Interval Seconds"
+          },
+          "speed_test_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Enabled"
+          },
           "expected_status_code": {
             "anyOf": [
               {
@@ -3366,6 +3517,14 @@
             "type": "integer",
             "title": "Scheduler Interval Seconds"
           },
+          "default_speed_test_url_template": {
+            "type": "string",
+            "title": "Default Speed Test Url Template"
+          },
+          "default_speed_test_interval_seconds": {
+            "type": "integer",
+            "title": "Default Speed Test Interval Seconds"
+          },
           "updated_at": {
             "type": "string",
             "format": "date-time",
@@ -3376,6 +3535,8 @@
         "required": [
           "default_poll_interval_seconds",
           "scheduler_interval_seconds",
+          "default_speed_test_url_template",
+          "default_speed_test_interval_seconds",
           "updated_at"
         ],
         "title": "MonitoringSettingsResponse"
@@ -3407,6 +3568,31 @@
               }
             ],
             "title": "Scheduler Interval Seconds"
+          },
+          "default_speed_test_url_template": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Speed Test Url Template"
+          },
+          "default_speed_test_interval_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Speed Test Interval Seconds"
           }
         },
         "type": "object",
@@ -4637,6 +4823,46 @@
         ],
         "title": "RegistrationStatusResponse"
       },
+      "SpeedTestAdvisoryResponse": {
+        "properties": {
+          "active_vpn_service_count": {
+            "type": "integer",
+            "title": "Active Vpn Service Count"
+          },
+          "estimated_speed_tests_per_minute": {
+            "type": "number",
+            "title": "Estimated Speed Tests Per Minute"
+          },
+          "uses_default_cloudflare_template": {
+            "type": "boolean",
+            "title": "Uses Default Cloudflare Template"
+          },
+          "guidance_requests_per_minute": {
+            "type": "integer",
+            "title": "Guidance Requests Per Minute"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_vpn_service_count",
+          "estimated_speed_tests_per_minute",
+          "uses_default_cloudflare_template",
+          "guidance_requests_per_minute",
+          "warning"
+        ],
+        "title": "SpeedTestAdvisoryResponse"
+      },
       "TwoFactorDisableRequest": {
         "properties": {
           "password": {
@@ -5285,6 +5511,24 @@
           },
           "data": {
             "$ref": "#/components/schemas/MonitoringSettingsResponse"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
+      "ApiResponse_SpeedTestAdvisoryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SpeedTestAdvisoryResponse"
           }
         },
         "required": [

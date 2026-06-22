@@ -777,6 +777,12 @@ input[type='radio']:focus-visible {
   color: var(--sg-success-text);
 }
 
+.alert.warning {
+  background: color-mix(in srgb, var(--sg-status-degraded) 12%, transparent);
+  border-color: color-mix(in srgb, var(--sg-status-degraded) 35%, transparent);
+  color: var(--sg-text);
+}
+
 .divider {
   display: flex;
   align-items: center;

@@ -8,6 +8,9 @@ import type { MonitoredComponentCreateDescription } from './monitoredComponentCr
 import type { MonitoredComponentCreateEnvironment } from './monitoredComponentCreateEnvironment';
 import type { MonitoredComponentCreateCheckConfig } from './monitoredComponentCreateCheckConfig';
 import type { MonitoredComponentCreateSpeedTestBytes } from './monitoredComponentCreateSpeedTestBytes';
+import type { MonitoredComponentCreateSpeedTestUrlTemplate } from './monitoredComponentCreateSpeedTestUrlTemplate';
+import type { MonitoredComponentCreateSpeedTestIntervalSeconds } from './monitoredComponentCreateSpeedTestIntervalSeconds';
+import type { MonitoredComponentCreateSpeedTestEnabled } from './monitoredComponentCreateSpeedTestEnabled';
 import type { MonitoredComponentCreatePollIntervalSeconds } from './monitoredComponentCreatePollIntervalSeconds';
 
 export interface MonitoredComponentCreate {
@@ -34,6 +37,9 @@ export interface MonitoredComponentCreate {
   check_type?: string;
   check_config?: MonitoredComponentCreateCheckConfig;
   speed_test_bytes?: MonitoredComponentCreateSpeedTestBytes;
+  speed_test_url_template?: MonitoredComponentCreateSpeedTestUrlTemplate;
+  speed_test_interval_seconds?: MonitoredComponentCreateSpeedTestIntervalSeconds;
+  speed_test_enabled?: MonitoredComponentCreateSpeedTestEnabled;
   /**
    * @minimum 100
    * @maximum 599

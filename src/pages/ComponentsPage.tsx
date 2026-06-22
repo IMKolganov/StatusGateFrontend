@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type NetworkSummary, type Project } from '../api/client'
+import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type MonitoringSettings, type NetworkSummary, type Project } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
 import { CheckDiagnostics, logTailFromDetails, networkSummaryFromRecord } from '../components/CheckDiagnostics'
 import { formatApiError } from '../utils/apiError'
@@ -10,6 +10,11 @@ import {
   speedTestMibStringFromBytes,
   validateSpeedTestMibInput,
 } from '../utils/speedTest'
+import {
+  buildLocalSpeedTestWarning,
+  DEFAULT_SPEED_TEST_URL_TEMPLATE,
+  validateSpeedTestUrlTemplate,
+} from '../utils/speedTestConfig'
 import { slugFromName } from '../utils/slug'
 import './admin.css'
 
@@ -33,6 +38,9 @@ const emptyForm = {
   check_type: 'http_status',
   vpn_config_text: '',
   speed_test_mib: '',
+  speed_test_url_template: '',
+  speed_test_interval_seconds: '' as number | '',
+  speed_test_enabled: true,
   expected_status_code: 200,
   timeout_seconds: 10,
   poll_interval_seconds: '' as number | '',
@@ -95,6 +103,7 @@ export function ComponentsPage() {
   const [checkingId, setCheckingId] = useState<string | null>(null)
   const [purgingId, setPurgingId] = useState<string | null>(null)
   const [lastManualResult, setLastManualResult] = useState<CheckResult | null>(null)
+  const [monitoringSettings, setMonitoringSettings] = useState<MonitoringSettings | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const load = () => {
@@ -116,6 +125,10 @@ export function ComponentsPage() {
   }, [])
 
   useEffect(() => {
+    void api.getMonitoringSettings().then(setMonitoringSettings).catch(() => setMonitoringSettings(null))
+  }, [])
+
+  useEffect(() => {
     load()
   }, [projectId])
 
@@ -134,6 +147,45 @@ export function ComponentsPage() {
   const selectedKindSlug = kindById.get(form.component_kind_id)?.slug
   const isVpnKind = selectedKindSlug ? VPN_KIND_SLUGS.has(selectedKindSlug) : false
   const isOpenVpn = selectedKindSlug === 'openvpn'
+
+  const speedTestWarning = useMemo(() => {
+    if (!isVpnKind || !form.speed_test_enabled || !monitoringSettings) return null
+
+    const defaultTemplate =
+      monitoringSettings.default_speed_test_url_template ?? DEFAULT_SPEED_TEST_URL_TEMPLATE
+    const defaultSpeedInterval = monitoringSettings.default_speed_test_interval_seconds ?? 3600
+    const defaultPoll = monitoringSettings.default_poll_interval_seconds ?? 60
+    const usesCloudflare = (form.speed_test_url_template.trim() || defaultTemplate).startsWith(
+      'https://speed.cloudflare.com/',
+    )
+
+    const projectedItems = items.map((item) => {
+      if (item.id !== editingId) return item
+      return {
+        ...item,
+        is_active: form.is_active,
+        check_type: form.check_type,
+        poll_interval_seconds: form.poll_interval_seconds === '' ? null : Number(form.poll_interval_seconds),
+        speed_test_url_template: form.speed_test_url_template.trim() || null,
+        speed_test_interval_seconds:
+          form.speed_test_interval_seconds === '' ? null : Number(form.speed_test_interval_seconds),
+        speed_test_enabled: form.speed_test_enabled,
+      }
+    })
+
+    return buildLocalSpeedTestWarning(projectedItems, defaultPoll, defaultSpeedInterval, usesCloudflare)
+  }, [
+    editingId,
+    form.check_type,
+    form.is_active,
+    form.poll_interval_seconds,
+    form.speed_test_enabled,
+    form.speed_test_interval_seconds,
+    form.speed_test_url_template,
+    isVpnKind,
+    items,
+    monitoringSettings,
+  ])
 
   const resetForm = () => {
     setForm(emptyForm)
@@ -187,6 +239,13 @@ export function ComponentsPage() {
         setError(speedTestError)
         return
       }
+      if (form.speed_test_enabled && form.speed_test_url_template.trim()) {
+        const urlError = validateSpeedTestUrlTemplate(form.speed_test_url_template)
+        if (urlError) {
+          setError(urlError)
+          return
+        }
+      }
     }
     setError(null)
     const slug = editingId ? (editingSlug ?? slugFromName(form.name, 'service')) : slugFromName(form.name, 'service')
@@ -202,6 +261,15 @@ export function ComponentsPage() {
       check_type: form.check_type,
       check_config: isVpnKind ? { config_text: form.vpn_config_text.trim() } : null,
       speed_test_bytes: isVpnKind ? speedTestBytesFromMibInput(form.speed_test_mib) : null,
+      speed_test_url_template:
+        isVpnKind && form.speed_test_enabled ? form.speed_test_url_template.trim() || null : null,
+      speed_test_interval_seconds:
+        isVpnKind && form.speed_test_enabled
+          ? form.speed_test_interval_seconds === ''
+            ? null
+            : Number(form.speed_test_interval_seconds)
+          : null,
+      speed_test_enabled: isVpnKind ? form.speed_test_enabled : null,
       expected_status_code: form.expected_status_code,
       timeout_seconds: form.timeout_seconds,
       poll_interval_seconds: form.poll_interval_seconds === '' ? null : Number(form.poll_interval_seconds),
@@ -366,22 +434,74 @@ export function ComponentsPage() {
             </label>
 
             {isVpnKind && (
-              <label>
-                Speed test size (MiB)
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={form.speed_test_mib}
-                  onChange={(e) => setForm({
-                    ...form,
-                    speed_test_mib: e.target.value,
-                  })}
-                  placeholder={String(DEFAULT_SPEED_TEST_MIB)}
-                />
-                <span className="field-hint">
-                  Download size for throughput measurement through the tunnel. Leave empty for {DEFAULT_SPEED_TEST_MIB} MiB (512 KiB). Use a higher timeout for larger tests.
-                </span>
-              </label>
+              <>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={form.speed_test_enabled}
+                    onChange={(e) => setForm({ ...form, speed_test_enabled: e.target.checked })}
+                  />
+                  Run download speed test through VPN
+                </label>
+
+                {form.speed_test_enabled && (
+                  <>
+                    {speedTestWarning && <div className="alert warning full-width">{speedTestWarning}</div>}
+
+                    <label className="full-width">
+                      Speed test URL template
+                      <input
+                        value={form.speed_test_url_template}
+                        onChange={(e) => setForm({ ...form, speed_test_url_template: e.target.value })}
+                        spellCheck={false}
+                        placeholder={
+                          monitoringSettings?.default_speed_test_url_template ?? DEFAULT_SPEED_TEST_URL_TEMPLATE
+                        }
+                      />
+                      <span className="field-hint">
+                        Leave empty to use the global default from{' '}
+                        <Link to="/admin/monitoring">Monitoring settings</Link>. Must include {'{bytes}'}.
+                      </span>
+                    </label>
+
+                    <label>
+                      Speed test interval (seconds)
+                      <input
+                        type="number"
+                        min={0}
+                        value={form.speed_test_interval_seconds}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            speed_test_interval_seconds: e.target.value === '' ? '' : Number(e.target.value),
+                          })
+                        }
+                        placeholder={String(monitoringSettings?.default_speed_test_interval_seconds ?? 3600)}
+                      />
+                      <span className="field-hint">
+                        Leave empty for the global default. 0 = run on every check; higher values reuse the last result.
+                      </span>
+                    </label>
+
+                    <label>
+                      Speed test size (MiB)
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={form.speed_test_mib}
+                        onChange={(e) => setForm({
+                          ...form,
+                          speed_test_mib: e.target.value,
+                        })}
+                        placeholder={String(DEFAULT_SPEED_TEST_MIB)}
+                      />
+                      <span className="field-hint">
+                        Download size for throughput measurement through the tunnel. Leave empty for {DEFAULT_SPEED_TEST_MIB} MiB (512 KiB). Use a higher timeout for larger tests.
+                      </span>
+                    </label>
+                  </>
+                )}
+              </>
             )}
 
             {!isVpnKind && (
@@ -483,6 +603,9 @@ export function ComponentsPage() {
                         check_type: item.check_type ?? 'http_status',
                         vpn_config_text: item.check_config?.config_text ?? '',
                         speed_test_mib: speedTestMibStringFromBytes(item.speed_test_bytes),
+                        speed_test_url_template: item.speed_test_url_template ?? '',
+                        speed_test_interval_seconds: item.speed_test_interval_seconds ?? '',
+                        speed_test_enabled: item.speed_test_enabled ?? true,
                         expected_status_code: item.expected_status_code,
                         timeout_seconds: item.timeout_seconds,
                         poll_interval_seconds: item.poll_interval_seconds ?? '',

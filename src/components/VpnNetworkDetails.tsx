@@ -1,4 +1,5 @@
 import type { NetworkSummary } from '../api/generated/models/networkSummary'
+import { formatSpeedTestError } from '../utils/speedTestError'
 
 export type { NetworkSummary }
 
@@ -21,7 +22,7 @@ function formatDownloadSpeed(summary: NetworkSummary): string | null {
     return `${Number(summary.download_mbps).toFixed(2)} Mbps`
   }
   if (summary.speed_test_ok === false) {
-    const reason = summary.speed_test_error?.trim() || 'Unknown error'
+    const reason = formatSpeedTestError(summary.speed_test_error)
     return `Could not measure speed: ${reason}`
   }
   return null
