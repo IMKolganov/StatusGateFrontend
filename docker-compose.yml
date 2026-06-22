@@ -5,6 +5,8 @@ services:
       args:
         VITE_BRAND_NAME: ${VITE_BRAND_NAME:-StatusGate}
         VITE_BRAND_LOGO_URL: ${VITE_BRAND_LOGO_URL:-}
+        VITE_BRAND_LOGO_URL_LIGHT: ${VITE_BRAND_LOGO_URL_LIGHT:-}
+        VITE_BRAND_LOGO_URL_DARK: ${VITE_BRAND_LOGO_URL_DARK:-}
         VITE_BRAND_TAGLINE: ${VITE_BRAND_TAGLINE:-Service status monitoring}
     restart: unless-stopped
     ports:

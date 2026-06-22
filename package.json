@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "api:generate": "orval"
+    "api:export": "docker run --rm -v \"$(pwd)/..:/repo\" -w /repo/backend -e JWT_SECRET=export-openapi-local-dev-secret-32chars statusgate-backend-test python scripts/export_openapi.py",
+    "api:generate": "orval",
+    "api:sync": "npm run api:export && npm run api:generate"
   },
   "dependencies": {
     "react": "^19.2.6",
@@ -24,10 +26,10 @@
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.6.0",
-    "orval": "^7.9.0",
+    "globals": "^17.7.0",
+    "orval": "^7.21.0",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.59.2",
+    "typescript-eslint": "^8.62.0",
     "vite": "^8.0.12"
   }
 }
