@@ -216,51 +216,51 @@
   letter-spacing: 0.01em;
 }
 
-.status-up {
-  background: #dcfce7;
-  color: #166534;
+.status-badge.status-up {
+  background: color-mix(in srgb, var(--sg-status-operational) 18%, transparent);
+  color: var(--sg-status-operational);
 }
 
 .status-dot.status-up {
   background: var(--sg-status-operational);
 }
 
-.status-down {
-  background: #fee2e2;
-  color: #991b1b;
+.status-badge.status-down {
+  background: color-mix(in srgb, var(--sg-status-outage) 18%, transparent);
+  color: var(--sg-status-outage);
 }
 
 .status-dot.status-down {
-  background: #ef4444;
+  background: var(--sg-status-outage);
 }
 
-.status-degraded {
-  background: #fef3c7;
-  color: #92400e;
+.status-badge.status-degraded {
+  background: color-mix(in srgb, var(--sg-status-degraded) 18%, transparent);
+  color: var(--sg-status-degraded);
 }
 
 .status-dot.status-degraded {
-  background: #f59e0b;
+  background: var(--sg-status-degraded);
 }
 
-.status-timeout,
-.status-error {
-  background: #ffedd5;
-  color: #9a3412;
+.status-badge.status-timeout,
+.status-badge.status-error {
+  background: color-mix(in srgb, var(--sg-status-warning) 18%, transparent);
+  color: var(--sg-status-warning);
 }
 
 .status-dot.status-timeout,
 .status-dot.status-error {
-  background: #f97316;
+  background: var(--sg-status-warning);
 }
 
-.status-unknown {
-  background: #f1f5f9;
-  color: #475569;
+.status-badge.status-unknown {
+  background: color-mix(in srgb, var(--sg-text-muted) 14%, transparent);
+  color: var(--sg-text-muted);
 }
 
 .status-dot.status-unknown {
-  background: #94a3b8;
+  background: var(--sg-text-muted);
 }
 
 .service-latency,
@@ -387,9 +387,9 @@
   text-transform: capitalize;
 }
 
-.history-status-investigating { color: #ca8a04; }
-.history-status-resolved { color: var(--sg-success, #16a34a); }
-.history-status-monitoring { color: #2563eb; }
+.history-status-investigating { color: var(--sg-status-degraded); }
+.history-status-resolved { color: var(--sg-success); }
+.history-status-monitoring { color: var(--sg-primary); }
 .history-status-identified { color: #7c3aed; }
 
 .current-status h2 {
@@ -657,12 +657,6 @@
   font-weight: 600;
   line-height: 1.45;
   color: var(--sg-text-heading);
-}
-
-.status-timeline-tooltip-empty {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--sg-text-muted);
 }
 
 .status-timeline-tooltip-list {

@@ -22,8 +22,11 @@
   --sg-danger-hover: #b91c1c;
   --sg-success-bg: #ecfdf5;
   --sg-success-text: #047857;
+  --sg-success: #16a34a;
   --sg-error-bg: #fef2f2;
   --sg-error-text: #b91c1c;
+  --sg-error-border: #fecaca;
+  --sg-success-border: #a7f3d0;
   --sg-warning-bg: #fefce8;
   --sg-warning-border: #ca8a04;
   --sg-warning-title: #854d0e;
@@ -32,6 +35,7 @@
   --sg-status-operational: #22c55e;
   --sg-status-degraded: #eab308;
   --sg-status-outage: #ef4444;
+  --sg-status-warning: #f97316;
 
   --sg-radius-sm: 6px;
   --sg-radius: 8px;
@@ -73,7 +77,9 @@
   --sg-admin-sidebar: 260px;
 
   --sg-hover: rgba(15, 23, 42, 0.05);
+  --sg-bg-subtle: var(--sg-surface-muted);
   --sg-focus-ring: rgba(29, 78, 216, 0.15);
+  --sg-btn-border-hover: #b7bdc5;
 
   color-scheme: light;
   font-family: var(--sg-font);
@@ -101,8 +107,11 @@
   --sg-danger-hover: #dc2626;
   --sg-success-bg: rgba(16, 185, 129, 0.12);
   --sg-success-text: #6ee7b7;
+  --sg-success: #22c55e;
   --sg-error-bg: rgba(239, 68, 68, 0.12);
   --sg-error-text: #fca5a5;
+  --sg-error-border: rgba(248, 113, 113, 0.35);
+  --sg-success-border: rgba(52, 211, 153, 0.35);
   --sg-warning-bg: rgba(234, 179, 8, 0.14);
   --sg-warning-border: #a16207;
   --sg-warning-title: #fde68a;
@@ -111,11 +120,15 @@
   --sg-status-operational: #22c55e;
   --sg-status-degraded: #eab308;
   --sg-status-outage: #ef4444;
+  --sg-status-warning: #fb923c;
+
   --sg-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --sg-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   --sg-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
   --sg-hover: rgba(255, 255, 255, 0.06);
+  --sg-bg-subtle: var(--sg-surface-muted);
   --sg-focus-ring: rgba(59, 130, 246, 0.25);
+  --sg-btn-border-hover: #484f58;
   --sg-btn-bg: #21262d;
   --sg-btn-bg-hover: #30363d;
   --sg-btn-border: #30363d;
@@ -292,7 +305,7 @@ p {
 .btn-secondary:hover:not(:disabled),
 .google-btn:hover:not(:disabled) {
   background: var(--sg-btn-bg-hover);
-  border-color: #b7bdc5;
+  border-color: var(--sg-btn-border-hover);
 }
 
 .btn-ghost,
@@ -750,13 +763,13 @@ input[type='radio']:focus-visible {
 
 .alert.error {
   background: var(--sg-error-bg);
-  border-color: #fecaca;
+  border-color: var(--sg-error-border);
   color: var(--sg-error-text);
 }
 
 .alert.success {
   background: var(--sg-success-bg);
-  border-color: #a7f3d0;
+  border-color: var(--sg-success-border);
   color: var(--sg-success-text);
 }
 
