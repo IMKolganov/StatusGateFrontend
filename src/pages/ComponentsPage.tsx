@@ -4,6 +4,12 @@ import { api, type CheckResult, type ComponentKind, type MonitoredComponent, typ
 import { AdminLayout } from '../components/AdminLayout'
 import { CheckDiagnostics, logTailFromDetails, networkSummaryFromRecord } from '../components/CheckDiagnostics'
 import { formatApiError } from '../utils/apiError'
+import {
+  DEFAULT_SPEED_TEST_MIB,
+  speedTestBytesFromMibInput,
+  speedTestMibStringFromBytes,
+  validateSpeedTestMibInput,
+} from '../utils/speedTest'
 import { slugFromName } from '../utils/slug'
 import './admin.css'
 
@@ -26,23 +32,11 @@ const emptyForm = {
   check_method: 'GET',
   check_type: 'http_status',
   vpn_config_text: '',
-  speed_test_mib: '' as number | '',
+  speed_test_mib: '',
   expected_status_code: 200,
   timeout_seconds: 10,
   poll_interval_seconds: '' as number | '',
   is_active: true,
-}
-
-const DEFAULT_SPEED_TEST_MIB = 0.5
-
-function speedTestMibFromBytes(bytes: number | null | undefined): number | '' {
-  if (bytes == null) return ''
-  return Math.round((bytes / (1024 * 1024)) * 100) / 100
-}
-
-function speedTestBytesFromMib(mib: number | ''): number | null {
-  if (mib === '') return null
-  return Math.round(mib * 1024 * 1024)
 }
 
 function statusClass(outcome: string | null | undefined): string {
@@ -185,6 +179,13 @@ export function ComponentsPage() {
       setError(isOpenVpn ? 'Paste an OpenVPN .ovpn config.' : 'Paste a vless:// share link or Xray JSON config.')
       return
     }
+    if (isVpnKind) {
+      const speedTestError = validateSpeedTestMibInput(form.speed_test_mib)
+      if (speedTestError) {
+        setError(speedTestError)
+        return
+      }
+    }
     setError(null)
     const slug = editingId ? (editingSlug ?? slugFromName(form.name, 'service')) : slugFromName(form.name, 'service')
     const payload = {
@@ -198,7 +199,7 @@ export function ComponentsPage() {
       check_method: form.check_method,
       check_type: form.check_type,
       check_config: isVpnKind ? { config_text: form.vpn_config_text.trim() } : null,
-      speed_test_bytes: isVpnKind ? speedTestBytesFromMib(form.speed_test_mib) : null,
+      speed_test_bytes: isVpnKind ? speedTestBytesFromMibInput(form.speed_test_mib) : null,
       expected_status_code: form.expected_status_code,
       timeout_seconds: form.timeout_seconds,
       poll_interval_seconds: form.poll_interval_seconds === '' ? null : Number(form.poll_interval_seconds),
@@ -366,14 +367,12 @@ export function ComponentsPage() {
               <label>
                 Speed test size (MiB)
                 <input
-                  type="number"
-                  min={0.001}
-                  max={50}
-                  step={0.1}
+                  type="text"
+                  inputMode="decimal"
                   value={form.speed_test_mib}
                   onChange={(e) => setForm({
                     ...form,
-                    speed_test_mib: e.target.value === '' ? '' : Number(e.target.value),
+                    speed_test_mib: e.target.value,
                   })}
                   placeholder={String(DEFAULT_SPEED_TEST_MIB)}
                 />
@@ -481,7 +480,7 @@ export function ComponentsPage() {
                         check_method: item.check_method,
                         check_type: item.check_type ?? 'http_status',
                         vpn_config_text: item.check_config?.config_text ?? '',
-                        speed_test_mib: speedTestMibFromBytes(item.speed_test_bytes),
+                        speed_test_mib: speedTestMibStringFromBytes(item.speed_test_bytes),
                         expected_status_code: item.expected_status_code,
                         timeout_seconds: item.timeout_seconds,
                         poll_interval_seconds: item.poll_interval_seconds ?? '',
