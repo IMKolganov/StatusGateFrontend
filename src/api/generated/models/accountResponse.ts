@@ -5,12 +5,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AccountResponseFullName } from './accountResponseFullName';
+import type { AccountResponseAvatarUrl } from './accountResponseAvatarUrl';
 
 export interface AccountResponse {
   id: string;
   email: string;
   full_name: AccountResponseFullName;
-  avatar_url?: string | null;
+  avatar_url?: AccountResponseAvatarUrl;
   access_roles: string[];
   is_totp_enabled: boolean;
   has_password: boolean;

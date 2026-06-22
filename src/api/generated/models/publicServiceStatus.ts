@@ -8,6 +8,7 @@ import type { PublicServiceStatusDescription } from './publicServiceStatusDescri
 import type { PublicServiceStatusEnvironment } from './publicServiceStatusEnvironment';
 import type { PublicServiceStatusLatencyMs } from './publicServiceStatusLatencyMs';
 import type { PublicServiceStatusCheckedAt } from './publicServiceStatusCheckedAt';
+import type { PublicServiceStatusNetworkSummary } from './publicServiceStatusNetworkSummary';
 
 export interface PublicServiceStatus {
   id: string;
@@ -20,4 +21,5 @@ export interface PublicServiceStatus {
   status: string;
   latency_ms?: PublicServiceStatusLatencyMs;
   checked_at?: PublicServiceStatusCheckedAt;
+  network_summary?: PublicServiceStatusNetworkSummary;
 }

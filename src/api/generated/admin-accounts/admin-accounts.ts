@@ -5,11 +5,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  AccountAdminResponse,
   AccountRolesUpdate,
-  ApiResponseAccountAdminResponse,
-  ApiResponseError,
-  ApiResponsePaginatedAccountAdminResponse,
-  ListAccountsApiAdminAccountsGetParams
+  ListAccountsApiAdminAccountsGetParams,
+  PaginatedAccountAdminResponse
 } from '.././models';
 
 import { customFetch } from '../../mutator';
@@ -17,25 +16,6 @@ import { customFetch } from '../../mutator';
 /**
  * @summary List Accounts
  */
-export type listAccountsApiAdminAccountsGetResponse200 = {
-  data: ApiResponsePaginatedAccountAdminResponse
-  status: 200
-}
-
-export type listAccountsApiAdminAccountsGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type listAccountsApiAdminAccountsGetResponseSuccess = (listAccountsApiAdminAccountsGetResponse200) & {
-  headers: Headers;
-};
-export type listAccountsApiAdminAccountsGetResponseError = (listAccountsApiAdminAccountsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listAccountsApiAdminAccountsGetResponse = (listAccountsApiAdminAccountsGetResponseSuccess | listAccountsApiAdminAccountsGetResponseError)
-
 export const getListAccountsApiAdminAccountsGetUrl = (params?: ListAccountsApiAdminAccountsGetParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -51,9 +31,9 @@ export const getListAccountsApiAdminAccountsGetUrl = (params?: ListAccountsApiAd
   return stringifiedParams.length > 0 ? `/api/admin/accounts?${stringifiedParams}` : `/api/admin/accounts`
 }
 
-export const listAccountsApiAdminAccountsGet = async (params?: ListAccountsApiAdminAccountsGetParams, options?: RequestInit): Promise<listAccountsApiAdminAccountsGetResponse> => {
+export const listAccountsApiAdminAccountsGet = async (params?: ListAccountsApiAdminAccountsGetParams, options?: RequestInit): Promise<PaginatedAccountAdminResponse> => {
   
-  return customFetch<listAccountsApiAdminAccountsGetResponse>(getListAccountsApiAdminAccountsGetUrl(params),
+  return customFetch<PaginatedAccountAdminResponse>(getListAccountsApiAdminAccountsGetUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -66,25 +46,6 @@ export const listAccountsApiAdminAccountsGet = async (params?: ListAccountsApiAd
 /**
  * @summary Get Account
  */
-export type getAccountApiAdminAccountsAccountIdGetResponse200 = {
-  data: ApiResponseAccountAdminResponse
-  status: 200
-}
-
-export type getAccountApiAdminAccountsAccountIdGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type getAccountApiAdminAccountsAccountIdGetResponseSuccess = (getAccountApiAdminAccountsAccountIdGetResponse200) & {
-  headers: Headers;
-};
-export type getAccountApiAdminAccountsAccountIdGetResponseError = (getAccountApiAdminAccountsAccountIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getAccountApiAdminAccountsAccountIdGetResponse = (getAccountApiAdminAccountsAccountIdGetResponseSuccess | getAccountApiAdminAccountsAccountIdGetResponseError)
-
 export const getGetAccountApiAdminAccountsAccountIdGetUrl = (accountId: string,) => {
 
 
@@ -93,9 +54,9 @@ export const getGetAccountApiAdminAccountsAccountIdGetUrl = (accountId: string,)
   return `/api/admin/accounts/${accountId}`
 }
 
-export const getAccountApiAdminAccountsAccountIdGet = async (accountId: string, options?: RequestInit): Promise<getAccountApiAdminAccountsAccountIdGetResponse> => {
+export const getAccountApiAdminAccountsAccountIdGet = async (accountId: string, options?: RequestInit): Promise<AccountAdminResponse> => {
   
-  return customFetch<getAccountApiAdminAccountsAccountIdGetResponse>(getGetAccountApiAdminAccountsAccountIdGetUrl(accountId),
+  return customFetch<AccountAdminResponse>(getGetAccountApiAdminAccountsAccountIdGetUrl(accountId),
   {      
     ...options,
     method: 'GET'
@@ -108,25 +69,6 @@ export const getAccountApiAdminAccountsAccountIdGet = async (accountId: string, 
 /**
  * @summary Update Account Roles
  */
-export type updateAccountRolesApiAdminAccountsAccountIdRolesPutResponse200 = {
-  data: ApiResponseAccountAdminResponse
-  status: 200
-}
-
-export type updateAccountRolesApiAdminAccountsAccountIdRolesPutResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type updateAccountRolesApiAdminAccountsAccountIdRolesPutResponseSuccess = (updateAccountRolesApiAdminAccountsAccountIdRolesPutResponse200) & {
-  headers: Headers;
-};
-export type updateAccountRolesApiAdminAccountsAccountIdRolesPutResponseError = (updateAccountRolesApiAdminAccountsAccountIdRolesPutResponse422) & {
-  headers: Headers;
-};
-
-export type updateAccountRolesApiAdminAccountsAccountIdRolesPutResponse = (updateAccountRolesApiAdminAccountsAccountIdRolesPutResponseSuccess | updateAccountRolesApiAdminAccountsAccountIdRolesPutResponseError)
-
 export const getUpdateAccountRolesApiAdminAccountsAccountIdRolesPutUrl = (accountId: string,) => {
 
 
@@ -136,9 +78,9 @@ export const getUpdateAccountRolesApiAdminAccountsAccountIdRolesPutUrl = (accoun
 }
 
 export const updateAccountRolesApiAdminAccountsAccountIdRolesPut = async (accountId: string,
-    accountRolesUpdate: AccountRolesUpdate, options?: RequestInit): Promise<updateAccountRolesApiAdminAccountsAccountIdRolesPutResponse> => {
+    accountRolesUpdate: AccountRolesUpdate, options?: RequestInit): Promise<AccountAdminResponse> => {
   
-  return customFetch<updateAccountRolesApiAdminAccountsAccountIdRolesPutResponse>(getUpdateAccountRolesApiAdminAccountsAccountIdRolesPutUrl(accountId),
+  return customFetch<AccountAdminResponse>(getUpdateAccountRolesApiAdminAccountsAccountIdRolesPutUrl(accountId),
   {      
     ...options,
     method: 'PUT',
@@ -152,25 +94,6 @@ export const updateAccountRolesApiAdminAccountsAccountIdRolesPut = async (accoun
 /**
  * @summary Deactivate Account
  */
-export type deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponse200 = {
-  data: ApiResponseAccountAdminResponse
-  status: 200
-}
-
-export type deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponseSuccess = (deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponse200) & {
-  headers: Headers;
-};
-export type deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponseError = (deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponse422) & {
-  headers: Headers;
-};
-
-export type deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponse = (deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponseSuccess | deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponseError)
-
 export const getDeactivateAccountApiAdminAccountsAccountIdDeactivatePostUrl = (accountId: string,) => {
 
 
@@ -179,9 +102,9 @@ export const getDeactivateAccountApiAdminAccountsAccountIdDeactivatePostUrl = (a
   return `/api/admin/accounts/${accountId}/deactivate`
 }
 
-export const deactivateAccountApiAdminAccountsAccountIdDeactivatePost = async (accountId: string, options?: RequestInit): Promise<deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponse> => {
+export const deactivateAccountApiAdminAccountsAccountIdDeactivatePost = async (accountId: string, options?: RequestInit): Promise<AccountAdminResponse> => {
   
-  return customFetch<deactivateAccountApiAdminAccountsAccountIdDeactivatePostResponse>(getDeactivateAccountApiAdminAccountsAccountIdDeactivatePostUrl(accountId),
+  return customFetch<AccountAdminResponse>(getDeactivateAccountApiAdminAccountsAccountIdDeactivatePostUrl(accountId),
   {      
     ...options,
     method: 'POST'
@@ -194,25 +117,6 @@ export const deactivateAccountApiAdminAccountsAccountIdDeactivatePost = async (a
 /**
  * @summary Activate Account
  */
-export type activateAccountApiAdminAccountsAccountIdActivatePostResponse200 = {
-  data: ApiResponseAccountAdminResponse
-  status: 200
-}
-
-export type activateAccountApiAdminAccountsAccountIdActivatePostResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type activateAccountApiAdminAccountsAccountIdActivatePostResponseSuccess = (activateAccountApiAdminAccountsAccountIdActivatePostResponse200) & {
-  headers: Headers;
-};
-export type activateAccountApiAdminAccountsAccountIdActivatePostResponseError = (activateAccountApiAdminAccountsAccountIdActivatePostResponse422) & {
-  headers: Headers;
-};
-
-export type activateAccountApiAdminAccountsAccountIdActivatePostResponse = (activateAccountApiAdminAccountsAccountIdActivatePostResponseSuccess | activateAccountApiAdminAccountsAccountIdActivatePostResponseError)
-
 export const getActivateAccountApiAdminAccountsAccountIdActivatePostUrl = (accountId: string,) => {
 
 
@@ -221,9 +125,9 @@ export const getActivateAccountApiAdminAccountsAccountIdActivatePostUrl = (accou
   return `/api/admin/accounts/${accountId}/activate`
 }
 
-export const activateAccountApiAdminAccountsAccountIdActivatePost = async (accountId: string, options?: RequestInit): Promise<activateAccountApiAdminAccountsAccountIdActivatePostResponse> => {
+export const activateAccountApiAdminAccountsAccountIdActivatePost = async (accountId: string, options?: RequestInit): Promise<AccountAdminResponse> => {
   
-  return customFetch<activateAccountApiAdminAccountsAccountIdActivatePostResponse>(getActivateAccountApiAdminAccountsAccountIdActivatePostUrl(accountId),
+  return customFetch<AccountAdminResponse>(getActivateAccountApiAdminAccountsAccountIdActivatePostUrl(accountId),
   {      
     ...options,
     method: 'POST'

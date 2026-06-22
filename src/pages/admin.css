@@ -42,6 +42,54 @@
   width: 100%;
 }
 
+.google-login-shell {
+  position: relative;
+  width: 100%;
+  min-height: var(--sg-btn-height);
+}
+
+.google-login-visual {
+  pointer-events: none;
+  user-select: none;
+}
+
+.google-login-icon {
+  flex-shrink: 0;
+}
+
+.google-login-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.google-login-shell--pending .google-login-overlay {
+  pointer-events: none;
+  cursor: wait;
+}
+
+.google-login-shell--pending .google-login-visual {
+  opacity: 0.55;
+}
+
+.google-login-overlay > div {
+  width: 100% !important;
+  max-width: 100%;
+  height: 100% !important;
+  min-height: var(--sg-btn-height);
+}
+
+.google-login-overlay iframe {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: var(--sg-btn-height);
+  margin: 0;
+}
+
 .google-login-wrapper {
   width: 100%;
   min-width: 0;

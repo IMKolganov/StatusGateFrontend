@@ -48,7 +48,7 @@ export function LoginPage() {
     void api.registrationStatus().then((s) => {
       setAllowRegistration(s.allow_registration)
       setGoogleOauthEnabled(s.google_oauth_enabled)
-      setGoogleClientIdFromApi(s.google_client_id)
+      setGoogleClientIdFromApi(s.google_client_id ?? '')
     })
   }, [])
 

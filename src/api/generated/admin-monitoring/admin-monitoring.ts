@@ -5,12 +5,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
-  ApiResponseCheckResultResponse,
-  ApiResponseError,
-  ApiResponseMonitoringSettingsResponse,
-  ApiResponsePaginatedCheckResultResponse,
+  CheckResultResponse,
   ListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetParams,
-  MonitoringSettingsUpdate
+  MonitoringSettingsResponse,
+  MonitoringSettingsUpdate,
+  PaginatedCheckResultResponse,
+  PurgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDeleteParams,
+  PurgeCheckHistoryResponse
 } from '.././models';
 
 import { customFetch } from '../../mutator';
@@ -18,18 +19,6 @@ import { customFetch } from '../../mutator';
 /**
  * @summary Get Monitoring Settings
  */
-export type getMonitoringSettingsApiAdminMonitoringSettingsGetResponse200 = {
-  data: ApiResponseMonitoringSettingsResponse
-  status: 200
-}
-    
-export type getMonitoringSettingsApiAdminMonitoringSettingsGetResponseSuccess = (getMonitoringSettingsApiAdminMonitoringSettingsGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type getMonitoringSettingsApiAdminMonitoringSettingsGetResponse = (getMonitoringSettingsApiAdminMonitoringSettingsGetResponseSuccess)
-
 export const getGetMonitoringSettingsApiAdminMonitoringSettingsGetUrl = () => {
 
 
@@ -38,9 +27,9 @@ export const getGetMonitoringSettingsApiAdminMonitoringSettingsGetUrl = () => {
   return `/api/admin/monitoring/settings`
 }
 
-export const getMonitoringSettingsApiAdminMonitoringSettingsGet = async ( options?: RequestInit): Promise<getMonitoringSettingsApiAdminMonitoringSettingsGetResponse> => {
+export const getMonitoringSettingsApiAdminMonitoringSettingsGet = async ( options?: RequestInit): Promise<MonitoringSettingsResponse> => {
   
-  return customFetch<getMonitoringSettingsApiAdminMonitoringSettingsGetResponse>(getGetMonitoringSettingsApiAdminMonitoringSettingsGetUrl(),
+  return customFetch<MonitoringSettingsResponse>(getGetMonitoringSettingsApiAdminMonitoringSettingsGetUrl(),
   {      
     ...options,
     method: 'GET'
@@ -53,25 +42,6 @@ export const getMonitoringSettingsApiAdminMonitoringSettingsGet = async ( option
 /**
  * @summary Update Monitoring Settings
  */
-export type updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponse200 = {
-  data: ApiResponseMonitoringSettingsResponse
-  status: 200
-}
-
-export type updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponseSuccess = (updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponse200) & {
-  headers: Headers;
-};
-export type updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponseError = (updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponse422) & {
-  headers: Headers;
-};
-
-export type updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponse = (updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponseSuccess | updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponseError)
-
 export const getUpdateMonitoringSettingsApiAdminMonitoringSettingsPatchUrl = () => {
 
 
@@ -80,9 +50,9 @@ export const getUpdateMonitoringSettingsApiAdminMonitoringSettingsPatchUrl = () 
   return `/api/admin/monitoring/settings`
 }
 
-export const updateMonitoringSettingsApiAdminMonitoringSettingsPatch = async (monitoringSettingsUpdate: MonitoringSettingsUpdate, options?: RequestInit): Promise<updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponse> => {
+export const updateMonitoringSettingsApiAdminMonitoringSettingsPatch = async (monitoringSettingsUpdate: MonitoringSettingsUpdate, options?: RequestInit): Promise<MonitoringSettingsResponse> => {
   
-  return customFetch<updateMonitoringSettingsApiAdminMonitoringSettingsPatchResponse>(getUpdateMonitoringSettingsApiAdminMonitoringSettingsPatchUrl(),
+  return customFetch<MonitoringSettingsResponse>(getUpdateMonitoringSettingsApiAdminMonitoringSettingsPatchUrl(),
   {      
     ...options,
     method: 'PATCH',
@@ -96,25 +66,6 @@ export const updateMonitoringSettingsApiAdminMonitoringSettingsPatch = async (mo
 /**
  * @summary Run Manual Check
  */
-export type runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponse200 = {
-  data: ApiResponseCheckResultResponse
-  status: 200
-}
-
-export type runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponseSuccess = (runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponse200) & {
-  headers: Headers;
-};
-export type runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponseError = (runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponse422) & {
-  headers: Headers;
-};
-
-export type runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponse = (runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponseSuccess | runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponseError)
-
 export const getRunManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostUrl = (componentId: string,) => {
 
 
@@ -123,9 +74,9 @@ export const getRunManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCh
   return `/api/admin/monitoring/monitored-components/${componentId}/check`
 }
 
-export const runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPost = async (componentId: string, options?: RequestInit): Promise<runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponse> => {
+export const runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPost = async (componentId: string, options?: RequestInit): Promise<CheckResultResponse> => {
   
-  return customFetch<runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostResponse>(getRunManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostUrl(componentId),
+  return customFetch<CheckResultResponse>(getRunManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPostUrl(componentId),
   {      
     ...options,
     method: 'POST'
@@ -138,25 +89,6 @@ export const runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheck
 /**
  * @summary List Check Results
  */
-export type listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponse200 = {
-  data: ApiResponsePaginatedCheckResultResponse
-  status: 200
-}
-
-export type listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponseSuccess = (listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponse200) & {
-  headers: Headers;
-};
-export type listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponseError = (listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponse = (listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponseSuccess | listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponseError)
-
 export const getListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetUrl = (componentId: string,
     params?: ListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -174,12 +106,44 @@ export const getListCheckResultsApiAdminMonitoringMonitoredComponentsComponentId
 }
 
 export const listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGet = async (componentId: string,
-    params?: ListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetParams, options?: RequestInit): Promise<listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponse> => {
+    params?: ListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetParams, options?: RequestInit): Promise<PaginatedCheckResultResponse> => {
   
-  return customFetch<listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetResponse>(getListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetUrl(componentId,params),
+  return customFetch<PaginatedCheckResultResponse>(getListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetUrl(componentId,params),
   {      
     ...options,
     method: 'GET'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary Purge Check History
+ */
+export const getPurgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDeleteUrl = (componentId: string,
+    params?: PurgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDeleteParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/monitoring/monitored-components/${componentId}/check-results?${stringifiedParams}` : `/api/admin/monitoring/monitored-components/${componentId}/check-results`
+}
+
+export const purgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDelete = async (componentId: string,
+    params?: PurgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDeleteParams, options?: RequestInit): Promise<PurgeCheckHistoryResponse> => {
+  
+  return customFetch<PurgeCheckHistoryResponse>(getPurgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDeleteUrl(componentId,params),
+  {      
+    ...options,
+    method: 'DELETE'
     
     
   }

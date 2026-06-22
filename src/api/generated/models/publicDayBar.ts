@@ -4,6 +4,7 @@
  * StatusGate API
  * OpenAPI spec version: 0.1.0
  */
+import type { PublicDayBarAvailabilityPercent } from './publicDayBarAvailabilityPercent';
 import type { PublicDayIncident } from './publicDayIncident';
 
 export interface PublicDayBar {
@@ -11,5 +12,10 @@ export interface PublicDayBar {
   /** operational, degraded, outage, or no_data */
   status: string;
   tooltip: string;
+  check_count?: number;
+  failed_count?: number;
+  degraded_count?: number;
+  availability_percent?: PublicDayBarAvailabilityPercent;
+  downtime_seconds?: number;
   incidents?: PublicDayIncident[];
 }

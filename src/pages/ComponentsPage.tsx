@@ -442,7 +442,7 @@ export function ComponentsPage() {
                     outcome={item.latest_outcome}
                     errorMessage={item.latest_error_message}
                     logTail={item.latest_log_tail}
-                    networkSummary={networkSummaryFromRecord(item.latest_network_summary ?? undefined)}
+                    networkSummary={item.latest_network_summary ?? undefined}
                     collapsible
                   />
                 </td>

@@ -302,6 +302,10 @@ p {
   color: var(--sg-btn-text);
 }
 
+.google-btn.btn-block {
+  width: 100%;
+}
+
 .btn-secondary:hover:not(:disabled),
 .google-btn:hover:not(:disabled) {
   background: var(--sg-btn-bg-hover);

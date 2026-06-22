@@ -5,8 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ApiResponseEmptyGetApiAuthGoogleLogin {
-  success: boolean;
-  message: string;
-  data?: null;
+export interface GoogleLoginRequest {
+  /** @minLength 1 */
+  idToken: string;
 }

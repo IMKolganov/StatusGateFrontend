@@ -5,7 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
-  ApiResponseHealthStatusResponse
+  HealthStatusResponse
 } from '.././models';
 
 import { customFetch } from '../../mutator';
@@ -13,18 +13,6 @@ import { customFetch } from '../../mutator';
 /**
  * @summary Health
  */
-export type healthHealthGetResponse200 = {
-  data: ApiResponseHealthStatusResponse
-  status: 200
-}
-    
-export type healthHealthGetResponseSuccess = (healthHealthGetResponse200) & {
-  headers: Headers;
-};
-;
-
-export type healthHealthGetResponse = (healthHealthGetResponseSuccess)
-
 export const getHealthHealthGetUrl = () => {
 
 
@@ -33,9 +21,9 @@ export const getHealthHealthGetUrl = () => {
   return `/health`
 }
 
-export const healthHealthGet = async ( options?: RequestInit): Promise<healthHealthGetResponse> => {
+export const healthHealthGet = async ( options?: RequestInit): Promise<HealthStatusResponse> => {
   
-  return customFetch<healthHealthGetResponse>(getHealthHealthGetUrl(),
+  return customFetch<HealthStatusResponse>(getHealthHealthGetUrl(),
   {      
     ...options,
     method: 'GET'

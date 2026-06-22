@@ -1,23 +1,21 @@
 import { useEffect, useState } from 'react'
-import { api, ApiError, type Account } from '../api/client'
+import { api, ApiError, type AccountAdminResponse } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
 import './admin.css'
-
-type AdminAccount = Account & { created_at: string; is_active: boolean }
 
 const ALL_ROLES = ['admin', 'operator', 'viewer', 'user']
 
 export function AccountsPage() {
-  const [items, setItems] = useState<AdminAccount[]>([])
+  const [items, setItems] = useState<AccountAdminResponse[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  const load = () => void api.listAccounts().then((r) => setItems(r.items as AdminAccount[]))
+  const load = () => void api.listAccounts().then((r) => setItems(r.items))
 
   useEffect(() => {
     load()
   }, [])
 
-  const toggleRole = (account: AdminAccount, role: string) => {
+  const toggleRole = (account: AccountAdminResponse, role: string) => {
     const roles = new Set(account.access_roles)
     if (roles.has(role)) roles.delete(role)
     else roles.add(role)

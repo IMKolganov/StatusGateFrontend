@@ -6,6 +6,8 @@
  */
 import type { MonitoredComponentCreateDescription } from './monitoredComponentCreateDescription';
 import type { MonitoredComponentCreateEnvironment } from './monitoredComponentCreateEnvironment';
+import type { MonitoredComponentCreateCheckConfig } from './monitoredComponentCreateCheckConfig';
+import type { MonitoredComponentCreateSpeedTestBytes } from './monitoredComponentCreateSpeedTestBytes';
 import type { MonitoredComponentCreatePollIntervalSeconds } from './monitoredComponentCreatePollIntervalSeconds';
 
 export interface MonitoredComponentCreate {
@@ -24,15 +26,14 @@ export interface MonitoredComponentCreate {
   slug: string;
   description?: MonitoredComponentCreateDescription;
   environment?: MonitoredComponentCreateEnvironment;
-  /**
-   * @minLength 1
-   * @maxLength 2048
-   */
-  check_url: string;
+  /** @maxLength 2048 */
+  check_url?: string;
   /** @maxLength 10 */
   check_method?: string;
-  /** @pattern ^(http_status|json|xml)$ */
+  /** @pattern ^(http_status|json|xml|openvpn|xray)$ */
   check_type?: string;
+  check_config?: MonitoredComponentCreateCheckConfig;
+  speed_test_bytes?: MonitoredComponentCreateSpeedTestBytes;
   /**
    * @minimum 100
    * @maximum 599
@@ -40,7 +41,7 @@ export interface MonitoredComponentCreate {
   expected_status_code?: number;
   /**
    * @minimum 1
-   * @maximum 120
+   * @maximum 300
    */
   timeout_seconds?: number;
   poll_interval_seconds?: MonitoredComponentCreatePollIntervalSeconds;

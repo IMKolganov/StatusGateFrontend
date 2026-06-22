@@ -5,24 +5,20 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
-  ApiResponseComponentKindResponse,
-  ApiResponseEmptyDeleteApiAdminComponentKindsKindId,
-  ApiResponseEmptyDeleteApiAdminMonitoredComponentsComponentId,
-  ApiResponseEmptyDeleteApiAdminProjectsProjectId,
-  ApiResponseError,
-  ApiResponseMonitoredComponentResponse,
-  ApiResponsePaginatedComponentKindResponse,
-  ApiResponsePaginatedMonitoredComponentResponse,
-  ApiResponsePaginatedProjectResponse,
-  ApiResponseProjectResponse,
   ComponentKindCreate,
+  ComponentKindResponse,
   ComponentKindUpdate,
   ListComponentKindsApiAdminComponentKindsGetParams,
   ListMonitoredComponentsApiAdminMonitoredComponentsGetParams,
   ListProjectsApiAdminProjectsGetParams,
   MonitoredComponentCreate,
+  MonitoredComponentResponse,
   MonitoredComponentUpdate,
+  PaginatedComponentKindResponse,
+  PaginatedMonitoredComponentResponse,
+  PaginatedProjectResponse,
   ProjectCreate,
+  ProjectResponse,
   ProjectUpdate
 } from '.././models';
 
@@ -31,25 +27,6 @@ import { customFetch } from '../../mutator';
 /**
  * @summary List Projects
  */
-export type listProjectsApiAdminProjectsGetResponse200 = {
-  data: ApiResponsePaginatedProjectResponse
-  status: 200
-}
-
-export type listProjectsApiAdminProjectsGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type listProjectsApiAdminProjectsGetResponseSuccess = (listProjectsApiAdminProjectsGetResponse200) & {
-  headers: Headers;
-};
-export type listProjectsApiAdminProjectsGetResponseError = (listProjectsApiAdminProjectsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listProjectsApiAdminProjectsGetResponse = (listProjectsApiAdminProjectsGetResponseSuccess | listProjectsApiAdminProjectsGetResponseError)
-
 export const getListProjectsApiAdminProjectsGetUrl = (params?: ListProjectsApiAdminProjectsGetParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -65,9 +42,9 @@ export const getListProjectsApiAdminProjectsGetUrl = (params?: ListProjectsApiAd
   return stringifiedParams.length > 0 ? `/api/admin/projects?${stringifiedParams}` : `/api/admin/projects`
 }
 
-export const listProjectsApiAdminProjectsGet = async (params?: ListProjectsApiAdminProjectsGetParams, options?: RequestInit): Promise<listProjectsApiAdminProjectsGetResponse> => {
+export const listProjectsApiAdminProjectsGet = async (params?: ListProjectsApiAdminProjectsGetParams, options?: RequestInit): Promise<PaginatedProjectResponse> => {
   
-  return customFetch<listProjectsApiAdminProjectsGetResponse>(getListProjectsApiAdminProjectsGetUrl(params),
+  return customFetch<PaginatedProjectResponse>(getListProjectsApiAdminProjectsGetUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -80,25 +57,6 @@ export const listProjectsApiAdminProjectsGet = async (params?: ListProjectsApiAd
 /**
  * @summary Create Project
  */
-export type createProjectApiAdminProjectsPostResponse201 = {
-  data: ApiResponseProjectResponse
-  status: 201
-}
-
-export type createProjectApiAdminProjectsPostResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type createProjectApiAdminProjectsPostResponseSuccess = (createProjectApiAdminProjectsPostResponse201) & {
-  headers: Headers;
-};
-export type createProjectApiAdminProjectsPostResponseError = (createProjectApiAdminProjectsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createProjectApiAdminProjectsPostResponse = (createProjectApiAdminProjectsPostResponseSuccess | createProjectApiAdminProjectsPostResponseError)
-
 export const getCreateProjectApiAdminProjectsPostUrl = () => {
 
 
@@ -107,9 +65,9 @@ export const getCreateProjectApiAdminProjectsPostUrl = () => {
   return `/api/admin/projects`
 }
 
-export const createProjectApiAdminProjectsPost = async (projectCreate: ProjectCreate, options?: RequestInit): Promise<createProjectApiAdminProjectsPostResponse> => {
+export const createProjectApiAdminProjectsPost = async (projectCreate: ProjectCreate, options?: RequestInit): Promise<ProjectResponse> => {
   
-  return customFetch<createProjectApiAdminProjectsPostResponse>(getCreateProjectApiAdminProjectsPostUrl(),
+  return customFetch<ProjectResponse>(getCreateProjectApiAdminProjectsPostUrl(),
   {      
     ...options,
     method: 'POST',
@@ -123,25 +81,6 @@ export const createProjectApiAdminProjectsPost = async (projectCreate: ProjectCr
 /**
  * @summary Get Project
  */
-export type getProjectApiAdminProjectsProjectIdGetResponse200 = {
-  data: ApiResponseProjectResponse
-  status: 200
-}
-
-export type getProjectApiAdminProjectsProjectIdGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type getProjectApiAdminProjectsProjectIdGetResponseSuccess = (getProjectApiAdminProjectsProjectIdGetResponse200) & {
-  headers: Headers;
-};
-export type getProjectApiAdminProjectsProjectIdGetResponseError = (getProjectApiAdminProjectsProjectIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getProjectApiAdminProjectsProjectIdGetResponse = (getProjectApiAdminProjectsProjectIdGetResponseSuccess | getProjectApiAdminProjectsProjectIdGetResponseError)
-
 export const getGetProjectApiAdminProjectsProjectIdGetUrl = (projectId: string,) => {
 
 
@@ -150,9 +89,9 @@ export const getGetProjectApiAdminProjectsProjectIdGetUrl = (projectId: string,)
   return `/api/admin/projects/${projectId}`
 }
 
-export const getProjectApiAdminProjectsProjectIdGet = async (projectId: string, options?: RequestInit): Promise<getProjectApiAdminProjectsProjectIdGetResponse> => {
+export const getProjectApiAdminProjectsProjectIdGet = async (projectId: string, options?: RequestInit): Promise<ProjectResponse> => {
   
-  return customFetch<getProjectApiAdminProjectsProjectIdGetResponse>(getGetProjectApiAdminProjectsProjectIdGetUrl(projectId),
+  return customFetch<ProjectResponse>(getGetProjectApiAdminProjectsProjectIdGetUrl(projectId),
   {      
     ...options,
     method: 'GET'
@@ -165,25 +104,6 @@ export const getProjectApiAdminProjectsProjectIdGet = async (projectId: string, 
 /**
  * @summary Update Project
  */
-export type updateProjectApiAdminProjectsProjectIdPatchResponse200 = {
-  data: ApiResponseProjectResponse
-  status: 200
-}
-
-export type updateProjectApiAdminProjectsProjectIdPatchResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type updateProjectApiAdminProjectsProjectIdPatchResponseSuccess = (updateProjectApiAdminProjectsProjectIdPatchResponse200) & {
-  headers: Headers;
-};
-export type updateProjectApiAdminProjectsProjectIdPatchResponseError = (updateProjectApiAdminProjectsProjectIdPatchResponse422) & {
-  headers: Headers;
-};
-
-export type updateProjectApiAdminProjectsProjectIdPatchResponse = (updateProjectApiAdminProjectsProjectIdPatchResponseSuccess | updateProjectApiAdminProjectsProjectIdPatchResponseError)
-
 export const getUpdateProjectApiAdminProjectsProjectIdPatchUrl = (projectId: string,) => {
 
 
@@ -193,9 +113,9 @@ export const getUpdateProjectApiAdminProjectsProjectIdPatchUrl = (projectId: str
 }
 
 export const updateProjectApiAdminProjectsProjectIdPatch = async (projectId: string,
-    projectUpdate: ProjectUpdate, options?: RequestInit): Promise<updateProjectApiAdminProjectsProjectIdPatchResponse> => {
+    projectUpdate: ProjectUpdate, options?: RequestInit): Promise<ProjectResponse> => {
   
-  return customFetch<updateProjectApiAdminProjectsProjectIdPatchResponse>(getUpdateProjectApiAdminProjectsProjectIdPatchUrl(projectId),
+  return customFetch<ProjectResponse>(getUpdateProjectApiAdminProjectsProjectIdPatchUrl(projectId),
   {      
     ...options,
     method: 'PATCH',
@@ -209,25 +129,6 @@ export const updateProjectApiAdminProjectsProjectIdPatch = async (projectId: str
 /**
  * @summary Delete Project
  */
-export type deleteProjectApiAdminProjectsProjectIdDeleteResponse200 = {
-  data: ApiResponseEmptyDeleteApiAdminProjectsProjectId
-  status: 200
-}
-
-export type deleteProjectApiAdminProjectsProjectIdDeleteResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type deleteProjectApiAdminProjectsProjectIdDeleteResponseSuccess = (deleteProjectApiAdminProjectsProjectIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deleteProjectApiAdminProjectsProjectIdDeleteResponseError = (deleteProjectApiAdminProjectsProjectIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteProjectApiAdminProjectsProjectIdDeleteResponse = (deleteProjectApiAdminProjectsProjectIdDeleteResponseSuccess | deleteProjectApiAdminProjectsProjectIdDeleteResponseError)
-
 export const getDeleteProjectApiAdminProjectsProjectIdDeleteUrl = (projectId: string,) => {
 
 
@@ -236,9 +137,9 @@ export const getDeleteProjectApiAdminProjectsProjectIdDeleteUrl = (projectId: st
   return `/api/admin/projects/${projectId}`
 }
 
-export const deleteProjectApiAdminProjectsProjectIdDelete = async (projectId: string, options?: RequestInit): Promise<deleteProjectApiAdminProjectsProjectIdDeleteResponse> => {
+export const deleteProjectApiAdminProjectsProjectIdDelete = async (projectId: string, options?: RequestInit): Promise<null> => {
   
-  return customFetch<deleteProjectApiAdminProjectsProjectIdDeleteResponse>(getDeleteProjectApiAdminProjectsProjectIdDeleteUrl(projectId),
+  return customFetch<null>(getDeleteProjectApiAdminProjectsProjectIdDeleteUrl(projectId),
   {      
     ...options,
     method: 'DELETE'
@@ -251,25 +152,6 @@ export const deleteProjectApiAdminProjectsProjectIdDelete = async (projectId: st
 /**
  * @summary List Component Kinds
  */
-export type listComponentKindsApiAdminComponentKindsGetResponse200 = {
-  data: ApiResponsePaginatedComponentKindResponse
-  status: 200
-}
-
-export type listComponentKindsApiAdminComponentKindsGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type listComponentKindsApiAdminComponentKindsGetResponseSuccess = (listComponentKindsApiAdminComponentKindsGetResponse200) & {
-  headers: Headers;
-};
-export type listComponentKindsApiAdminComponentKindsGetResponseError = (listComponentKindsApiAdminComponentKindsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listComponentKindsApiAdminComponentKindsGetResponse = (listComponentKindsApiAdminComponentKindsGetResponseSuccess | listComponentKindsApiAdminComponentKindsGetResponseError)
-
 export const getListComponentKindsApiAdminComponentKindsGetUrl = (params?: ListComponentKindsApiAdminComponentKindsGetParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -285,9 +167,9 @@ export const getListComponentKindsApiAdminComponentKindsGetUrl = (params?: ListC
   return stringifiedParams.length > 0 ? `/api/admin/component-kinds?${stringifiedParams}` : `/api/admin/component-kinds`
 }
 
-export const listComponentKindsApiAdminComponentKindsGet = async (params?: ListComponentKindsApiAdminComponentKindsGetParams, options?: RequestInit): Promise<listComponentKindsApiAdminComponentKindsGetResponse> => {
+export const listComponentKindsApiAdminComponentKindsGet = async (params?: ListComponentKindsApiAdminComponentKindsGetParams, options?: RequestInit): Promise<PaginatedComponentKindResponse> => {
   
-  return customFetch<listComponentKindsApiAdminComponentKindsGetResponse>(getListComponentKindsApiAdminComponentKindsGetUrl(params),
+  return customFetch<PaginatedComponentKindResponse>(getListComponentKindsApiAdminComponentKindsGetUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -300,25 +182,6 @@ export const listComponentKindsApiAdminComponentKindsGet = async (params?: ListC
 /**
  * @summary Create Component Kind
  */
-export type createComponentKindApiAdminComponentKindsPostResponse201 = {
-  data: ApiResponseComponentKindResponse
-  status: 201
-}
-
-export type createComponentKindApiAdminComponentKindsPostResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type createComponentKindApiAdminComponentKindsPostResponseSuccess = (createComponentKindApiAdminComponentKindsPostResponse201) & {
-  headers: Headers;
-};
-export type createComponentKindApiAdminComponentKindsPostResponseError = (createComponentKindApiAdminComponentKindsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createComponentKindApiAdminComponentKindsPostResponse = (createComponentKindApiAdminComponentKindsPostResponseSuccess | createComponentKindApiAdminComponentKindsPostResponseError)
-
 export const getCreateComponentKindApiAdminComponentKindsPostUrl = () => {
 
 
@@ -327,9 +190,9 @@ export const getCreateComponentKindApiAdminComponentKindsPostUrl = () => {
   return `/api/admin/component-kinds`
 }
 
-export const createComponentKindApiAdminComponentKindsPost = async (componentKindCreate: ComponentKindCreate, options?: RequestInit): Promise<createComponentKindApiAdminComponentKindsPostResponse> => {
+export const createComponentKindApiAdminComponentKindsPost = async (componentKindCreate: ComponentKindCreate, options?: RequestInit): Promise<ComponentKindResponse> => {
   
-  return customFetch<createComponentKindApiAdminComponentKindsPostResponse>(getCreateComponentKindApiAdminComponentKindsPostUrl(),
+  return customFetch<ComponentKindResponse>(getCreateComponentKindApiAdminComponentKindsPostUrl(),
   {      
     ...options,
     method: 'POST',
@@ -343,25 +206,6 @@ export const createComponentKindApiAdminComponentKindsPost = async (componentKin
 /**
  * @summary Get Component Kind
  */
-export type getComponentKindApiAdminComponentKindsKindIdGetResponse200 = {
-  data: ApiResponseComponentKindResponse
-  status: 200
-}
-
-export type getComponentKindApiAdminComponentKindsKindIdGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type getComponentKindApiAdminComponentKindsKindIdGetResponseSuccess = (getComponentKindApiAdminComponentKindsKindIdGetResponse200) & {
-  headers: Headers;
-};
-export type getComponentKindApiAdminComponentKindsKindIdGetResponseError = (getComponentKindApiAdminComponentKindsKindIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getComponentKindApiAdminComponentKindsKindIdGetResponse = (getComponentKindApiAdminComponentKindsKindIdGetResponseSuccess | getComponentKindApiAdminComponentKindsKindIdGetResponseError)
-
 export const getGetComponentKindApiAdminComponentKindsKindIdGetUrl = (kindId: string,) => {
 
 
@@ -370,9 +214,9 @@ export const getGetComponentKindApiAdminComponentKindsKindIdGetUrl = (kindId: st
   return `/api/admin/component-kinds/${kindId}`
 }
 
-export const getComponentKindApiAdminComponentKindsKindIdGet = async (kindId: string, options?: RequestInit): Promise<getComponentKindApiAdminComponentKindsKindIdGetResponse> => {
+export const getComponentKindApiAdminComponentKindsKindIdGet = async (kindId: string, options?: RequestInit): Promise<ComponentKindResponse> => {
   
-  return customFetch<getComponentKindApiAdminComponentKindsKindIdGetResponse>(getGetComponentKindApiAdminComponentKindsKindIdGetUrl(kindId),
+  return customFetch<ComponentKindResponse>(getGetComponentKindApiAdminComponentKindsKindIdGetUrl(kindId),
   {      
     ...options,
     method: 'GET'
@@ -385,25 +229,6 @@ export const getComponentKindApiAdminComponentKindsKindIdGet = async (kindId: st
 /**
  * @summary Update Component Kind
  */
-export type updateComponentKindApiAdminComponentKindsKindIdPatchResponse200 = {
-  data: ApiResponseComponentKindResponse
-  status: 200
-}
-
-export type updateComponentKindApiAdminComponentKindsKindIdPatchResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type updateComponentKindApiAdminComponentKindsKindIdPatchResponseSuccess = (updateComponentKindApiAdminComponentKindsKindIdPatchResponse200) & {
-  headers: Headers;
-};
-export type updateComponentKindApiAdminComponentKindsKindIdPatchResponseError = (updateComponentKindApiAdminComponentKindsKindIdPatchResponse422) & {
-  headers: Headers;
-};
-
-export type updateComponentKindApiAdminComponentKindsKindIdPatchResponse = (updateComponentKindApiAdminComponentKindsKindIdPatchResponseSuccess | updateComponentKindApiAdminComponentKindsKindIdPatchResponseError)
-
 export const getUpdateComponentKindApiAdminComponentKindsKindIdPatchUrl = (kindId: string,) => {
 
 
@@ -413,9 +238,9 @@ export const getUpdateComponentKindApiAdminComponentKindsKindIdPatchUrl = (kindI
 }
 
 export const updateComponentKindApiAdminComponentKindsKindIdPatch = async (kindId: string,
-    componentKindUpdate: ComponentKindUpdate, options?: RequestInit): Promise<updateComponentKindApiAdminComponentKindsKindIdPatchResponse> => {
+    componentKindUpdate: ComponentKindUpdate, options?: RequestInit): Promise<ComponentKindResponse> => {
   
-  return customFetch<updateComponentKindApiAdminComponentKindsKindIdPatchResponse>(getUpdateComponentKindApiAdminComponentKindsKindIdPatchUrl(kindId),
+  return customFetch<ComponentKindResponse>(getUpdateComponentKindApiAdminComponentKindsKindIdPatchUrl(kindId),
   {      
     ...options,
     method: 'PATCH',
@@ -429,25 +254,6 @@ export const updateComponentKindApiAdminComponentKindsKindIdPatch = async (kindI
 /**
  * @summary Delete Component Kind
  */
-export type deleteComponentKindApiAdminComponentKindsKindIdDeleteResponse200 = {
-  data: ApiResponseEmptyDeleteApiAdminComponentKindsKindId
-  status: 200
-}
-
-export type deleteComponentKindApiAdminComponentKindsKindIdDeleteResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type deleteComponentKindApiAdminComponentKindsKindIdDeleteResponseSuccess = (deleteComponentKindApiAdminComponentKindsKindIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deleteComponentKindApiAdminComponentKindsKindIdDeleteResponseError = (deleteComponentKindApiAdminComponentKindsKindIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteComponentKindApiAdminComponentKindsKindIdDeleteResponse = (deleteComponentKindApiAdminComponentKindsKindIdDeleteResponseSuccess | deleteComponentKindApiAdminComponentKindsKindIdDeleteResponseError)
-
 export const getDeleteComponentKindApiAdminComponentKindsKindIdDeleteUrl = (kindId: string,) => {
 
 
@@ -456,9 +262,9 @@ export const getDeleteComponentKindApiAdminComponentKindsKindIdDeleteUrl = (kind
   return `/api/admin/component-kinds/${kindId}`
 }
 
-export const deleteComponentKindApiAdminComponentKindsKindIdDelete = async (kindId: string, options?: RequestInit): Promise<deleteComponentKindApiAdminComponentKindsKindIdDeleteResponse> => {
+export const deleteComponentKindApiAdminComponentKindsKindIdDelete = async (kindId: string, options?: RequestInit): Promise<null> => {
   
-  return customFetch<deleteComponentKindApiAdminComponentKindsKindIdDeleteResponse>(getDeleteComponentKindApiAdminComponentKindsKindIdDeleteUrl(kindId),
+  return customFetch<null>(getDeleteComponentKindApiAdminComponentKindsKindIdDeleteUrl(kindId),
   {      
     ...options,
     method: 'DELETE'
@@ -471,25 +277,6 @@ export const deleteComponentKindApiAdminComponentKindsKindIdDelete = async (kind
 /**
  * @summary List Monitored Components
  */
-export type listMonitoredComponentsApiAdminMonitoredComponentsGetResponse200 = {
-  data: ApiResponsePaginatedMonitoredComponentResponse
-  status: 200
-}
-
-export type listMonitoredComponentsApiAdminMonitoredComponentsGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type listMonitoredComponentsApiAdminMonitoredComponentsGetResponseSuccess = (listMonitoredComponentsApiAdminMonitoredComponentsGetResponse200) & {
-  headers: Headers;
-};
-export type listMonitoredComponentsApiAdminMonitoredComponentsGetResponseError = (listMonitoredComponentsApiAdminMonitoredComponentsGetResponse422) & {
-  headers: Headers;
-};
-
-export type listMonitoredComponentsApiAdminMonitoredComponentsGetResponse = (listMonitoredComponentsApiAdminMonitoredComponentsGetResponseSuccess | listMonitoredComponentsApiAdminMonitoredComponentsGetResponseError)
-
 export const getListMonitoredComponentsApiAdminMonitoredComponentsGetUrl = (params?: ListMonitoredComponentsApiAdminMonitoredComponentsGetParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -505,9 +292,9 @@ export const getListMonitoredComponentsApiAdminMonitoredComponentsGetUrl = (para
   return stringifiedParams.length > 0 ? `/api/admin/monitored-components?${stringifiedParams}` : `/api/admin/monitored-components`
 }
 
-export const listMonitoredComponentsApiAdminMonitoredComponentsGet = async (params?: ListMonitoredComponentsApiAdminMonitoredComponentsGetParams, options?: RequestInit): Promise<listMonitoredComponentsApiAdminMonitoredComponentsGetResponse> => {
+export const listMonitoredComponentsApiAdminMonitoredComponentsGet = async (params?: ListMonitoredComponentsApiAdminMonitoredComponentsGetParams, options?: RequestInit): Promise<PaginatedMonitoredComponentResponse> => {
   
-  return customFetch<listMonitoredComponentsApiAdminMonitoredComponentsGetResponse>(getListMonitoredComponentsApiAdminMonitoredComponentsGetUrl(params),
+  return customFetch<PaginatedMonitoredComponentResponse>(getListMonitoredComponentsApiAdminMonitoredComponentsGetUrl(params),
   {      
     ...options,
     method: 'GET'
@@ -520,25 +307,6 @@ export const listMonitoredComponentsApiAdminMonitoredComponentsGet = async (para
 /**
  * @summary Create Monitored Component
  */
-export type createMonitoredComponentApiAdminMonitoredComponentsPostResponse201 = {
-  data: ApiResponseMonitoredComponentResponse
-  status: 201
-}
-
-export type createMonitoredComponentApiAdminMonitoredComponentsPostResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type createMonitoredComponentApiAdminMonitoredComponentsPostResponseSuccess = (createMonitoredComponentApiAdminMonitoredComponentsPostResponse201) & {
-  headers: Headers;
-};
-export type createMonitoredComponentApiAdminMonitoredComponentsPostResponseError = (createMonitoredComponentApiAdminMonitoredComponentsPostResponse422) & {
-  headers: Headers;
-};
-
-export type createMonitoredComponentApiAdminMonitoredComponentsPostResponse = (createMonitoredComponentApiAdminMonitoredComponentsPostResponseSuccess | createMonitoredComponentApiAdminMonitoredComponentsPostResponseError)
-
 export const getCreateMonitoredComponentApiAdminMonitoredComponentsPostUrl = () => {
 
 
@@ -547,9 +315,9 @@ export const getCreateMonitoredComponentApiAdminMonitoredComponentsPostUrl = () 
   return `/api/admin/monitored-components`
 }
 
-export const createMonitoredComponentApiAdminMonitoredComponentsPost = async (monitoredComponentCreate: MonitoredComponentCreate, options?: RequestInit): Promise<createMonitoredComponentApiAdminMonitoredComponentsPostResponse> => {
+export const createMonitoredComponentApiAdminMonitoredComponentsPost = async (monitoredComponentCreate: MonitoredComponentCreate, options?: RequestInit): Promise<MonitoredComponentResponse> => {
   
-  return customFetch<createMonitoredComponentApiAdminMonitoredComponentsPostResponse>(getCreateMonitoredComponentApiAdminMonitoredComponentsPostUrl(),
+  return customFetch<MonitoredComponentResponse>(getCreateMonitoredComponentApiAdminMonitoredComponentsPostUrl(),
   {      
     ...options,
     method: 'POST',
@@ -563,25 +331,6 @@ export const createMonitoredComponentApiAdminMonitoredComponentsPost = async (mo
 /**
  * @summary Get Monitored Component
  */
-export type getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponse200 = {
-  data: ApiResponseMonitoredComponentResponse
-  status: 200
-}
-
-export type getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponseSuccess = (getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponse200) & {
-  headers: Headers;
-};
-export type getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponseError = (getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponse422) & {
-  headers: Headers;
-};
-
-export type getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponse = (getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponseSuccess | getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponseError)
-
 export const getGetMonitoredComponentApiAdminMonitoredComponentsComponentIdGetUrl = (componentId: string,) => {
 
 
@@ -590,9 +339,9 @@ export const getGetMonitoredComponentApiAdminMonitoredComponentsComponentIdGetUr
   return `/api/admin/monitored-components/${componentId}`
 }
 
-export const getMonitoredComponentApiAdminMonitoredComponentsComponentIdGet = async (componentId: string, options?: RequestInit): Promise<getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponse> => {
+export const getMonitoredComponentApiAdminMonitoredComponentsComponentIdGet = async (componentId: string, options?: RequestInit): Promise<MonitoredComponentResponse> => {
   
-  return customFetch<getMonitoredComponentApiAdminMonitoredComponentsComponentIdGetResponse>(getGetMonitoredComponentApiAdminMonitoredComponentsComponentIdGetUrl(componentId),
+  return customFetch<MonitoredComponentResponse>(getGetMonitoredComponentApiAdminMonitoredComponentsComponentIdGetUrl(componentId),
   {      
     ...options,
     method: 'GET'
@@ -605,25 +354,6 @@ export const getMonitoredComponentApiAdminMonitoredComponentsComponentIdGet = as
 /**
  * @summary Update Monitored Component
  */
-export type updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponse200 = {
-  data: ApiResponseMonitoredComponentResponse
-  status: 200
-}
-
-export type updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponseSuccess = (updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponse200) & {
-  headers: Headers;
-};
-export type updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponseError = (updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponse422) & {
-  headers: Headers;
-};
-
-export type updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponse = (updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponseSuccess | updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponseError)
-
 export const getUpdateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchUrl = (componentId: string,) => {
 
 
@@ -633,9 +363,9 @@ export const getUpdateMonitoredComponentApiAdminMonitoredComponentsComponentIdPa
 }
 
 export const updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatch = async (componentId: string,
-    monitoredComponentUpdate: MonitoredComponentUpdate, options?: RequestInit): Promise<updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponse> => {
+    monitoredComponentUpdate: MonitoredComponentUpdate, options?: RequestInit): Promise<MonitoredComponentResponse> => {
   
-  return customFetch<updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchResponse>(getUpdateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchUrl(componentId),
+  return customFetch<MonitoredComponentResponse>(getUpdateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatchUrl(componentId),
   {      
     ...options,
     method: 'PATCH',
@@ -649,25 +379,6 @@ export const updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatch
 /**
  * @summary Delete Monitored Component
  */
-export type deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponse200 = {
-  data: ApiResponseEmptyDeleteApiAdminMonitoredComponentsComponentId
-  status: 200
-}
-
-export type deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponse422 = {
-  data: ApiResponseError
-  status: 422
-}
-    
-export type deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponseSuccess = (deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponse200) & {
-  headers: Headers;
-};
-export type deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponseError = (deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponse422) & {
-  headers: Headers;
-};
-
-export type deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponse = (deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponseSuccess | deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponseError)
-
 export const getDeleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteUrl = (componentId: string,) => {
 
 
@@ -676,9 +387,9 @@ export const getDeleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDe
   return `/api/admin/monitored-components/${componentId}`
 }
 
-export const deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDelete = async (componentId: string, options?: RequestInit): Promise<deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponse> => {
+export const deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDelete = async (componentId: string, options?: RequestInit): Promise<null> => {
   
-  return customFetch<deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteResponse>(getDeleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteUrl(componentId),
+  return customFetch<null>(getDeleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDeleteUrl(componentId),
   {      
     ...options,
     method: 'DELETE'

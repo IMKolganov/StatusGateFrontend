@@ -5,11 +5,12 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PublicProjectSummaryDescription } from './publicProjectSummaryDescription';
+import type { PublicProjectSummaryUptimePercent } from './publicProjectSummaryUptimePercent';
 
 export interface PublicProjectSummary {
   id: string;
   name: string;
   slug: string;
   description: PublicProjectSummaryDescription;
-  uptime_percent?: number | null;
+  uptime_percent?: PublicProjectSummaryUptimePercent;
 }
