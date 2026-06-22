@@ -1,11 +1,14 @@
 import { defineConfig } from 'orval'
 
-const openApiUrl = process.env.OPENAPI_URL ?? 'http://localhost:8000/openapi.json'
+const openApiTarget = process.env.OPENAPI_URL ?? './openapi.json'
 
 export default defineConfig({
   statusgate: {
     input: {
-      target: openApiUrl,
+      target: openApiTarget,
+      override: {
+        transformer: './src/api/openapi-transformer.ts',
+      },
     },
     output: {
       mode: 'tags-split',
@@ -17,6 +20,9 @@ export default defineConfig({
         mutator: {
           path: './src/api/mutator.ts',
           name: 'customFetch',
+        },
+        fetch: {
+          includeHttpResponseReturnType: false,
         },
       },
     },

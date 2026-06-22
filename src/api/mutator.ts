@@ -6,6 +6,9 @@ type ApiEnvelope<T> = {
   data: T
 }
 
+/** Maps Orval ApiResponse_* types to the payload returned after envelope unwrap. */
+export type UnwrapApiResponse<T> = T extends { data?: infer D } ? NonNullable<D> : T
+
 export class ApiError extends Error {
   status: number
   detail?: string

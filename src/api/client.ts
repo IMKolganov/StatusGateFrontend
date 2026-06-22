@@ -27,12 +27,14 @@ import {
 import {
   getMonitoringSettingsApiAdminMonitoringSettingsGet,
   listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGet,
+  purgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDelete,
   runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPost,
   updateMonitoringSettingsApiAdminMonitoringSettingsPatch,
 } from './generated/admin-monitoring/admin-monitoring'
 import {
   disable2faApiAuth2faDisablePost,
   enable2faApiAuth2faEnablePost,
+  googleLoginApiAuthGoogleLoginPost,
   linkPasswordApiAuthPasswordLinkPost,
   login2faApiAuthLogin2faPost,
   loginApiAuthLoginPost,
@@ -58,6 +60,7 @@ import type { MonitoredComponentResponse } from './generated/models/monitoredCom
 import type { MonitoredComponentUpdate } from './generated/models/monitoredComponentUpdate'
 import type { MonitoringSettingsResponse } from './generated/models/monitoringSettingsResponse'
 import type { MonitoringSettingsUpdate } from './generated/models/monitoringSettingsUpdate'
+import type { NetworkSummary } from './generated/models/networkSummary'
 import type { PaginatedAccountAdminResponse } from './generated/models/paginatedAccountAdminResponse'
 import type { PaginatedCheckResultResponse } from './generated/models/paginatedCheckResultResponse'
 import type { PaginatedComponentKindResponse } from './generated/models/paginatedComponentKindResponse'
@@ -66,88 +69,31 @@ import type { PaginatedProjectResponse } from './generated/models/paginatedProje
 import type { ProjectCreate } from './generated/models/projectCreate'
 import type { ProjectResponse } from './generated/models/projectResponse'
 import type { ProjectUpdate } from './generated/models/projectUpdate'
-import type { PublicDayBar as PublicDayBarGenerated } from './generated/models/publicDayBar'
+import type { PublicDayBar } from './generated/models/publicDayBar'
 import type { PublicProjectHistory } from './generated/models/publicProjectHistory'
-import type { PublicProjectStatus as PublicProjectStatusGenerated } from './generated/models/publicProjectStatus'
+import type { PublicProjectStatus } from './generated/models/publicProjectStatus'
 import type { PublicProjectSummary } from './generated/models/publicProjectSummary'
-import type { PublicServiceStatus as PublicServiceStatusGenerated } from './generated/models/publicServiceStatus'
 import type { PublicSystemStatus } from './generated/models/publicSystemStatus'
-import type { RegistrationStatusResponse as GeneratedRegistrationStatusResponse } from './generated/models/registrationStatusResponse'
+import type { PurgeCheckHistoryResponse } from './generated/models/purgeCheckHistoryResponse'
+import type { RegistrationStatusResponse } from './generated/models/registrationStatusResponse'
+import type { RegisterRequest } from './generated/models/registerRequest'
 import type { TwoFactorSetupResponse } from './generated/models/twoFactorSetupResponse'
+import type { VpnCheckConfig } from './generated/models/vpnCheckConfig'
 import {
   getPublicProjectHistoryApiStatusProjectsSlugHistoryGet,
   getPublicProjectStatusApiStatusProjectsSlugGet,
   getPublicSystemStatusApiStatusProjectsSlugSystemStatusGet,
   listPublicProjectsApiStatusProjectsGet,
 } from './generated/public-status/public-status'
-import customFetch, { ApiError } from './mutator'
+import { ApiError } from './mutator'
 
 export type Account = AccountResponse
 export type Project = ProjectResponse
 export type ComponentKind = ComponentKindResponse
-export type MonitoredComponent = MonitoredComponentResponse & {
-  check_config?: { config_text?: string } | null
-  speed_test_bytes?: number | null
-  latest_error_message?: string | null
-  latest_log_tail?: string | null
-  latest_network_summary?: Record<string, unknown> | null
-}
-
-export type PurgeCheckHistoryResult = {
-  deleted_count: number
-  remaining_count: number
-}
-
-export type NetworkSummary = {
-  interface?: string
-  ipv4_address?: string
-  gateway?: string
-  dns_servers?: string[]
-  mtu?: number
-  connect_time_ms?: number
-  proxy_url?: string
-  inbound_protocol?: string
-  probe_url?: string
-  exit_ip?: string
-  probe_latency_ms?: number
-  gateway_ping_avg_ms?: number
-  gateway_ping_loss_percent?: number
-  gateway_ping_jitter_ms?: number
-  download_mbps?: number
-  download_bytes?: number
-  download_duration_ms?: number
-}
-
-export type PublicServiceStatus = PublicServiceStatusGenerated & {
-  network_summary?: NetworkSummary | null
-}
-
-export type PublicDayBar = PublicDayBarGenerated & {
-  check_count?: number
-  failed_count?: number
-  degraded_count?: number
-  availability_percent?: number | null
-}
-
-export type PublicProjectStatus = Omit<PublicProjectStatusGenerated, 'services'> & {
-  services: PublicServiceStatus[]
-}
-
+export type MonitoredComponent = MonitoredComponentResponse
 export type CheckResult = CheckResultResponse
 export type MonitoringSettings = MonitoringSettingsResponse
 export type Incident = IncidentResponse
-export type Paginated<T> = {
-  items: T[]
-  total: number
-  offset: number
-  limit: number
-  has_next: boolean
-  has_previous: boolean
-}
-
-export type RegistrationStatusResponse = GeneratedRegistrationStatusResponse & {
-  require_email_verification: boolean
-}
 
 export type {
   AccountAdminResponse,
@@ -162,6 +108,7 @@ export type {
   MonitoredComponentCreate,
   MonitoredComponentUpdate,
   MonitoringSettingsUpdate,
+  NetworkSummary,
   PaginatedAccountAdminResponse,
   PaginatedCheckResultResponse,
   PaginatedComponentKindResponse,
@@ -169,162 +116,146 @@ export type {
   PaginatedProjectResponse,
   ProjectCreate,
   ProjectUpdate,
+  PublicDayBar,
   PublicProjectHistory,
+  PublicProjectStatus,
   PublicProjectSummary,
   PublicSystemStatus,
+  PurgeCheckHistoryResponse,
+  RegistrationStatusResponse,
+  RegisterRequest,
   TwoFactorSetupResponse,
+  VpnCheckConfig,
 }
 
 export { ApiError }
 
-async function call<T>(request: () => Promise<unknown>): Promise<T> {
-  return request() as Promise<T>
-}
-
 export const api = {
-  registrationStatus: (): Promise<RegistrationStatusResponse> =>
-    call(() => registrationStatusApiAuthRegistrationStatusGet()),
+  registrationStatus: (): Promise<RegistrationStatusResponse> => registrationStatusApiAuthRegistrationStatusGet(),
 
   googleLogin: (idToken: string): Promise<ApiResponseLoginResultData> =>
-    call(() =>
-      customFetch<ApiResponseLoginResultData>('/api/auth/google-login', {
-        method: 'POST',
-        body: JSON.stringify({ idToken }),
-      }),
-    ),
+    googleLoginApiAuthGoogleLoginPost({ idToken }),
 
-  register: (payload: { email: string; password: string; full_name?: string }) =>
-    call<AccountResponse>(() => registerApiAuthRegisterPost(payload)),
+  register: (payload: RegisterRequest): Promise<AccountResponse> => registerApiAuthRegisterPost(payload),
 
   login: (payload: { email: string; password: string }): Promise<ApiResponseLoginResultData> =>
-    call(() => loginApiAuthLoginPost(payload)),
+    loginApiAuthLoginPost(payload),
 
   login2fa: (payload: { mfa_token: string; code: string }): Promise<AccountResponse> =>
-    call(() => login2faApiAuthLogin2faPost(payload)),
+    login2faApiAuthLogin2faPost(payload),
 
-  logout: (): Promise<void> => call(() => logoutApiAuthLogoutPost()),
+  logout: async (): Promise<void> => {
+    await logoutApiAuthLogoutPost()
+  },
 
-  me: (): Promise<AccountResponse> => call(() => meApiAuthMeGet()),
+  me: (): Promise<AccountResponse> => meApiAuthMeGet(),
 
-  dashboard: (): Promise<AdminDashboardResponse> => call(() => adminDashboardApiAdminDashboardGet()),
+  dashboard: (): Promise<AdminDashboardResponse> => adminDashboardApiAdminDashboardGet(),
 
-  linkPassword: (password: string): Promise<AccountResponse> =>
-    call(() => linkPasswordApiAuthPasswordLinkPost({ password })),
+  linkPassword: (password: string): Promise<AccountResponse> => linkPasswordApiAuthPasswordLinkPost({ password }),
 
-  setup2fa: (): Promise<TwoFactorSetupResponse> => call(() => setup2faApiAuth2faSetupPost()),
+  setup2fa: (): Promise<TwoFactorSetupResponse> => setup2faApiAuth2faSetupPost(),
 
-  enable2fa: (code: string): Promise<AccountResponse> =>
-    call(() => enable2faApiAuth2faEnablePost({ code })),
+  enable2fa: (code: string): Promise<AccountResponse> => enable2faApiAuth2faEnablePost({ code }),
 
   disable2fa: (payload: { password: string; code: string }): Promise<AccountResponse> =>
-    call(() => disable2faApiAuth2faDisablePost(payload)),
+    disable2faApiAuth2faDisablePost(payload),
 
   listProjects: (offset = 0, limit = 100): Promise<PaginatedProjectResponse> =>
-    call(() => listProjectsApiAdminProjectsGet({ offset, limit })),
+    listProjectsApiAdminProjectsGet({ offset, limit }),
 
-  createProject: (payload: ProjectCreate): Promise<ProjectResponse> =>
-    call(() => createProjectApiAdminProjectsPost(payload)),
+  createProject: (payload: ProjectCreate): Promise<ProjectResponse> => createProjectApiAdminProjectsPost(payload),
 
   updateProject: (id: string, payload: ProjectUpdate): Promise<ProjectResponse> =>
-    call(() => updateProjectApiAdminProjectsProjectIdPatch(id, payload)),
+    updateProjectApiAdminProjectsProjectIdPatch(id, payload),
 
-  deleteProject: (id: string): Promise<void> =>
-    call(() => deleteProjectApiAdminProjectsProjectIdDelete(id)),
+  deleteProject: async (id: string): Promise<void> => {
+    await deleteProjectApiAdminProjectsProjectIdDelete(id)
+  },
 
   listComponentKinds: (offset = 0, limit = 100): Promise<PaginatedComponentKindResponse> =>
-    call(() => listComponentKindsApiAdminComponentKindsGet({ offset, limit })),
+    listComponentKindsApiAdminComponentKindsGet({ offset, limit }),
 
   createComponentKind: (payload: ComponentKindCreate): Promise<ComponentKindResponse> =>
-    call(() => createComponentKindApiAdminComponentKindsPost(payload)),
+    createComponentKindApiAdminComponentKindsPost(payload),
 
   updateComponentKind: (id: string, payload: ComponentKindUpdate): Promise<ComponentKindResponse> =>
-    call(() => updateComponentKindApiAdminComponentKindsKindIdPatch(id, payload)),
+    updateComponentKindApiAdminComponentKindsKindIdPatch(id, payload),
 
-  deleteComponentKind: (id: string): Promise<void> =>
-    call(() => deleteComponentKindApiAdminComponentKindsKindIdDelete(id)),
+  deleteComponentKind: async (id: string): Promise<void> => {
+    await deleteComponentKindApiAdminComponentKindsKindIdDelete(id)
+  },
 
   listMonitoredComponents: (
     projectId?: string,
     offset = 0,
     limit = 100,
   ): Promise<PaginatedMonitoredComponentResponse> =>
-    call(() =>
-      listMonitoredComponentsApiAdminMonitoredComponentsGet({
-        project_id: projectId,
-        offset,
-        limit,
-      }),
-    ),
+    listMonitoredComponentsApiAdminMonitoredComponentsGet({
+      project_id: projectId,
+      offset,
+      limit,
+    }),
 
   createMonitoredComponent: (payload: MonitoredComponentCreate): Promise<MonitoredComponentResponse> =>
-    call(() => createMonitoredComponentApiAdminMonitoredComponentsPost(payload)),
+    createMonitoredComponentApiAdminMonitoredComponentsPost(payload),
 
-  updateMonitoredComponent: (
-    id: string,
-    payload: MonitoredComponentUpdate,
-  ): Promise<MonitoredComponentResponse> =>
-    call(() => updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatch(id, payload)),
+  updateMonitoredComponent: (id: string, payload: MonitoredComponentUpdate): Promise<MonitoredComponentResponse> =>
+    updateMonitoredComponentApiAdminMonitoredComponentsComponentIdPatch(id, payload),
 
-  deleteMonitoredComponent: (id: string): Promise<void> =>
-    call(() => deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDelete(id)),
+  deleteMonitoredComponent: async (id: string): Promise<void> => {
+    await deleteMonitoredComponentApiAdminMonitoredComponentsComponentIdDelete(id)
+  },
 
-  getMonitoringSettings: (): Promise<MonitoringSettingsResponse> =>
-    call(() => getMonitoringSettingsApiAdminMonitoringSettingsGet()),
+  getMonitoringSettings: (): Promise<MonitoringSettingsResponse> => getMonitoringSettingsApiAdminMonitoringSettingsGet(),
 
   updateMonitoringSettings: (payload: MonitoringSettingsUpdate): Promise<MonitoringSettingsResponse> =>
-    call(() => updateMonitoringSettingsApiAdminMonitoringSettingsPatch(payload)),
+    updateMonitoringSettingsApiAdminMonitoringSettingsPatch(payload),
 
   runManualCheck: (componentId: string): Promise<CheckResultResponse> =>
-    call(() => runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPost(componentId)),
+    runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPost(componentId),
 
   listCheckResults: (componentId: string, limit = 20): Promise<PaginatedCheckResultResponse> =>
-    call(() =>
-      listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGet(componentId, {
-        limit,
-      }),
-    ),
+    listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGet(componentId, {
+      limit,
+    }),
 
-  purgeCheckHistory: (componentId: string, keep = 0): Promise<PurgeCheckHistoryResult> =>
-    call(() =>
-      customFetch<PurgeCheckHistoryResult>(
-        `/api/admin/monitoring/monitored-components/${componentId}/check-results?keep=${keep}`,
-        { method: 'DELETE' },
-      ),
-    ),
+  purgeCheckHistory: (componentId: string, keep = 0): Promise<PurgeCheckHistoryResponse> =>
+    purgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDelete(componentId, { keep }),
 
   listProjectIncidents: (projectId: string): Promise<IncidentResponse[]> =>
-    call(() => listProjectIncidentsApiAdminProjectsProjectIdIncidentsGet(projectId)),
+    listProjectIncidentsApiAdminProjectsProjectIdIncidentsGet(projectId),
 
   createProjectIncident: (projectId: string, payload: IncidentCreate): Promise<IncidentResponse> =>
-    call(() => createProjectIncidentApiAdminProjectsProjectIdIncidentsPost(projectId, payload)),
+    createProjectIncidentApiAdminProjectsProjectIdIncidentsPost(projectId, payload),
 
-  deleteIncident: (incidentId: string): Promise<void> =>
-    call(() => deleteIncidentApiAdminIncidentsIncidentIdDelete(incidentId)),
+  deleteIncident: async (incidentId: string): Promise<void> => {
+    await deleteIncidentApiAdminIncidentsIncidentIdDelete(incidentId)
+  },
 
   addIncidentUpdate: (incidentId: string, payload: IncidentUpdateCreate) =>
-    call(() => addIncidentUpdateApiAdminIncidentsIncidentIdUpdatesPost(incidentId, payload)),
+    addIncidentUpdateApiAdminIncidentsIncidentIdUpdatesPost(incidentId, payload),
 
-  deleteIncidentUpdate: (updateId: string): Promise<void> =>
-    call(() => deleteIncidentEntryApiAdminIncidentUpdatesUpdateIdDelete(updateId)),
+  deleteIncidentUpdate: async (updateId: string): Promise<void> => {
+    await deleteIncidentEntryApiAdminIncidentUpdatesUpdateIdDelete(updateId)
+  },
 
   listAccounts: (offset = 0, limit = 100): Promise<PaginatedAccountAdminResponse> =>
-    call(() => listAccountsApiAdminAccountsGet({ offset, limit })),
+    listAccountsApiAdminAccountsGet({ offset, limit }),
 
   updateAccountRoles: (id: string, access_roles: string[]): Promise<AccountAdminResponse> =>
-    call(() => updateAccountRolesApiAdminAccountsAccountIdRolesPut(id, { access_roles })),
+    updateAccountRolesApiAdminAccountsAccountIdRolesPut(id, { access_roles }),
 
-  listPublicProjects: (): Promise<PublicProjectSummary[]> =>
-    call(() => listPublicProjectsApiStatusProjectsGet()),
+  listPublicProjects: (): Promise<PublicProjectSummary[]> => listPublicProjectsApiStatusProjectsGet(),
 
   getPublicProjectStatus: (slug: string): Promise<PublicProjectStatus> =>
-    call(() => getPublicProjectStatusApiStatusProjectsSlugGet(slug)),
+    getPublicProjectStatusApiStatusProjectsSlugGet(slug),
 
   getPublicProjectHistory: (slug: string): Promise<PublicProjectHistory> =>
-    call(() => getPublicProjectHistoryApiStatusProjectsSlugHistoryGet(slug)),
+    getPublicProjectHistoryApiStatusProjectsSlugHistoryGet(slug),
 
   getPublicSystemStatus: (
     slug: string,
     params?: { end?: string; days?: number },
-  ): Promise<PublicSystemStatus> =>
-    call(() => getPublicSystemStatusApiStatusProjectsSlugSystemStatusGet(slug, params)),
+  ): Promise<PublicSystemStatus> => getPublicSystemStatusApiStatusProjectsSlugSystemStatusGet(slug, params),
 }

@@ -43,12 +43,27 @@ function isSameUtcMonth(left: Date, right: Date): boolean {
   return left.getUTCFullYear() === right.getUTCFullYear() && left.getUTCMonth() === right.getUTCMonth()
 }
 
+function formatDowntime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.round((seconds % 3600) / 60)
+  return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`
+}
+
+function formatAvailabilityLine(day: PublicDayBar): string {
+  if ((day.check_count ?? 0) === 0) return 'No monitoring data'
+  if ((day.downtime_seconds ?? 0) === 0) return 'Available all day'
+  return `Unavailable ~${formatDowntime(day.downtime_seconds ?? 0)}`
+}
+
 type TimelineTooltipProps = {
   day: PublicDayBar
   anchorRect: DOMRect
+  showAvailabilityDetail?: boolean
 }
 
-function TimelineTooltip({ day, anchorRect }: TimelineTooltipProps) {
+function TimelineTooltip({ day, anchorRect, showAvailabilityDetail }: TimelineTooltipProps) {
   const left = anchorRect.left + anchorRect.width / 2
   const top = anchorRect.top - 8
 
@@ -60,6 +75,9 @@ function TimelineTooltip({ day, anchorRect }: TimelineTooltipProps) {
     >
       <div className="status-timeline-tooltip-date">{formatDayLabel(day.date)}</div>
       <p className="status-timeline-tooltip-summary">{day.tooltip}</p>
+      {showAvailabilityDetail && (
+        <p className="status-timeline-tooltip-availability">{formatAvailabilityLine(day)}</p>
+      )}
       {day.incidents && day.incidents.length > 0 && (
         <ul className="status-timeline-tooltip-list">
           {day.incidents.map((incident, index) => (
@@ -123,11 +141,18 @@ type TimelineRowProps = {
   uptimePercent: number | null | undefined
   days: PublicDayBar[]
   todayIso: string
-  onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect) => void
+  onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect, showAvailabilityDetail?: boolean) => void
   nested?: boolean
 }
 
 function TimelineRow({ title, meta, uptimePercent, days, todayIso, onHoverDay, nested }: TimelineRowProps) {
+  const handleHoverDay = useCallback(
+    (day: PublicDayBar | null, anchor?: DOMRect) => {
+      onHoverDay(day, anchor, nested)
+    },
+    [nested, onHoverDay],
+  )
+
   return (
     <div className={`status-timeline-row${nested ? ' status-timeline-row-nested' : ''}`}>
       <div className="status-timeline-label">
@@ -137,7 +162,7 @@ function TimelineRow({ title, meta, uptimePercent, days, todayIso, onHoverDay, n
       {uptimePercent != null && (
         <div className="status-timeline-uptime">{uptimePercent.toFixed(2)}% uptime</div>
       )}
-      <DayBars days={days} todayIso={todayIso} onHoverDay={onHoverDay} />
+      <DayBars days={days} todayIso={todayIso} onHoverDay={handleHoverDay} />
     </div>
   )
 }
@@ -154,7 +179,11 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
-  const [tooltip, setTooltip] = useState<{ day: PublicDayBar; anchorRect: DOMRect } | null>(null)
+  const [tooltip, setTooltip] = useState<{
+    day: PublicDayBar
+    anchorRect: DOMRect
+    showAvailabilityDetail: boolean
+  } | null>(null)
 
   const todayIso = toIsoDate(today)
   const monthEnd = useMemo(() => endOfUtcMonth(viewMonth), [viewMonth])
@@ -174,13 +203,16 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
       .finally(() => setLoading(false))
   }, [slug, monthEnd, dayCount])
 
-  const handleHoverDay = useCallback((day: PublicDayBar | null, anchor?: DOMRect) => {
-    if (day && anchor) {
-      setTooltip({ day, anchorRect: anchor })
-      return
-    }
-    setTooltip(null)
-  }, [])
+  const handleHoverDay = useCallback(
+    (day: PublicDayBar | null, anchor?: DOMRect, showAvailabilityDetail = false) => {
+      if (day && anchor) {
+        setTooltip({ day, anchorRect: anchor, showAvailabilityDetail })
+        return
+      }
+      setTooltip(null)
+    },
+    [],
+  )
 
   const moveRange = (direction: -1 | 1) => {
     setViewMonth((current) => {
@@ -298,7 +330,13 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
         </>
       )}
 
-      {tooltip && <TimelineTooltip day={tooltip.day} anchorRect={tooltip.anchorRect} />}
+      {tooltip && (
+        <TimelineTooltip
+          day={tooltip.day}
+          anchorRect={tooltip.anchorRect}
+          showAvailabilityDetail={tooltip.showAvailabilityDetail}
+        />
+      )}
     </section>
   )
 }

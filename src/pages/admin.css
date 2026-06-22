@@ -42,6 +42,54 @@
   width: 100%;
 }
 
+.google-login-shell {
+  position: relative;
+  width: 100%;
+  min-height: var(--sg-btn-height);
+}
+
+.google-login-visual {
+  pointer-events: none;
+  user-select: none;
+}
+
+.google-login-icon {
+  flex-shrink: 0;
+}
+
+.google-login-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.google-login-shell--pending .google-login-overlay {
+  pointer-events: none;
+  cursor: wait;
+}
+
+.google-login-shell--pending .google-login-visual {
+  opacity: 0.55;
+}
+
+.google-login-overlay > div {
+  width: 100% !important;
+  max-width: 100%;
+  height: 100% !important;
+  min-height: var(--sg-btn-height);
+}
+
+.google-login-overlay iframe {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: var(--sg-btn-height);
+  margin: 0;
+}
+
 .google-login-wrapper {
   width: 100%;
   min-width: 0;
@@ -73,7 +121,7 @@
   font-size: 0.875rem;
   line-height: 1.4;
   background: var(--sg-error-bg);
-  border: 1px solid #fecaca;
+  border: 1px solid var(--sg-error-border);
   color: var(--sg-error-text);
 }
 
@@ -467,14 +515,14 @@
   text-transform: lowercase;
 }
 
-.status-up { background: color-mix(in srgb, var(--sg-success, #16a34a) 18%, transparent); color: var(--sg-success, #16a34a); }
-.status-degraded { background: color-mix(in srgb, #ca8a04 18%, transparent); color: #ca8a04; }
-.status-down { background: color-mix(in srgb, var(--sg-danger, #dc2626) 18%, transparent); color: var(--sg-danger, #dc2626); }
-.status-unknown { background: var(--sg-surface-muted, #f4f4f5); color: var(--sg-text-muted); }
+.status-up { background: color-mix(in srgb, var(--sg-success) 18%, transparent); color: var(--sg-success); }
+.status-degraded { background: color-mix(in srgb, var(--sg-status-degraded) 18%, transparent); color: var(--sg-status-degraded); }
+.status-down { background: color-mix(in srgb, var(--sg-danger) 18%, transparent); color: var(--sg-danger); }
+.status-unknown { background: color-mix(in srgb, var(--sg-text-muted) 14%, transparent); color: var(--sg-text-muted); }
 
 .alert.success {
-  background: color-mix(in srgb, var(--sg-success, #16a34a) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--sg-success, #16a34a) 35%, transparent);
+  background: color-mix(in srgb, var(--sg-success) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sg-success) 35%, transparent);
   color: var(--sg-text);
 }
 
