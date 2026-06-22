@@ -87,6 +87,7 @@ export type Project = ProjectResponse
 export type ComponentKind = ComponentKindResponse
 export type MonitoredComponent = MonitoredComponentResponse & {
   check_config?: { config_text?: string } | null
+  speed_test_bytes?: number | null
   latest_error_message?: string | null
   latest_log_tail?: string | null
   latest_network_summary?: Record<string, unknown> | null
