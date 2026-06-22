@@ -127,6 +127,7 @@ export type PublicDayBar = PublicDayBarGenerated & {
   failed_count?: number
   degraded_count?: number
   availability_percent?: number | null
+  downtime_seconds?: number
 }
 
 export type PublicProjectStatus = Omit<PublicProjectStatusGenerated, 'services'> & {

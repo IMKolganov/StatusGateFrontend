@@ -651,6 +651,14 @@
   color: var(--sg-text);
 }
 
+.status-timeline-tooltip-availability {
+  margin: 0 0 var(--sg-space-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--sg-text-heading);
+}
+
 .status-timeline-tooltip-empty {
   margin: 0;
   font-size: 0.875rem;
