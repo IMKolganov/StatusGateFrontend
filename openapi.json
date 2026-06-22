@@ -3603,6 +3603,28 @@
               }
             ],
             "title": "Download Duration Ms"
+          },
+          "speed_test_ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Ok"
+          },
+          "speed_test_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Test Error"
           }
         },
         "type": "object",

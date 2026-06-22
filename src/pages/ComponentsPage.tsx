@@ -79,6 +79,8 @@ function networkSummaryFromDetails(details: Record<string, unknown> | null | und
     download_mbps: speedTest.mbps,
     download_bytes: speedTest.bytes,
     download_duration_ms: speedTest.duration_ms,
+    speed_test_ok: typeof speedTest.ok === 'boolean' ? speedTest.ok : undefined,
+    speed_test_error: typeof speedTest.error === 'string' ? speedTest.error : undefined,
   })
 }
 

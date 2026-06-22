@@ -66,6 +66,7 @@ export function networkSummaryFromRecord(raw: Record<string, unknown> | null | u
 
   const num = (key: string) => (typeof raw[key] === 'number' ? raw[key] as number : undefined)
   const str = (key: string) => (typeof raw[key] === 'string' ? raw[key] as string : undefined)
+  const bool = (key: string) => (typeof raw[key] === 'boolean' ? raw[key] as boolean : undefined)
 
   const summary: NetworkSummary = {
     interface: str('interface'),
@@ -87,6 +88,8 @@ export function networkSummaryFromRecord(raw: Record<string, unknown> | null | u
     download_mbps: num('download_mbps'),
     download_bytes: num('download_bytes'),
     download_duration_ms: num('download_duration_ms'),
+    speed_test_ok: bool('speed_test_ok'),
+    speed_test_error: str('speed_test_error'),
   }
 
   return Object.values(summary).some((value) => value != null && value !== '' && !(Array.isArray(value) && value.length === 0))

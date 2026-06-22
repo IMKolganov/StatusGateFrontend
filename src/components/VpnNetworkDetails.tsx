@@ -16,6 +16,17 @@ function formatBytes(value: number): string {
   return `${value} B`
 }
 
+function formatDownloadSpeed(summary: NetworkSummary): string | null {
+  if (summary.download_mbps != null) {
+    return `${Number(summary.download_mbps).toFixed(2)} Mbps`
+  }
+  if (summary.speed_test_ok === false) {
+    const reason = summary.speed_test_error?.trim() || 'Unknown error'
+    return `Could not measure speed: ${reason}`
+  }
+  return null
+}
+
 export function VpnNetworkDetails({
   summary,
   className = '',
@@ -42,10 +53,18 @@ export function VpnNetworkDetails({
   if (summary.gateway_ping_loss_percent != null) {
     rows.push(['Packet loss', `${summary.gateway_ping_loss_percent}%`])
   }
-  if (summary.download_mbps != null) rows.push(['Download speed', `${Number(summary.download_mbps).toFixed(2)} Mbps`])
-  if (summary.download_bytes != null && summary.download_duration_ms != null) {
+
+  const downloadSpeed = formatDownloadSpeed(summary)
+  if (downloadSpeed) rows.push(['Download speed', downloadSpeed])
+
+  if (
+    summary.speed_test_ok === true
+    && summary.download_bytes != null
+    && summary.download_duration_ms != null
+  ) {
     rows.push(['Speed test', `${formatBytes(Number(summary.download_bytes))} in ${summary.download_duration_ms} ms`])
   }
+
   if (summary.exit_ip) rows.push(['Exit IP', String(summary.exit_ip)])
   if (summary.probe_latency_ms != null) rows.push(['Probe latency', `${summary.probe_latency_ms} ms`])
   if (summary.probe_url) rows.push(['Probe URL', String(summary.probe_url)])

@@ -5,4 +5,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type NetworkSummaryProbeLatencyMs = number | null;
+export type NetworkSummarySpeedTestOk = boolean | null;
