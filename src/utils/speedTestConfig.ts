@@ -9,6 +9,7 @@ export const DEFAULT_SPEED_TEST_URL_TEMPLATE = 'https://speed.cloudflare.com/__d
  * when too many requests arrive in a short window (see cloudflare/speedtest and Error 429 docs).
  */
 export const CLOUDFLARE_SPEED_TEST_GUIDANCE_REQUESTS_PER_MINUTE = 10
+export const CLOUDFLARE_SPEED_TEST_MIN_GAP_SECONDS = 60
 
 export function isVpnCheckType(checkType: string | null | undefined): boolean {
   return checkType === 'openvpn' || checkType === 'xray'
@@ -57,7 +58,8 @@ export function buildLocalSpeedTestWarning(
   return (
     `${activeVpn.length} active VPN services may trigger about ${perMinute.toFixed(1)} speed tests per minute ` +
     `on speed.cloudflare.com from this server (Cloudflare has no published limit; HTTP 429 may occur above ~` +
-    `${CLOUDFLARE_SPEED_TEST_GUIDANCE_REQUESTS_PER_MINUTE}/min). Use a custom speed test URL, increase intervals, ` +
+    `${CLOUDFLARE_SPEED_TEST_GUIDANCE_REQUESTS_PER_MINUTE}/min). The worker waits at least ` +
+    `${CLOUDFLARE_SPEED_TEST_MIN_GAP_SECONDS}s between Cloudflare tests. Use a custom speed test URL, increase intervals, ` +
     'or reduce polling frequency.'
   )
 }
