@@ -28,6 +28,7 @@ import {
   getMonitoringSettingsApiAdminMonitoringSettingsGet,
   getSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGet,
   listCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGet,
+  listConnectionEventsApiAdminMonitoringMonitoredComponentsComponentIdConnectionEventsGet,
   purgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDelete,
   runManualCheckApiAdminMonitoringMonitoredComponentsComponentIdCheckPost,
   updateMonitoringSettingsApiAdminMonitoringSettingsPatch,
@@ -63,6 +64,8 @@ import type { MonitoringSettingsResponse } from './generated/models/monitoringSe
 import type { MonitoringSettingsUpdate } from './generated/models/monitoringSettingsUpdate'
 import type { NetworkSummary } from './generated/models/networkSummary'
 import type { PaginatedAccountAdminResponse } from './generated/models/paginatedAccountAdminResponse'
+import type { ConnectionEventResponse } from './generated/models/connectionEventResponse'
+import type { PaginatedConnectionEventResponse } from './generated/models/paginatedConnectionEventResponse'
 import type { PaginatedCheckResultResponse } from './generated/models/paginatedCheckResultResponse'
 import type { PaginatedComponentKindResponse } from './generated/models/paginatedComponentKindResponse'
 import type { PaginatedMonitoredComponentResponse } from './generated/models/paginatedMonitoredComponentResponse'
@@ -99,11 +102,14 @@ export type MonitoringSettings = MonitoringSettingsResponse
 export type SpeedTestAdvisory = SpeedTestAdvisoryResponse
 export type Incident = IncidentResponse
 
+export type ConnectionEvent = ConnectionEventResponse
+
 export type {
   AccountAdminResponse,
   AdminDashboardResponse,
   ApiResponseLoginResultData,
   CheckResultResponse,
+  ConnectionEventResponse,
   ComponentKindCreate,
   ComponentKindUpdate,
   IncidentCreate,
@@ -115,6 +121,7 @@ export type {
   NetworkSummary,
   PaginatedAccountAdminResponse,
   PaginatedCheckResultResponse,
+  PaginatedConnectionEventResponse,
   PaginatedComponentKindResponse,
   PaginatedMonitoredComponentResponse,
   PaginatedProjectResponse,
@@ -235,6 +242,11 @@ export const api = {
 
   purgeCheckHistory: (componentId: string, keep = 0): Promise<PurgeCheckHistoryResponse> =>
     purgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDelete(componentId, { keep }),
+
+  listConnectionEvents: (componentId: string, limit = 50): Promise<PaginatedConnectionEventResponse> =>
+    listConnectionEventsApiAdminMonitoringMonitoredComponentsComponentIdConnectionEventsGet(componentId, {
+      limit,
+    }),
 
   listProjectIncidents: (projectId: string): Promise<IncidentResponse[]> =>
     listProjectIncidentsApiAdminProjectsProjectIdIncidentsGet(projectId),

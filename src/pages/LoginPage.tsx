@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { useAuth } from '../auth/useAuth'
@@ -34,15 +34,15 @@ export function LoginPage() {
   const googleClientId = getRuntimeEnv().googleClientId || googleClientIdFromApi
   const showGoogleLogin = googleOauthEnabled && Boolean(googleClientId)
 
-  const redirectTo = (from: string | undefined) => {
-    navigate(postLoginPath(from), { replace: true })
-  }
+  const redirectTo = useCallback((from: string | undefined) => {
+    void navigate(postLoginPath(from), { replace: true })
+  }, [navigate])
 
   useEffect(() => {
     if (account) {
       redirectTo((location.state as { from?: { pathname?: string } } | null)?.from?.pathname)
     }
-  }, [account, location.state])
+  }, [account, location.state, redirectTo])
 
   useEffect(() => {
     void api.registrationStatus().then((s) => {
@@ -78,7 +78,7 @@ export function LoginPage() {
     setDuplicateEmail(false)
     try {
       await api.register({ email, password })
-      navigate('/register/complete', { replace: true, state: { email } })
+      void navigate('/register/complete', { replace: true, state: { email } })
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setDuplicateEmail(true)

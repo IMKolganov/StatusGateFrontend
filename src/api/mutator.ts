@@ -34,7 +34,7 @@ function parseEnvelope<T>(json: unknown, status: number): T {
         errorData?.trace_id,
       )
     }
-    return envelope.data as T
+    return envelope.data
   }
   return json as T
 }
@@ -74,7 +74,7 @@ export const customFetch = async <T>(url: string, options: RequestInit = {}): Pr
     let detail = 'Request failed'
     let traceId: string | undefined
     try {
-      const body = await response.json()
+      const body: unknown = await response.json()
       if (body && typeof body === 'object' && 'success' in body) {
         parseEnvelope<never>(body, response.status)
       }
@@ -96,7 +96,7 @@ export const customFetch = async <T>(url: string, options: RequestInit = {}): Pr
     return undefined as T
   }
 
-  const json = await response.json()
+  const json: unknown = await response.json()
   return parseEnvelope<T>(json, response.status)
 }
 

@@ -9,16 +9,18 @@ type AccountAvatarProps = {
 
 export function AccountAvatar({ account, className = '' }: AccountAvatarProps) {
   const avatarUrl = getAccountAvatarUrl(account)
+  const [trackedUrl, setTrackedUrl] = useState(avatarUrl)
   const [isValid, setIsValid] = useState(false)
 
+  if (trackedUrl !== avatarUrl) {
+    setTrackedUrl(avatarUrl)
+    setIsValid(false)
+  }
+
   useEffect(() => {
-    if (!avatarUrl) {
-      setIsValid(false)
-      return
-    }
+    if (!avatarUrl) return
 
     let cancelled = false
-    setIsValid(false)
 
     const probe = new Image()
     probe.referrerPolicy = 'no-referrer'

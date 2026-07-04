@@ -1,4 +1,4 @@
-import type { ThemeMode } from './theme'
+import type { ThemeMode } from './themeUtils'
 
 export type BrandConfig = {
   /** App title, footer, About page — never empty. */

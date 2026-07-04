@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import type { Account } from '../api/client'
 import { isAdmin } from '../auth/roles'
@@ -90,20 +90,15 @@ export function AdminLayout({ children, title, subtitle }: { children: React.Rea
     [account],
   )
 
-  useEffect(() => {
-    setCollapsedSections((current) => {
-      const next = new Set(current)
-      let changed = false
-      for (const { section } of sections) {
-        if (sectionIsActive(section, location.pathname, account) && next.has(section.title)) {
-          next.delete(section.title)
-          changed = true
-        }
+  const displayedCollapsedSections = useMemo(() => {
+    const next = new Set(collapsedSections)
+    for (const { section } of sections) {
+      if (sectionIsActive(section, location.pathname, account)) {
+        next.delete(section.title)
       }
-      if (changed) writeCollapsedSections(next)
-      return changed ? next : current
-    })
-  }, [location.pathname, account, sections])
+    }
+    return next
+  }, [collapsedSections, sections, location.pathname, account])
 
   const toggleSection = (sectionTitle: string) => {
     setCollapsedSections((current) => {
@@ -124,7 +119,7 @@ export function AdminLayout({ children, title, subtitle }: { children: React.Rea
         <BrandLogo />
         <nav className="sidebar-nav" aria-label="Admin navigation">
           {sections.map(({ section, items }) => {
-            const collapsed = collapsedSections.has(section.title)
+            const collapsed = displayedCollapsedSections.has(section.title)
             const activeSection = sectionIsActive(section, location.pathname, account)
 
             return (
@@ -166,7 +161,7 @@ export function AdminLayout({ children, title, subtitle }: { children: React.Rea
           <Link className="back-home-link" to="/">
             ← Status page
           </Link>
-          <button type="button" className="btn btn-ghost btn-sm btn-block" onClick={() => void logout()}>
+          <button type="button" className="btn btn-ghost btn-sm btn-block" onClick={() => { void logout() }}>
             Sign out
           </button>
         </div>

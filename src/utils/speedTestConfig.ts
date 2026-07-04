@@ -30,7 +30,7 @@ export function estimateSpeedTestsPerMinute(
 ): number {
   let total = 0
   for (const component of components) {
-    if (!component.is_active || component.speed_test_enabled === false || !isVpnCheckType(component.check_type)) {
+    if (!component.is_active || !component.speed_test_enabled || !isVpnCheckType(component.check_type)) {
       continue
     }
     const pollInterval = Math.max(component.poll_interval_seconds ?? defaultPollIntervalSeconds, 1)
@@ -48,7 +48,7 @@ export function buildLocalSpeedTestWarning(
   usesCloudflareDefault: boolean,
 ): string | null {
   const activeVpn = components.filter(
-    (component) => component.is_active && component.speed_test_enabled !== false && isVpnCheckType(component.check_type),
+    (component) => component.is_active && component.speed_test_enabled && isVpnCheckType(component.check_type),
   )
   if (activeVpn.length === 0 || !usesCloudflareDefault) return null
 

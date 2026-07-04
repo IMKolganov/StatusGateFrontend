@@ -8,9 +8,11 @@ import type {
   CheckResultResponse,
   GetSpeedTestAdvisoryApiAdminMonitoringSpeedTestAdvisoryGetParams,
   ListCheckResultsApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsGetParams,
+  ListConnectionEventsApiAdminMonitoringMonitoredComponentsComponentIdConnectionEventsGetParams,
   MonitoringSettingsResponse,
   MonitoringSettingsUpdate,
   PaginatedCheckResultResponse,
+  PaginatedConnectionEventResponse,
   PurgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCheckResultsDeleteParams,
   PurgeCheckHistoryResponse,
   SpeedTestAdvisoryResponse
@@ -176,6 +178,38 @@ export const purgeCheckHistoryApiAdminMonitoringMonitoredComponentsComponentIdCh
   {      
     ...options,
     method: 'DELETE'
+    
+    
+  }
+);}
+
+
+/**
+ * @summary List Connection Events
+ */
+export const getListConnectionEventsApiAdminMonitoringMonitoredComponentsComponentIdConnectionEventsGetUrl = (componentId: string,
+    params?: ListConnectionEventsApiAdminMonitoringMonitoredComponentsComponentIdConnectionEventsGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/monitoring/monitored-components/${componentId}/connection-events?${stringifiedParams}` : `/api/admin/monitoring/monitored-components/${componentId}/connection-events`
+}
+
+export const listConnectionEventsApiAdminMonitoringMonitoredComponentsComponentIdConnectionEventsGet = async (componentId: string,
+    params?: ListConnectionEventsApiAdminMonitoringMonitoredComponentsComponentIdConnectionEventsGetParams, options?: RequestInit): Promise<PaginatedConnectionEventResponse> => {
+  
+  return customFetch<PaginatedConnectionEventResponse>(getListConnectionEventsApiAdminMonitoringMonitoredComponentsComponentIdConnectionEventsGetUrl(componentId,params),
+  {      
+    ...options,
+    method: 'GET'
     
     
   }

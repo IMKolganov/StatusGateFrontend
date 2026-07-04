@@ -1915,6 +1915,72 @@
         }
       }
     },
+    "/api/admin/monitoring/monitored-components/{component_id}/connection-events": {
+      "get": {
+        "tags": [
+          "admin-monitoring"
+        ],
+        "summary": "List Connection Events",
+        "operationId": "list_connection_events_api_admin_monitoring_monitored_components__component_id__connection_events_get",
+        "parameters": [
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Component Id"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_PaginatedConnectionEventResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/accounts": {
       "get": {
         "tags": [
@@ -2564,6 +2630,80 @@
         "type": "object",
         "title": "ComponentKindUpdate"
       },
+      "ConnectionEventResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "monitored_component_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Monitored Component Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "event_label": {
+            "type": "string",
+            "title": "Event Label",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "monitored_component_id",
+          "occurred_at",
+          "event_type",
+          "outcome",
+          "message",
+          "details",
+          "event_label"
+        ],
+        "title": "ConnectionEventResponse"
+      },
       "GoogleLoginRequest": {
         "properties": {
           "idToken": {
@@ -3022,6 +3162,12 @@
             ],
             "title": "Poll Interval Seconds"
           },
+          "connection_mode": {
+            "type": "string",
+            "pattern": "^(ephemeral|persistent)$",
+            "title": "Connection Mode",
+            "default": "ephemeral"
+          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active",
@@ -3161,6 +3307,11 @@
               }
             ],
             "title": "Poll Interval Seconds"
+          },
+          "connection_mode": {
+            "type": "string",
+            "title": "Connection Mode",
+            "default": "ephemeral"
           },
           "last_checked_at": {
             "anyOf": [
@@ -3491,6 +3642,18 @@
               }
             ],
             "title": "Poll Interval Seconds"
+          },
+          "connection_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(ephemeral|persistent)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Mode"
           },
           "is_active": {
             "anyOf": [
@@ -3938,6 +4101,47 @@
           "has_previous"
         ],
         "title": "PaginatedComponentKindResponse"
+      },
+      "PaginatedConnectionEventResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectionEventResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "has_next": {
+            "type": "boolean",
+            "title": "Has Next"
+          },
+          "has_previous": {
+            "type": "boolean",
+            "title": "Has Previous"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit",
+          "has_next",
+          "has_previous"
+        ],
+        "title": "PaginatedConnectionEventResponse"
       },
       "PaginatedMonitoredComponentResponse": {
         "properties": {
@@ -5583,6 +5787,24 @@
           },
           "data": {
             "$ref": "#/components/schemas/PurgeCheckHistoryResponse"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ]
+      },
+      "ApiResponse_PaginatedConnectionEventResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginatedConnectionEventResponse"
           }
         },
         "required": [

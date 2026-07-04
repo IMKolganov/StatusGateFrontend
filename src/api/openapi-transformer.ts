@@ -1,7 +1,9 @@
 type OpenApiSchema = Record<string, unknown>
-type ObjectSchema = OpenApiSchema & {
+type ObjectSchema = {
   properties?: Record<string, OpenApiSchema>
+  $ref?: string
 }
+
 type OpenApiDocument = {
   paths?: Record<string, Record<string, OpenApiOperation>>
   components?: { schemas?: Record<string, OpenApiSchema> }
@@ -18,6 +20,13 @@ function schemaRefName(schema: OpenApiSchema | undefined): string | null {
   return ref.split('/').pop() ?? null
 }
 
+function asObjectSchema(schema: OpenApiSchema | undefined): ObjectSchema | undefined {
+  if (!schema || typeof schema !== 'object') return undefined
+  const properties = schema.properties
+  if (properties !== undefined && typeof properties !== 'object') return undefined
+  return { properties: properties as Record<string, OpenApiSchema> | undefined, $ref: schema.$ref as string | undefined }
+}
+
 function unwrapApiResponseSchema(
   schema: OpenApiSchema | undefined,
   schemas: Record<string, OpenApiSchema>,
@@ -27,7 +36,7 @@ function unwrapApiResponseSchema(
     return schema
   }
 
-  const wrapper = schemas[name] as ObjectSchema | undefined
+  const wrapper = asObjectSchema(schemas[name])
   const dataSchema = wrapper?.properties?.data
   if (!dataSchema) {
     return { type: 'null' }
@@ -41,7 +50,7 @@ export default function transformOpenApi(document: OpenApiDocument): OpenApiDocu
 
   for (const pathItem of Object.values(document.paths ?? {})) {
     for (const operation of Object.values(pathItem)) {
-      if (!operation?.responses) continue
+      if (!operation.responses) continue
 
       for (const [statusCode, response] of Object.entries(operation.responses)) {
         const jsonContent = response.content?.['application/json']
