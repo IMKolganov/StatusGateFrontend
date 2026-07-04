@@ -38,6 +38,7 @@ export interface MonitoredComponentResponse {
   expected_status_code: number;
   timeout_seconds: number;
   poll_interval_seconds: MonitoredComponentResponsePollIntervalSeconds;
+  connection_mode: string;
   last_checked_at: MonitoredComponentResponseLastCheckedAt;
   is_active: boolean;
   latest_outcome?: MonitoredComponentResponseLatestOutcome;
