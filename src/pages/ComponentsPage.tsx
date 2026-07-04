@@ -44,6 +44,7 @@ const emptyForm = {
   expected_status_code: 200,
   timeout_seconds: 10,
   poll_interval_seconds: '' as number | '',
+  connection_mode: 'ephemeral' as 'ephemeral' | 'persistent',
   is_active: true,
 }
 
@@ -273,6 +274,7 @@ export function ComponentsPage() {
       expected_status_code: form.expected_status_code,
       timeout_seconds: form.timeout_seconds,
       poll_interval_seconds: form.poll_interval_seconds === '' ? null : Number(form.poll_interval_seconds),
+      connection_mode: isOpenVpn ? form.connection_mode : undefined,
       is_active: form.is_active,
     }
     try {
@@ -433,6 +435,25 @@ export function ComponentsPage() {
               />
             </label>
 
+            {isOpenVpn && (
+              <label className="checkbox-row full-width">
+                <input
+                  type="checkbox"
+                  checked={form.connection_mode === 'persistent'}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      connection_mode: e.target.checked ? 'persistent' : 'ephemeral',
+                    })
+                  }
+                />
+                Keep VPN session alive (persistent monitoring)
+                <span className="field-hint">
+                  OpenVPN stays connected; probes and speed tests run on the interval below instead of reconnecting each cycle.
+                </span>
+              </label>
+            )}
+
             {isVpnKind && (
               <>
                 <label className="checkbox-row">
@@ -513,7 +534,7 @@ export function ComponentsPage() {
 
             <label>Timeout (sec)<input type="number" min={isVpnKind ? 30 : 1} value={form.timeout_seconds} onChange={(e) => setForm({ ...form, timeout_seconds: Number(e.target.value) })} /></label>
             <label>
-              Poll every (sec)
+              {isVpnKind && form.connection_mode === 'persistent' ? 'Probe every (sec)' : 'Poll every (sec)'}
               <input
                 type="number"
                 min={10}
@@ -609,6 +630,7 @@ export function ComponentsPage() {
                         expected_status_code: item.expected_status_code,
                         timeout_seconds: item.timeout_seconds,
                         poll_interval_seconds: item.poll_interval_seconds ?? '',
+                        connection_mode: (item.connection_mode === 'persistent' ? 'persistent' : 'ephemeral'),
                         is_active: item.is_active,
                       })
                     }}

@@ -41,5 +41,7 @@ export interface MonitoredComponentUpdate {
   expected_status_code?: MonitoredComponentUpdateExpectedStatusCode;
   timeout_seconds?: MonitoredComponentUpdateTimeoutSeconds;
   poll_interval_seconds?: MonitoredComponentUpdatePollIntervalSeconds;
+  /** @pattern ^(ephemeral|persistent)$ */
+  connection_mode?: string;
   is_active?: MonitoredComponentUpdateIsActive;
 }

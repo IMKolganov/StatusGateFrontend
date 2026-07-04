@@ -51,5 +51,7 @@ export interface MonitoredComponentCreate {
    */
   timeout_seconds?: number;
   poll_interval_seconds?: MonitoredComponentCreatePollIntervalSeconds;
+  /** @pattern ^(ephemeral|persistent)$ */
+  connection_mode?: string;
   is_active?: boolean;
 }
