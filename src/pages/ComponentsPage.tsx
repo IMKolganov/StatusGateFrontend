@@ -2,7 +2,9 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type MonitoringSettings, type NetworkSummary, type Project } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
-import { CheckDiagnostics, logTailFromDetails, networkSummaryFromRecord } from '../components/CheckDiagnostics'
+import { CheckDiagnostics } from '../components/CheckDiagnostics'
+import { logTailFromDetails, networkSummaryFromRecord } from '../components/checkDiagnosticsUtils'
+import { ConnectionEventsTimeline } from '../components/ConnectionEventsTimeline'
 import { formatApiError } from '../utils/apiError'
 import {
   DEFAULT_SPEED_TEST_MIB,
@@ -103,6 +105,7 @@ export function ComponentsPage() {
   const [editingSlug, setEditingSlug] = useState<string | null>(null)
   const [checkingId, setCheckingId] = useState<string | null>(null)
   const [purgingId, setPurgingId] = useState<string | null>(null)
+  const [connectionLogEpoch, setConnectionLogEpoch] = useState(0)
   const [lastManualResult, setLastManualResult] = useState<CheckResult | null>(null)
   const [monitoringSettings, setMonitoringSettings] = useState<MonitoringSettings | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -120,7 +123,7 @@ export function ComponentsPage() {
       setProjects(p.items)
       setKinds(k.items)
       if (p.items.length > 0) {
-        setProjectId((current) => current || p.items[0].id)
+        setProjectId((current) => current || p.items[0]!.id)
       }
     })
   }, [])
@@ -130,7 +133,11 @@ export function ComponentsPage() {
   }, [])
 
   useEffect(() => {
-    load()
+    if (!projectId) {
+      void api.listMonitoredComponents().then((r) => setItems(r.items))
+      return
+    }
+    void api.listMonitoredComponents(projectId).then((r) => setItems(r.items))
   }, [projectId])
 
   const kindById = useMemo(() => new Map(kinds.map((k) => [k.id, k])), [kinds])
@@ -152,10 +159,9 @@ export function ComponentsPage() {
   const speedTestWarning = useMemo(() => {
     if (!isVpnKind || !form.speed_test_enabled || !monitoringSettings) return null
 
-    const defaultTemplate =
-      monitoringSettings.default_speed_test_url_template ?? DEFAULT_SPEED_TEST_URL_TEMPLATE
-    const defaultSpeedInterval = monitoringSettings.default_speed_test_interval_seconds ?? 3600
-    const defaultPoll = monitoringSettings.default_poll_interval_seconds ?? 60
+    const defaultTemplate = monitoringSettings.default_speed_test_url_template
+    const defaultSpeedInterval = monitoringSettings.default_speed_test_interval_seconds
+    const defaultPoll = monitoringSettings.default_poll_interval_seconds
     const usesCloudflare = (form.speed_test_url_template.trim() || defaultTemplate).startsWith(
       'https://speed.cloudflare.com/',
     )
@@ -306,7 +312,7 @@ export function ComponentsPage() {
 
   const onClearHistory = async (item: MonitoredComponent) => {
     const confirmed = window.confirm(
-      `Delete all check history for "${item.name}"?\n\nThis removes stored check results and timelines for this service. It cannot be undone.`,
+      `Delete all check history for "${item.name}"?\n\nThis removes stored check results and the connection log for this service. It cannot be undone.`,
     )
     if (!confirmed) return
 
@@ -317,6 +323,7 @@ export function ComponentsPage() {
       if (lastManualResult?.monitored_component_id === item.id) {
         setLastManualResult(null)
       }
+      setConnectionLogEpoch((epoch) => epoch + 1)
       load()
       window.alert(`Deleted ${result.deleted_count} check result(s).`)
     } catch (err) {
@@ -326,8 +333,8 @@ export function ComponentsPage() {
     }
   }
 
-  const lastNetworkSummary = networkSummaryFromDetails(lastManualResult?.details as Record<string, unknown> | undefined)
-  const lastLogTail = logTailFromDetails(lastManualResult?.details as Record<string, unknown> | undefined)
+  const lastNetworkSummary = networkSummaryFromDetails(lastManualResult?.details)
+  const lastLogTail = logTailFromDetails(lastManualResult?.details)
 
   return (
     <AdminLayout title="Services" subtitle="Health checks per project — background worker polls active services automatically">
@@ -575,7 +582,7 @@ export function ComponentsPage() {
                 {!projectId && <td>{projectNameById.get(item.project_id) ?? '—'}</td>}
                 <td>{item.name}</td>
                 <td>{kindNameById.get(item.component_kind_id) ?? '—'}</td>
-                <td>{checkTypeLabel(item.check_type ?? 'http_status')}</td>
+                <td>{checkTypeLabel(item.check_type)}</td>
                 <td className="status-cell">
                   <span className={`status-pill ${statusClass(item.latest_outcome)}`}>
                     {item.latest_outcome ?? 'unknown'}
@@ -588,6 +595,13 @@ export function ComponentsPage() {
                     networkSummary={item.latest_network_summary ?? undefined}
                     collapsible
                   />
+                  {item.check_type === 'openvpn' && item.connection_mode === 'persistent' && (
+                    <ConnectionEventsTimeline
+                      key={`${item.id}-${connectionLogEpoch}`}
+                      componentId={item.id}
+                      componentName={item.name}
+                    />
+                  )}
                 </td>
                 <td className="mono wrap">{item.check_url}</td>
                 <td className="row-actions">
@@ -602,7 +616,12 @@ export function ComponentsPage() {
                   <button
                     type="button"
                     className="btn btn-secondary btn-sm"
-                    disabled={checkingId === item.id}
+                    disabled={checkingId === item.id || (item.check_type === 'openvpn' && item.connection_mode === 'persistent')}
+                    title={
+                      item.check_type === 'openvpn' && item.connection_mode === 'persistent'
+                        ? 'Persistent VPN services are checked by the background worker; use Connection log'
+                        : undefined
+                    }
                     onClick={() => void onManualCheck(item.id)}
                   >
                     {checkingId === item.id ? 'Checking…' : 'Check now'}
@@ -621,12 +640,12 @@ export function ComponentsPage() {
                         environment: item.environment ?? '',
                         check_url: item.check_url,
                         check_method: item.check_method,
-                        check_type: item.check_type ?? 'http_status',
-                        vpn_config_text: item.check_config?.config_text ?? '',
+                        check_type: item.check_type,
+                        vpn_config_text: item.check_config?.config_text || '',
                         speed_test_mib: speedTestMibStringFromBytes(item.speed_test_bytes),
                         speed_test_url_template: item.speed_test_url_template ?? '',
                         speed_test_interval_seconds: item.speed_test_interval_seconds ?? '',
-                        speed_test_enabled: item.speed_test_enabled ?? true,
+                        speed_test_enabled: item.speed_test_enabled,
                         expected_status_code: item.expected_status_code,
                         timeout_seconds: item.timeout_seconds,
                         poll_interval_seconds: item.poll_interval_seconds ?? '',

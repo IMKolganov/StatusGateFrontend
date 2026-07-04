@@ -22,14 +22,20 @@ function formatCheckedAt(value: string | null | undefined): string | null {
 
 export function ProjectStatusPage() {
   const { slug } = useParams<{ slug: string }>()
+  const [trackedSlug, setTrackedSlug] = useState(slug)
   const [project, setProject] = useState<PublicProjectStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!slug) return
+  if (slug !== trackedSlug) {
+    setTrackedSlug(slug)
+    setProject(null)
     setLoading(true)
     setError(null)
+  }
+
+  useEffect(() => {
+    if (!slug) return
     void api
       .getPublicProjectStatus(slug)
       .then(setProject)

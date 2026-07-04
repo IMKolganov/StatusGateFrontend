@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { brandConfig, hasBrandLogo, resolveBrandLogoUrl } from '../brand/config'
-import { useTheme } from '../brand/theme'
+import { useTheme } from '../brand/useTheme'
 
 type BrandLogoProps = {
   to?: string

@@ -149,7 +149,7 @@ export function GoogleLoginForm({ clientId, onSuccess, onMfaRequired }: GoogleLo
           client_id: clientId,
           auto_select: false,
           callback: (response: GoogleCredentialResponse) => {
-            if (response?.credential) {
+            if (response.credential) {
               void handleGoogleCredential(response.credential)
             } else {
               setError('Google did not return a valid credential.')

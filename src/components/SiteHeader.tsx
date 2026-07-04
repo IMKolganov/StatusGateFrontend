@@ -7,10 +7,12 @@ export function SiteHeader({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const mobileNavId = useId()
   const location = useLocation()
+  const [trackedPathname, setTrackedPathname] = useState(location.pathname)
 
-  useEffect(() => {
+  if (trackedPathname !== location.pathname) {
+    setTrackedPathname(location.pathname)
     setMenuOpen(false)
-  }, [location.pathname])
+  }
 
   useEffect(() => {
     document.body.classList.toggle('site-header-menu-open', menuOpen)

@@ -18,14 +18,20 @@ function formatTime(iso: string): string {
 
 export function ProjectHistoryPage() {
   const { slug } = useParams<{ slug: string }>()
+  const [trackedSlug, setTrackedSlug] = useState(slug)
   const [history, setHistory] = useState<PublicProjectHistory | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!slug) return
+  if (slug !== trackedSlug) {
+    setTrackedSlug(slug)
+    setHistory(null)
     setLoading(true)
     setError(null)
+  }
+
+  useEffect(() => {
+    if (!slug) return
     void api
       .getPublicProjectHistory(slug)
       .then(setHistory)
@@ -41,7 +47,7 @@ export function ProjectHistoryPage() {
     const seen = new Set<string>()
     const headers = new Set<string>()
     for (const day of history.days) {
-      const key = `${day.date.slice(0, 7)}`
+      const key = day.date.slice(0, 7)
       if (!seen.has(key)) {
         seen.add(key)
         headers.add(day.date)

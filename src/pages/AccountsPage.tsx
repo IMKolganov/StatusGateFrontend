@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, ApiError, type AccountAdminResponse } from '../api/client'
+import { api, type ApiError, type AccountAdminResponse } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
 import './admin.css'
 

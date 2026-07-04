@@ -21,6 +21,7 @@ import type { MonitoredComponentUpdateSpeedTestEnabled } from './monitoredCompon
 import type { MonitoredComponentUpdateExpectedStatusCode } from './monitoredComponentUpdateExpectedStatusCode';
 import type { MonitoredComponentUpdateTimeoutSeconds } from './monitoredComponentUpdateTimeoutSeconds';
 import type { MonitoredComponentUpdatePollIntervalSeconds } from './monitoredComponentUpdatePollIntervalSeconds';
+import type { MonitoredComponentUpdateConnectionMode } from './monitoredComponentUpdateConnectionMode';
 import type { MonitoredComponentUpdateIsActive } from './monitoredComponentUpdateIsActive';
 
 export interface MonitoredComponentUpdate {
@@ -41,7 +42,6 @@ export interface MonitoredComponentUpdate {
   expected_status_code?: MonitoredComponentUpdateExpectedStatusCode;
   timeout_seconds?: MonitoredComponentUpdateTimeoutSeconds;
   poll_interval_seconds?: MonitoredComponentUpdatePollIntervalSeconds;
-  /** @pattern ^(ephemeral|persistent)$ */
-  connection_mode?: string;
+  connection_mode?: MonitoredComponentUpdateConnectionMode;
   is_active?: MonitoredComponentUpdateIsActive;
 }

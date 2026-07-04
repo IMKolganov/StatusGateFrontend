@@ -35,10 +35,16 @@ function fromLocalInputValue(value: string): string | undefined {
 export function IncidentsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [projectId, setProjectId] = useState('')
+  const [trackedProjectId, setTrackedProjectId] = useState(projectId)
   const [items, setItems] = useState<Incident[]>([])
   const [incidentForm, setIncidentForm] = useState(emptyIncidentForm)
   const [updateForms, setUpdateForms] = useState<Record<string, typeof emptyUpdateForm>>({})
   const [error, setError] = useState<string | null>(null)
+
+  if (projectId !== trackedProjectId) {
+    setTrackedProjectId(projectId)
+    setItems([])
+  }
 
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects])
   const selectedProject = projectId ? projectById.get(projectId) : undefined
@@ -55,13 +61,14 @@ export function IncidentsPage() {
     void api.listProjects().then((r) => {
       setProjects(r.items)
       if (r.items.length > 0) {
-        setProjectId((current) => current || r.items[0].id)
+        setProjectId((current) => current || r.items[0]!.id)
       }
     })
   }, [])
 
   useEffect(() => {
-    load()
+    if (!projectId) return
+    void api.listProjectIncidents(projectId).then(setItems)
   }, [projectId])
 
   const onCreateIncident = async (event: FormEvent) => {

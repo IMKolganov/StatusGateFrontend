@@ -16,7 +16,7 @@ function PublicHome() {
   useEffect(() => {
     void api
       .listPublicProjects()
-      .then((data) => setProjects(data ?? []))
+      .then((data) => setProjects(data))
       .catch((err: unknown) => setError(err instanceof ApiError ? err.message : 'Failed to load projects'))
       .finally(() => setLoading(false))
   }, [])
