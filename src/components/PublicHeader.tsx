@@ -27,7 +27,7 @@ export function PublicHeader() {
       ) : account ? (
         <>
           <HeaderUserMenu account={account} />
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => void logout()}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => logout()}>
             Sign out
           </button>
         </>

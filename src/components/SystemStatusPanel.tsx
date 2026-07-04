@@ -175,6 +175,11 @@ type SystemStatusPanelProps = {
 export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelProps) {
   const today = useMemo(() => startOfUtcDay(new Date()), [])
   const [viewMonth, setViewMonth] = useState(() => startOfUtcMonth(new Date()))
+  const todayIso = toIsoDate(today)
+  const monthEnd = useMemo(() => endOfUtcMonth(viewMonth), [viewMonth])
+  const dayCount = useMemo(() => daysInclusive(viewMonth, monthEnd), [viewMonth, monthEnd])
+  const fetchKey = `${slug}:${toIsoDate(monthEnd)}:${dayCount}`
+  const [trackedFetchKey, setTrackedFetchKey] = useState(fetchKey)
   const [systemStatus, setSystemStatus] = useState<PublicSystemStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -185,14 +190,16 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
     showAvailabilityDetail: boolean
   } | null>(null)
 
-  const todayIso = toIsoDate(today)
-  const monthEnd = useMemo(() => endOfUtcMonth(viewMonth), [viewMonth])
-  const dayCount = useMemo(() => daysInclusive(viewMonth, monthEnd), [viewMonth, monthEnd])
+  if (trackedFetchKey !== fetchKey) {
+    setTrackedFetchKey(fetchKey)
+    setSystemStatus(null)
+    setLoading(true)
+    setError(null)
+  }
+
   const canMoveForward = !isSameUtcMonth(viewMonth, today)
 
   useEffect(() => {
-    setLoading(true)
-    setError(null)
     void api
       .getPublicSystemStatus(slug, { end: toIsoDate(monthEnd), days: dayCount })
       .then(setSystemStatus)

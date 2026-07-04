@@ -7,8 +7,9 @@ function readString(value: unknown): string {
 }
 
 export function getRuntimeEnv() {
-  const runtime = ((window as EnvWindow).__ENV__ ?? {}) as Record<string, unknown>
-  const buildGoogleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+  const envWindow = window as EnvWindow
+  const runtime: Record<string, unknown> = envWindow.__ENV__ ?? {}
+  const buildGoogleClientId: unknown = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
   return {
     googleClientId: readString(runtime.VITE_GOOGLE_CLIENT_ID) || readString(buildGoogleClientId),

@@ -28,9 +28,8 @@ export function MonitoringSettingsPage() {
         setForm({
           default_poll_interval_seconds: data.default_poll_interval_seconds,
           scheduler_interval_seconds: data.scheduler_interval_seconds,
-          default_speed_test_url_template:
-            data.default_speed_test_url_template ?? DEFAULT_SPEED_TEST_URL_TEMPLATE,
-          default_speed_test_interval_seconds: data.default_speed_test_interval_seconds ?? 3600,
+          default_speed_test_url_template: data.default_speed_test_url_template,
+          default_speed_test_interval_seconds: data.default_speed_test_interval_seconds,
         })
       })
       .catch((err) => setError(formatApiError(err, 'Failed to load settings')))
