@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api, ApiError, type PublicDayBar, type PublicSystemStatus } from '../api/client'
 
 function formatDayLabel(value: string): string {
@@ -57,6 +57,75 @@ function formatAvailabilityLine(day: PublicDayBar): string {
   return `Unavailable ~${formatDowntime(day.downtime_seconds ?? 0)}`
 }
 
+function formatStatusLabel(status: string): string {
+  switch (status) {
+    case 'operational':
+      return 'Operational'
+    case 'degraded':
+      return 'Degraded'
+    case 'outage':
+      return 'Outage'
+    case 'no_data':
+      return 'No data'
+    default:
+      return status
+  }
+}
+
+function buildDayDetailText(
+  day: PublicDayBar,
+  scopeLabel: string,
+  showAvailabilityDetail: boolean,
+): string {
+  const lines = [
+    formatDayLabel(day.date),
+    `Scope: ${scopeLabel}`,
+    `Status: ${formatStatusLabel(day.status)}`,
+    day.tooltip,
+  ]
+
+  if (showAvailabilityDetail) {
+    lines.push(formatAvailabilityLine(day))
+    if (day.check_count != null) lines.push(`Checks: ${day.check_count}`)
+    if (day.failed_count != null) lines.push(`Failed: ${day.failed_count}`)
+    if (day.degraded_count != null) lines.push(`Degraded: ${day.degraded_count}`)
+    if (day.availability_percent != null) lines.push(`Availability: ${day.availability_percent.toFixed(2)}%`)
+    if (day.downtime_seconds != null) lines.push(`Downtime: ${formatDowntime(day.downtime_seconds)}`)
+  }
+
+  if (day.incidents && day.incidents.length > 0) {
+    lines.push('', 'Incidents:')
+    for (const incident of day.incidents) {
+      lines.push(`- ${incident.title} (${incident.status})`)
+      if (incident.message) lines.push(`  ${incident.message}`)
+    }
+  }
+
+  return lines.join('\n')
+}
+
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    try {
+      const area = document.createElement('textarea')
+      area.value = text
+      area.setAttribute('readonly', '')
+      area.style.position = 'fixed'
+      area.style.left = '-9999px'
+      document.body.appendChild(area)
+      area.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(area)
+      return ok
+    } catch {
+      return false
+    }
+  }
+}
+
 type TimelineTooltipProps = {
   day: PublicDayBar
   anchorRect: DOMRect
@@ -88,6 +157,214 @@ function TimelineTooltip({ day, anchorRect, showAvailabilityDetail }: TimelineTo
           ))}
         </ul>
       )}
+      <p className="status-timeline-tooltip-hint">Click for details</p>
+    </div>
+  )
+}
+
+type DayDetailPopoverProps = {
+  day: PublicDayBar
+  scopeLabel: string
+  showAvailabilityDetail: boolean
+  anchorRect: DOMRect
+  returnFocusEl: HTMLElement | null
+  onClose: () => void
+}
+
+function getFocusableElements(root: HTMLElement): HTMLElement[] {
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ).filter((el) => !el.hasAttribute('disabled') && el.tabIndex !== -1)
+}
+
+function clampPopoverPosition(anchorRect: DOMRect): { left: number; top: number; width: number } {
+  const margin = 12
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
+  const width = Math.min(22 * 16, viewportWidth - margin * 2)
+  const centerX = anchorRect.left + anchorRect.width / 2
+  const left = Math.min(Math.max(centerX - width / 2, margin), viewportWidth - width - margin)
+  const top = Math.max(anchorRect.top - 8, margin)
+  return { left, top, width }
+}
+
+function DayDetailPopover({
+  day,
+  scopeLabel,
+  showAvailabilityDetail,
+  anchorRect,
+  returnFocusEl,
+  onClose,
+}: DayDetailPopoverProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const copyResetTimerRef = useRef<number | null>(null)
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const detailText = useMemo(
+    () => buildDayDetailText(day, scopeLabel, showAvailabilityDetail),
+    [day, scopeLabel, showAvailabilityDetail],
+  )
+  const { left, top, width } = clampPopoverPosition(anchorRect)
+
+  const close = useCallback(() => {
+    onClose()
+    window.requestAnimationFrame(() => {
+      returnFocusEl?.focus()
+    })
+  }, [onClose, returnFocusEl])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        close()
+        return
+      }
+      if (event.key !== 'Tab' || !panelRef.current) return
+      const focusable = getFocusableElements(panelRef.current)
+      if (focusable.length === 0) {
+        event.preventDefault()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement as HTMLElement | null
+      if (event.shiftKey) {
+        if (active === first || !panelRef.current.contains(active)) {
+          event.preventDefault()
+          last.focus()
+        }
+      } else if (active === last || !panelRef.current.contains(active)) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null
+      if (!target) return
+      // Status bars manage open/close via their own click handler (including toggle).
+      if (target.closest('.status-bar')) return
+      if (panelRef.current && !panelRef.current.contains(target)) {
+        close()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    // Defer so the opening click does not immediately dismiss the popover.
+    const timer = window.setTimeout(() => {
+      document.addEventListener('pointerdown', onPointerDown)
+    }, 0)
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('pointerdown', onPointerDown)
+    }
+  }, [close])
+
+  useEffect(() => {
+    const focusable = panelRef.current ? getFocusableElements(panelRef.current) : []
+    ;(focusable[0] ?? panelRef.current)?.focus()
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (copyResetTimerRef.current != null) {
+        window.clearTimeout(copyResetTimerRef.current)
+      }
+    }
+  }, [])
+
+  const handleCopy = async () => {
+    const ok = await copyText(detailText)
+    setCopyState(ok ? 'copied' : 'failed')
+    if (copyResetTimerRef.current != null) {
+      window.clearTimeout(copyResetTimerRef.current)
+    }
+    copyResetTimerRef.current = window.setTimeout(() => {
+      setCopyState('idle')
+      copyResetTimerRef.current = null
+    }, 1600)
+  }
+
+  return (
+    <div
+      ref={panelRef}
+      className="status-timeline-popover"
+      style={{ left, top, width }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Status details for ${formatDayLabel(day.date)}`}
+      tabIndex={-1}
+    >
+      <div className="status-timeline-popover-header">
+        <div>
+          <div className="status-timeline-popover-date">{formatDayLabel(day.date)}</div>
+          <div className="status-timeline-popover-scope">{scopeLabel}</div>
+        </div>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={close} aria-label="Close">
+          ✕
+        </button>
+      </div>
+
+      <div className={`status-timeline-popover-status status-timeline-popover-status-${day.status}`}>
+        {formatStatusLabel(day.status)}
+      </div>
+
+      <p className="status-timeline-popover-summary">{day.tooltip}</p>
+      {showAvailabilityDetail && (
+        <p className="status-timeline-popover-availability">{formatAvailabilityLine(day)}</p>
+      )}
+
+      {showAvailabilityDetail && (
+        <dl className="status-timeline-popover-metrics">
+          {day.check_count != null && (
+            <>
+              <dt>Checks</dt>
+              <dd>{day.check_count}</dd>
+            </>
+          )}
+          {day.failed_count != null && (
+            <>
+              <dt>Failed</dt>
+              <dd>{day.failed_count}</dd>
+            </>
+          )}
+          {day.degraded_count != null && (
+            <>
+              <dt>Degraded</dt>
+              <dd>{day.degraded_count}</dd>
+            </>
+          )}
+          {day.availability_percent != null && (
+            <>
+              <dt>Availability</dt>
+              <dd>{day.availability_percent.toFixed(2)}%</dd>
+            </>
+          )}
+          {day.downtime_seconds != null && (
+            <>
+              <dt>Downtime</dt>
+              <dd>{formatDowntime(day.downtime_seconds)}</dd>
+            </>
+          )}
+        </dl>
+      )}
+
+      {day.incidents && day.incidents.length > 0 && (
+        <ul className="status-timeline-popover-list">
+          {day.incidents.map((incident, index) => (
+            <li key={`${incident.posted_at}-${index}`}>
+              <div className="status-timeline-popover-title">{incident.title}</div>
+              <div className="status-timeline-popover-message">{incident.message}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="status-timeline-popover-actions">
+        <button type="button" className="btn btn-secondary btn-sm" onClick={() => void handleCopy()}>
+          {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy failed' : 'Copy details'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -95,10 +372,13 @@ function TimelineTooltip({ day, anchorRect, showAvailabilityDetail }: TimelineTo
 type DayBarsProps = {
   days: PublicDayBar[]
   todayIso: string
+  selectedKey: string | null
+  selectionPrefix: string
   onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect) => void
+  onSelectDay: (day: PublicDayBar, anchor: DOMRect, trigger: HTMLElement) => void
 }
 
-function DayBars({ days, todayIso, onHoverDay }: DayBarsProps) {
+function DayBars({ days, todayIso, selectedKey, selectionPrefix, onHoverDay, onSelectDay }: DayBarsProps) {
   return (
     <div className="status-timeline-bars-shell">
       <div
@@ -109,10 +389,14 @@ function DayBars({ days, todayIso, onHoverDay }: DayBarsProps) {
       >
         {days.map((day) => {
           const isFuture = day.date > todayIso
+          const dayKey = `${selectionPrefix}::${day.date}`
+          const isSelected = selectedKey === dayKey
           return (
-            <span
+            <button
               key={day.date}
-              className={`status-bar status-bar-${day.status}${isFuture ? ' status-bar-future' : ''}`}
+              type="button"
+              className={`status-bar status-bar-${day.status}${isFuture ? ' status-bar-future' : ''}${isSelected ? ' status-bar-selected' : ''}`}
+              disabled={isFuture}
               onMouseEnter={(event) => {
                 if (!isFuture) {
                   onHoverDay(day, event.currentTarget.getBoundingClientRect())
@@ -125,8 +409,14 @@ function DayBars({ days, todayIso, onHoverDay }: DayBarsProps) {
                 }
               }}
               onBlur={() => onHoverDay(null)}
-              tabIndex={isFuture ? -1 : 0}
+              onClick={(event) => {
+                if (!isFuture) {
+                  onSelectDay(day, event.currentTarget.getBoundingClientRect(), event.currentTarget)
+                }
+              }}
               aria-label={`${formatDayLabel(day.date)}: ${day.tooltip}`}
+              aria-haspopup="dialog"
+              aria-expanded={isSelected}
             />
           )
         })}
@@ -141,16 +431,47 @@ type TimelineRowProps = {
   uptimePercent: number | null | undefined
   days: PublicDayBar[]
   todayIso: string
+  selectedKey: string | null
+  selectionPrefix: string
   onHoverDay: (day: PublicDayBar | null, anchor?: DOMRect, showAvailabilityDetail?: boolean) => void
+  onSelectDay: (
+    day: PublicDayBar,
+    anchor: DOMRect,
+    trigger: HTMLElement,
+    scopeLabel: string,
+    selectionPrefix: string,
+    groupName: string,
+    showAvailabilityDetail?: boolean,
+  ) => void
+  groupName: string
   nested?: boolean
 }
 
-function TimelineRow({ title, meta, uptimePercent, days, todayIso, onHoverDay, nested }: TimelineRowProps) {
+function TimelineRow({
+  title,
+  meta,
+  uptimePercent,
+  days,
+  todayIso,
+  selectedKey,
+  selectionPrefix,
+  onHoverDay,
+  onSelectDay,
+  groupName,
+  nested,
+}: TimelineRowProps) {
   const handleHoverDay = useCallback(
     (day: PublicDayBar | null, anchor?: DOMRect) => {
       onHoverDay(day, anchor, nested)
     },
     [nested, onHoverDay],
+  )
+
+  const handleSelectDay = useCallback(
+    (day: PublicDayBar, anchor: DOMRect, trigger: HTMLElement) => {
+      onSelectDay(day, anchor, trigger, title, selectionPrefix, groupName, nested)
+    },
+    [groupName, nested, onSelectDay, selectionPrefix, title],
   )
 
   return (
@@ -162,7 +483,14 @@ function TimelineRow({ title, meta, uptimePercent, days, todayIso, onHoverDay, n
       {uptimePercent != null && (
         <div className="status-timeline-uptime">{uptimePercent.toFixed(2)}% uptime</div>
       )}
-      <DayBars days={days} todayIso={todayIso} onHoverDay={handleHoverDay} />
+      <DayBars
+        days={days}
+        todayIso={todayIso}
+        selectedKey={selectedKey}
+        selectionPrefix={selectionPrefix}
+        onHoverDay={handleHoverDay}
+        onSelectDay={handleSelectDay}
+      />
     </div>
   )
 }
@@ -189,12 +517,22 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
     anchorRect: DOMRect
     showAvailabilityDetail: boolean
   } | null>(null)
+  const [detail, setDetail] = useState<{
+    day: PublicDayBar
+    scopeLabel: string
+    selectionKey: string
+    groupName: string
+    anchorRect: DOMRect
+    returnFocusEl: HTMLElement | null
+    showAvailabilityDetail: boolean
+  } | null>(null)
 
   if (trackedFetchKey !== fetchKey) {
     setTrackedFetchKey(fetchKey)
     setSystemStatus(null)
     setLoading(true)
     setError(null)
+    setDetail(null)
   }
 
   const canMoveForward = !isSameUtcMonth(viewMonth, today)
@@ -212,14 +550,51 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
 
   const handleHoverDay = useCallback(
     (day: PublicDayBar | null, anchor?: DOMRect, showAvailabilityDetail = false) => {
+      if (detail) {
+        setTooltip(null)
+        return
+      }
       if (day && anchor) {
         setTooltip({ day, anchorRect: anchor, showAvailabilityDetail })
         return
       }
       setTooltip(null)
     },
+    [detail],
+  )
+
+  const handleSelectDay = useCallback(
+    (
+      day: PublicDayBar,
+      anchor: DOMRect,
+      trigger: HTMLElement,
+      scopeLabel: string,
+      selectionPrefix: string,
+      groupName: string,
+      showAvailabilityDetail = false,
+    ) => {
+      const selectionKey = `${selectionPrefix}::${day.date}`
+      setTooltip(null)
+      setDetail((current) => {
+        if (current && current.selectionKey === selectionKey) {
+          window.requestAnimationFrame(() => trigger.focus())
+          return null
+        }
+        return {
+          day,
+          scopeLabel,
+          selectionKey,
+          groupName,
+          anchorRect: anchor,
+          returnFocusEl: trigger,
+          showAvailabilityDetail,
+        }
+      })
+    },
     [],
   )
+
+  const closeDetail = useCallback(() => setDetail(null), [])
 
   const moveRange = (direction: -1 | 1) => {
     setViewMonth((current) => {
@@ -229,10 +604,22 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
       }
       return next
     })
+    setDetail(null)
   }
 
   const toggleGroup = (name: string) => {
-    setExpandedGroups((current) => ({ ...current, [name]: !current[name] }))
+    setExpandedGroups((current) => {
+      const nextExpanded = !(current[name] ?? false)
+      if (!nextExpanded) {
+        setDetail((detailState) => {
+          if (detailState?.groupName !== name) return detailState
+          const el = detailState.returnFocusEl
+          window.requestAnimationFrame(() => el?.focus())
+          return null
+        })
+      }
+      return { ...current, [name]: nextExpanded }
+    })
   }
 
   return (
@@ -311,7 +698,11 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
                         uptimePercent={group.uptime_percent}
                         days={group.days}
                         todayIso={todayIso}
+                        selectedKey={detail?.selectionKey ?? null}
+                        selectionPrefix={`group:${group.name}`}
+                        groupName={group.name}
                         onHoverDay={handleHoverDay}
+                        onSelectDay={handleSelectDay}
                       />
                     </div>
                     {expanded && (
@@ -323,7 +714,11 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
                             uptimePercent={service.uptime_percent}
                             days={service.days}
                             todayIso={todayIso}
+                            selectedKey={detail?.selectionKey ?? null}
+                            selectionPrefix={`service:${service.id}`}
+                            groupName={group.name}
                             onHoverDay={handleHoverDay}
+                            onSelectDay={handleSelectDay}
                             nested
                           />
                         ))}
@@ -337,11 +732,23 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
         </>
       )}
 
-      {tooltip && (
+      {tooltip && !detail && (
         <TimelineTooltip
           day={tooltip.day}
           anchorRect={tooltip.anchorRect}
           showAvailabilityDetail={tooltip.showAvailabilityDetail}
+        />
+      )}
+
+      {detail && (
+        <DayDetailPopover
+          key={detail.selectionKey}
+          day={detail.day}
+          scopeLabel={detail.scopeLabel}
+          showAvailabilityDetail={detail.showAvailabilityDetail}
+          anchorRect={detail.anchorRect}
+          returnFocusEl={detail.returnFocusEl}
+          onClose={closeDetail}
         />
       )}
     </section>
