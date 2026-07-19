@@ -44,4 +44,10 @@ export interface NetworkSummary {
   download_duration_ms?: NetworkSummaryDownloadDurationMs;
   speed_test_ok?: NetworkSummarySpeedTestOk;
   speed_test_error?: NetworkSummarySpeedTestError;
+  /** ISO timestamp of the latest live speed-test attempt (success or fail). */
+  speed_test_measured_at?: string | null;
+  /** ISO timestamp of the last successful speed test. */
+  speed_test_last_success_at?: string | null;
+  /** True when displayed Mbps come from a previous successful measurement. */
+  speed_test_showing_last_success?: boolean | null;
 }
