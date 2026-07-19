@@ -46,19 +46,18 @@
   width: 100%;
   min-width: 0;
   display: flex;
-  justify-content: center;
+  justify-content: stretch;
+  /* GIS iframe is square-cornered; clip so light iframe chrome
+     does not show as white dots around the rounded button. */
+  border-radius: 4px;
   overflow: hidden;
   line-height: 0;
-}
-
-.google-login-wrapper > div {
-  width: 100% !important;
-  max-width: 100%;
+  background: transparent;
 }
 
 .google-login-wrapper iframe {
   display: block;
-  margin: 0 auto;
+  color-scheme: dark;
 }
 
 .google-login-loading {
