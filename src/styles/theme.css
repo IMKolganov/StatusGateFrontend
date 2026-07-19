@@ -239,7 +239,6 @@ p {
 /* Buttons — GitHub-style: flat, 6px radius, consistent heights */
 .btn,
 .primary-btn,
-.google-btn,
 .link-btn,
 .danger-btn,
 .logout-btn {
@@ -269,7 +268,6 @@ p {
 
 .btn:disabled,
 .primary-btn:disabled,
-.google-btn:disabled,
 .link-btn:disabled,
 .danger-btn:disabled {
   opacity: 0.55;
@@ -295,19 +293,13 @@ p {
   border-color: rgba(27, 31, 36, 0.15);
 }
 
-.btn-secondary,
-.google-btn {
+.btn-secondary {
   background: var(--sg-btn-bg);
   border-color: var(--sg-btn-border);
   color: var(--sg-btn-text);
 }
 
-.google-btn.btn-block {
-  width: 100%;
-}
-
-.btn-secondary:hover:not(:disabled),
-.google-btn:hover:not(:disabled) {
+.btn-secondary:hover:not(:disabled) {
   background: var(--sg-btn-bg-hover);
   border-color: var(--sg-btn-border-hover);
 }
