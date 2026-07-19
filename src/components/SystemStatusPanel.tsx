@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api, ApiError, type PublicDayBar, type PublicSystemStatus } from '../api/client'
+import { outageBarClassName, outagePopoverStatusClassName } from './outageAvailabilityBucket'
 
 function formatDayLabel(value: string): string {
   return new Date(`${value}T00:00:00Z`).toLocaleDateString(undefined, {
@@ -305,7 +306,7 @@ function DayDetailPopover({
         </button>
       </div>
 
-      <div className={`status-timeline-popover-status status-timeline-popover-status-${day.status}`}>
+      <div className={outagePopoverStatusClassName(day.status, day.availability_percent)}>
         {formatStatusLabel(day.status)}
       </div>
 
@@ -395,7 +396,7 @@ function DayBars({ days, todayIso, selectedKey, selectionPrefix, onHoverDay, onS
             <button
               key={day.date}
               type="button"
-              className={`status-bar status-bar-${day.status}${isFuture ? ' status-bar-future' : ''}${isSelected ? ' status-bar-selected' : ''}`}
+              className={`status-bar ${outageBarClassName(day.status, day.availability_percent)}${isFuture ? ' status-bar-future' : ''}${isSelected ? ' status-bar-selected' : ''}`}
               disabled={isFuture}
               onMouseEnter={(event) => {
                 if (!isFuture) {
