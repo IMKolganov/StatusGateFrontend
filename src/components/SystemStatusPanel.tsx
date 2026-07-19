@@ -85,9 +85,7 @@ function buildDayDetailText(
   ]
 
   if (showAvailabilityDetail) {
-    if ((day.check_count ?? 0) > 0 || day.availability_percent != null || (day.downtime_seconds ?? 0) > 0) {
-      lines.push(formatAvailabilityLine(day))
-    }
+    lines.push(formatAvailabilityLine(day))
     if (day.check_count != null) lines.push(`Checks: ${day.check_count}`)
     if (day.failed_count != null) lines.push(`Failed: ${day.failed_count}`)
     if (day.degraded_count != null) lines.push(`Degraded: ${day.degraded_count}`)
