@@ -47,6 +47,13 @@
   margin-bottom: 0.75rem;
 }
 
+.connection-events__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .connection-events__list {
   list-style: none;
   margin: 0;
@@ -112,4 +119,18 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--sg-text-muted, #64748b);
+}
+
+.connection-event__log {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.65rem;
+  max-height: 8rem;
+  overflow: auto;
+  border-radius: 4px;
+  background: var(--sg-surface-muted, #f1f5f9);
+  color: var(--sg-text, #0f172a);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
