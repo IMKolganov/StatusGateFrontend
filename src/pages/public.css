@@ -667,6 +667,17 @@
   background: var(--sg-status-outage);
 }
 
+.status-bar-outage-0 { background: var(--sg-status-outage-0); }
+.status-bar-outage-10 { background: var(--sg-status-outage-10); }
+.status-bar-outage-20 { background: var(--sg-status-outage-20); }
+.status-bar-outage-30 { background: var(--sg-status-outage-30); }
+.status-bar-outage-40 { background: var(--sg-status-outage-40); }
+.status-bar-outage-50 { background: var(--sg-status-outage-50); }
+.status-bar-outage-60 { background: var(--sg-status-outage-60); }
+.status-bar-outage-70 { background: var(--sg-status-outage-70); }
+.status-bar-outage-80 { background: var(--sg-status-outage-80); }
+.status-bar-outage-90 { background: var(--sg-status-outage-90); }
+
 .status-bar-no_data {
   background: var(--sg-border);
   opacity: 0.55;
@@ -800,6 +811,17 @@
 .status-timeline-popover-status-outage {
   color: var(--sg-status-outage);
 }
+
+.status-timeline-popover-status-outage-0 { color: var(--sg-status-outage-0); }
+.status-timeline-popover-status-outage-10 { color: var(--sg-status-outage-10); }
+.status-timeline-popover-status-outage-20 { color: var(--sg-status-outage-20); }
+.status-timeline-popover-status-outage-30 { color: var(--sg-status-outage-30); }
+.status-timeline-popover-status-outage-40 { color: var(--sg-status-outage-40); }
+.status-timeline-popover-status-outage-50 { color: var(--sg-status-outage-50); }
+.status-timeline-popover-status-outage-60 { color: var(--sg-status-outage-60); }
+.status-timeline-popover-status-outage-70 { color: var(--sg-status-outage-70); }
+.status-timeline-popover-status-outage-80 { color: var(--sg-status-outage-80); }
+.status-timeline-popover-status-outage-90 { color: var(--sg-status-outage-90); }
 
 .status-timeline-popover-status-no_data {
   color: var(--sg-text-muted);
