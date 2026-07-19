@@ -33,12 +33,18 @@
   border-radius: 8px;
   background: var(--sg-surface-muted, #f8fafc);
   width: 100%;
-  max-width: min(56rem, 100%);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.status-cell {
+  min-width: 18rem;
+  max-width: min(42rem, 55vw);
 }
 
 .status-cell .connection-events__panel {
   min-width: 0;
-  max-width: min(56rem, 100%);
+  max-width: 100%;
 }
 
 .connection-events__header {

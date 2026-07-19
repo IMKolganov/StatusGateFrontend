@@ -270,7 +270,7 @@
   border-bottom: 1px solid var(--sg-border);
   padding: var(--sg-space-3) var(--sg-space-2);
   text-align: left;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .data-table th {
@@ -279,16 +279,19 @@
   font-size: 0.8125rem;
 }
 
+/* Keep table-cell display — flex on <td> breaks row alignment. */
 .row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sg-space-2);
+  width: 1%;
+  white-space: nowrap;
 }
 
 .row-actions .btn,
 .row-actions button {
+  display: inline-flex;
+  align-items: center;
   min-height: var(--sg-btn-height-sm);
+  margin: 0 var(--sg-space-2) var(--sg-space-2) 0;
+  vertical-align: middle;
 }
 
 .grid-form {
