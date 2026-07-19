@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef, useState } from 'react'
 import type { NetworkSummary } from '../api/generated/models/networkSummary'
 import { formatSpeedTestError } from '../utils/speedTestError'
 
@@ -17,15 +18,116 @@ function formatBytes(value: number): string {
   return `${value} B`
 }
 
+function formatTimestamp(value: string | null | undefined): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString()
+}
+
+function buildSpeedTestDetails(summary: NetworkSummary): string[] {
+  const lines: string[] = []
+  const lastSuccessAt = formatTimestamp(summary.speed_test_last_success_at ?? summary.speed_test_measured_at)
+  const lastAttemptAt = formatTimestamp(summary.speed_test_measured_at)
+
+  if (summary.download_mbps != null) {
+    lines.push(`Displayed: ${Number(summary.download_mbps).toFixed(2)} Mbps`)
+  }
+  if (
+    summary.download_bytes != null
+    && summary.download_duration_ms != null
+  ) {
+    lines.push(`Transfer: ${formatBytes(Number(summary.download_bytes))} in ${summary.download_duration_ms} ms`)
+  }
+  if (lastSuccessAt) {
+    lines.push(`Last successful: ${lastSuccessAt}`)
+  }
+  if (lastAttemptAt && lastAttemptAt !== lastSuccessAt) {
+    lines.push(`Last attempt: ${lastAttemptAt}`)
+  }
+  if (summary.speed_test_showing_last_success) {
+    lines.push('Showing last successful measurement (latest live test was skipped or failed).')
+  }
+  if (summary.speed_test_error) {
+    lines.push(`Last error: ${formatSpeedTestError(summary.speed_test_error)}`)
+  }
+  return lines
+}
+
 function formatDownloadSpeed(summary: NetworkSummary): string | null {
   if (summary.download_mbps != null) {
-    return `${Number(summary.download_mbps).toFixed(2)} Mbps`
+    const base = `${Number(summary.download_mbps).toFixed(2)} Mbps`
+    return summary.speed_test_showing_last_success ? `${base} (cached)` : base
   }
   if (summary.speed_test_ok === false) {
     const reason = formatSpeedTestError(summary.speed_test_error)
     return `Could not measure speed: ${reason}`
   }
   return null
+}
+
+function SpeedTestValue({
+  value,
+  details,
+}: {
+  value: string
+  details: string[]
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const panelId = useId()
+
+  useEffect(() => {
+    if (!open) return
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  if (details.length === 0) return <>{value}</>
+
+  return (
+    <div className="network-summary__speed" ref={rootRef}>
+      <button
+        type="button"
+        className="network-summary__speed-trigger"
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-haspopup="dialog"
+        onClick={() => setOpen((current) => !current)}
+      >
+        {value}
+      </button>
+      {open && (
+        <div
+          id={panelId}
+          className="network-summary__speed-popover"
+          role="dialog"
+          aria-label="Speed test details"
+        >
+          <div className="network-summary__speed-popover-title">Speed test details</div>
+          <ul className="network-summary__speed-meta">
+            {details.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function VpnNetworkDetails({
@@ -35,7 +137,7 @@ export function VpnNetworkDetails({
   defaultOpen = false,
   summaryLabel = 'Network details',
 }: NetworkDetailsProps) {
-  const rows: Array<[string, string]> = []
+  const rows: Array<[string, string, string[]?]> = []
 
   if (summary.interface) rows.push(['Interface', String(summary.interface)])
   if (summary.ipv4_address) rows.push(['VPN IP', String(summary.ipv4_address)])
@@ -56,12 +158,15 @@ export function VpnNetworkDetails({
   }
 
   const downloadSpeed = formatDownloadSpeed(summary)
-  if (downloadSpeed) rows.push(['Download speed', downloadSpeed])
+  if (downloadSpeed) {
+    rows.push(['Download speed', downloadSpeed, buildSpeedTestDetails(summary)])
+  }
 
   if (
     summary.speed_test_ok === true
     && summary.download_bytes != null
     && summary.download_duration_ms != null
+    && !summary.speed_test_showing_last_success
   ) {
     rows.push(['Speed test', `${formatBytes(Number(summary.download_bytes))} in ${summary.download_duration_ms} ms`])
   }
@@ -74,10 +179,16 @@ export function VpnNetworkDetails({
 
   const content = (
     <dl className={collapsible ? 'network-summary' : `network-summary ${className}`.trim()}>
-      {rows.map(([label, value]) => (
+      {rows.map(([label, value, details]) => (
         <div key={label} className="network-summary__row">
           <dt>{label}</dt>
-          <dd>{value}</dd>
+          <dd>
+            {details && details.length > 0 ? (
+              <SpeedTestValue value={value} details={details} />
+            ) : (
+              value
+            )}
+          </dd>
         </div>
       ))}
     </dl>

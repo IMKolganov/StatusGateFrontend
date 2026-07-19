@@ -35,6 +35,9 @@ export function networkSummaryFromRecord(raw: Record<string, unknown> | null | u
     download_duration_ms: num('download_duration_ms'),
     speed_test_ok: bool('speed_test_ok'),
     speed_test_error: str('speed_test_error'),
+    speed_test_measured_at: str('speed_test_measured_at'),
+    speed_test_last_success_at: str('speed_test_last_success_at'),
+    speed_test_showing_last_success: bool('speed_test_showing_last_success'),
   }
 
   return Object.values(summary).some((value) => value != null && value !== '' && !(Array.isArray(value) && value.length === 0))
