@@ -47,6 +47,8 @@
   min-width: 0;
   display: flex;
   justify-content: stretch;
+  /* Keep GIS iframe canvas light so filled_black corners do not bleed white. */
+  color-scheme: light;
 }
 
 .google-login-loading {
