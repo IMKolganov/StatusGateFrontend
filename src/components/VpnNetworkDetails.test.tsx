@@ -25,6 +25,42 @@ describe('VpnNetworkDetails', () => {
     expect(screen.getByRole('dialog', { name: /speed test details/i })).toBeInTheDocument()
     expect(screen.getByText(/Last successful:/i)).toBeInTheDocument()
     expect(screen.getByText(/Last attempt:/i)).toBeInTheDocument()
+    expect(screen.getByText(/Showing last successful measurement after a failed live test/i)).toBeInTheDocument()
     expect(screen.getByText(/Last error: Speed test failed/i)).toBeInTheDocument()
+  })
+
+  it('explains deferred measurement when timestamps are missing', () => {
+    render(
+      <VpnNetworkDetails
+        summary={{
+          download_mbps: 91.88,
+          download_bytes: 10_485_760,
+          download_duration_ms: 913,
+          speed_test_ok: true,
+          speed_test_showing_last_success: true,
+        }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /91\.88 Mbps \(cached\)/i }))
+    expect(screen.getByText(/Last successful: time not recorded yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/Live test deferred/i)).toBeInTheDocument()
+  })
+
+  it('shows deferred placeholder when no mbps are available yet', () => {
+    render(
+      <VpnNetworkDetails
+        summary={{
+          speed_test_ok: false,
+          speed_test_error: 'Speed test deferred (waiting for a free slot among VPN services)',
+        }}
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', {
+        name: /Speed test deferred \(waiting for a free slot among VPN services\)/i,
+      }),
+    ).toBeInTheDocument()
   })
 })

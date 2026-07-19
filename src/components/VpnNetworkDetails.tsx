@@ -41,12 +41,18 @@ function buildSpeedTestDetails(summary: NetworkSummary): string[] {
   }
   if (lastSuccessAt) {
     lines.push(`Last successful: ${lastSuccessAt}`)
+  } else if (summary.speed_test_showing_last_success) {
+    lines.push('Last successful: time not recorded yet (appears after the next live speed test).')
   }
   if (lastAttemptAt && lastAttemptAt !== lastSuccessAt) {
     lines.push(`Last attempt: ${lastAttemptAt}`)
   }
   if (summary.speed_test_showing_last_success) {
-    lines.push('Showing last successful measurement (latest live test was skipped or failed).')
+    if (summary.speed_test_error) {
+      lines.push('Showing last successful measurement after a failed live test.')
+    } else {
+      lines.push('Live test deferred (stagger / rate limit); showing previous measurement.')
+    }
   }
   if (summary.speed_test_error) {
     lines.push(`Last error: ${formatSpeedTestError(summary.speed_test_error)}`)
@@ -61,6 +67,9 @@ function formatDownloadSpeed(summary: NetworkSummary): string | null {
   }
   if (summary.speed_test_ok === false) {
     const reason = formatSpeedTestError(summary.speed_test_error)
+    if (/deferred/i.test(reason)) {
+      return reason
+    }
     return `Could not measure speed: ${reason}`
   }
   return null
