@@ -226,8 +226,8 @@ function DayDetailPopover({
         event.preventDefault()
         return
       }
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
+      const first = focusable[0]!
+      const last = focusable[focusable.length - 1]!
       const active = document.activeElement as HTMLElement | null
       if (event.shiftKey) {
         if (active === first || !panelRef.current.contains(active)) {
