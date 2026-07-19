@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, ApiError } from '../../api/client'
-import { GoogleIcon } from './GoogleIcon'
 
 type GoogleCredentialResponse = { credential?: string }
 
@@ -113,7 +112,7 @@ export function GoogleLoginForm({ clientId, onSuccess, onMfaRequired }: GoogleLo
       buttonContainer.replaceChildren()
       window.google.accounts.id.renderButton(buttonContainer, {
         type: 'standard',
-        theme: 'outline',
+        theme: 'filled_black',
         size: 'large',
         text: 'signin_with',
         shape: 'rectangular',
@@ -199,18 +198,8 @@ export function GoogleLoginForm({ clientId, onSuccess, onMfaRequired }: GoogleLo
   return (
     <>
       {error && <p className="google-login-error">{error}</p>}
-      <div className={`google-login-shell${pending ? ' google-login-shell--pending' : ''}`}>
-        <div className="google-btn btn-block google-login-visual" aria-hidden="true">
-          <GoogleIcon className="google-login-icon" />
-          <span>Sign in with Google</span>
-        </div>
-        <div
-          ref={buttonContainerRef}
-          className="google-login-overlay"
-          role="button"
-          aria-label="Sign in with Google"
-          aria-busy={pending}
-        />
+      <div className="login-item">
+        <div ref={buttonContainerRef} className="google-login-wrapper" />
       </div>
       {(!scriptReady || pending) && (
         <span className="google-login-loading muted">Loading...</span>
