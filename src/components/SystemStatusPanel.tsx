@@ -744,6 +744,7 @@ export function SystemStatusPanel({ slug, embedded = false }: SystemStatusPanelP
 
       {detail && (
         <DayDetailPopover
+          key={detail.selectionKey}
           day={detail.day}
           scopeLabel={detail.scopeLabel}
           showAvailabilityDetail={detail.showAvailabilityDetail}
