@@ -47,17 +47,6 @@
   min-width: 0;
   display: flex;
   justify-content: stretch;
-  /* GIS iframe is square-cornered; clip so light iframe chrome
-     does not show as white dots around the rounded button. */
-  border-radius: 4px;
-  overflow: hidden;
-  line-height: 0;
-  background: transparent;
-}
-
-.google-login-wrapper iframe {
-  display: block;
-  color-scheme: dark;
 }
 
 .google-login-loading {
