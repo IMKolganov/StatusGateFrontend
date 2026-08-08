@@ -429,6 +429,12 @@
   margin-bottom: var(--sg-space-1);
 }
 
+.history-entry-scope {
+  margin: 0 0 var(--sg-space-1);
+  font-size: 0.8125rem;
+  color: var(--sg-text-muted);
+}
+
 .history-entry-message {
   margin: 0;
   line-height: 1.5;
@@ -750,6 +756,13 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--sg-text-heading);
+}
+
+.status-timeline-tooltip-meta,
+.status-timeline-popover-meta {
+  font-size: 0.75rem;
+  color: var(--sg-text-muted);
+  margin-top: 0.15rem;
 }
 
 .status-timeline-tooltip-message {

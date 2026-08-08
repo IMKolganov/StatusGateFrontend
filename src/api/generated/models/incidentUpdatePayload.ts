@@ -8,4 +8,9 @@ import type { IncidentUpdatePayloadTitle } from './incidentUpdatePayloadTitle';
 
 export interface IncidentUpdatePayload {
   title?: IncidentUpdatePayloadTitle;
+  monitored_component_id?: string | null;
+  clear_monitored_component?: boolean;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  clear_ends_at?: boolean;
 }

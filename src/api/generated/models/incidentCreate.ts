@@ -17,4 +17,7 @@ export interface IncidentCreate {
   /** @pattern ^(investigating|identified|monitoring|resolved|update)$ */
   status?: string;
   posted_at?: IncidentCreatePostedAt;
+  monitored_component_id?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
 }

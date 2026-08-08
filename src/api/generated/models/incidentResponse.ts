@@ -10,6 +10,11 @@ export interface IncidentResponse {
   id: string;
   project_id: string;
   title: string;
+  monitored_component_id?: string | null;
+  service_name?: string | null;
+  service_slug?: string | null;
+  starts_at: string;
+  ends_at?: string | null;
   created_at: string;
   updated_at: string;
   updates?: IncidentUpdateResponse[];

@@ -44,6 +44,13 @@ function isSameUtcMonth(left: Date, right: Date): boolean {
   return left.getUTCFullYear() === right.getUTCFullYear() && left.getUTCMonth() === right.getUTCMonth()
 }
 
+function formatIncidentRange(startsAt?: string | null, endsAt?: string | null): string | null {
+  if (!startsAt) return null
+  const start = new Date(startsAt).toLocaleString()
+  if (!endsAt) return `${start} → open`
+  return `${start} → ${new Date(endsAt).toLocaleString()}`
+}
+
 function formatDowntime(seconds: number): string {
   if (seconds < 60) return `${seconds}s`
   if (seconds < 3600) return `${Math.round(seconds / 60)} min`
@@ -97,7 +104,10 @@ function buildDayDetailText(
   if (day.incidents && day.incidents.length > 0) {
     lines.push('', 'Incidents:')
     for (const incident of day.incidents) {
-      lines.push(`- ${incident.title} (${incident.status})`)
+      const scope = incident.service_name ? ` · ${incident.service_name}` : ''
+      const range = formatIncidentRange(incident.starts_at, incident.ends_at)
+      lines.push(`- ${incident.title} (${incident.status}${scope})`)
+      if (range) lines.push(`  ${range}`)
       if (incident.message) lines.push(`  ${incident.message}`)
     }
   }
@@ -153,6 +163,13 @@ function TimelineTooltip({ day, anchorRect, showAvailabilityDetail }: TimelineTo
           {day.incidents.map((incident, index) => (
             <li key={`${incident.posted_at}-${index}`}>
               <div className="status-timeline-tooltip-title">{incident.title}</div>
+              {(incident.service_name || incident.starts_at) && (
+                <div className="status-timeline-tooltip-meta">
+                  {[incident.service_name, formatIncidentRange(incident.starts_at, incident.ends_at)]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </div>
+              )}
               <div className="status-timeline-tooltip-message">{incident.message}</div>
             </li>
           ))}
@@ -355,6 +372,13 @@ function DayDetailPopover({
           {day.incidents.map((incident, index) => (
             <li key={`${incident.posted_at}-${index}`}>
               <div className="status-timeline-popover-title">{incident.title}</div>
+              {(incident.service_name || incident.starts_at) && (
+                <div className="status-timeline-popover-meta">
+                  {[incident.service_name, formatIncidentRange(incident.starts_at, incident.ends_at)]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </div>
+              )}
               <div className="status-timeline-popover-message">{incident.message}</div>
             </li>
           ))}

@@ -631,17 +631,14 @@
   align-items: center;
 }
 
-.incident-title-edit {
-  display: flex;
+.incident-meta-edit {
   flex: 1;
-  flex-wrap: wrap;
-  gap: var(--sg-space-2);
-  align-items: center;
+  margin: 0;
 }
 
-.incident-title-edit input {
-  flex: 1;
-  min-width: 12rem;
+.incident-meta-line {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
 }
 
 .incident-update-edit {

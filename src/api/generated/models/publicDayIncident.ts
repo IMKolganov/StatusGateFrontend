@@ -10,4 +10,8 @@ export interface PublicDayIncident {
   message: string;
   status: string;
   posted_at: string;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  service_name?: string | null;
+  service_slug?: string | null;
 }
