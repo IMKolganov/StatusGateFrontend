@@ -23,6 +23,8 @@ import {
   deleteIncidentApiAdminIncidentsIncidentIdDelete,
   deleteIncidentEntryApiAdminIncidentUpdatesUpdateIdDelete,
   listProjectIncidentsApiAdminProjectsProjectIdIncidentsGet,
+  updateIncidentApiAdminIncidentsIncidentIdPatch,
+  updateIncidentEntryApiAdminIncidentUpdatesUpdateIdPatch,
 } from './generated/admin-incidents/admin-incidents'
 import {
   getMonitoringSettingsApiAdminMonitoringSettingsGet,
@@ -57,6 +59,9 @@ import type { ComponentKindUpdate } from './generated/models/componentKindUpdate
 import type { IncidentCreate } from './generated/models/incidentCreate'
 import type { IncidentResponse } from './generated/models/incidentResponse'
 import type { IncidentUpdateCreate } from './generated/models/incidentUpdateCreate'
+import type { IncidentUpdatePayload } from './generated/models/incidentUpdatePayload'
+import type { IncidentUpdateResponse } from './generated/models/incidentUpdateResponse'
+import type { IncidentUpdateUpdate } from './generated/models/incidentUpdateUpdate'
 import type { MonitoredComponentCreate } from './generated/models/monitoredComponentCreate'
 import type { MonitoredComponentResponse } from './generated/models/monitoredComponentResponse'
 import type { MonitoredComponentUpdate } from './generated/models/monitoredComponentUpdate'
@@ -262,12 +267,18 @@ export const api = {
   createProjectIncident: (projectId: string, payload: IncidentCreate): Promise<IncidentResponse> =>
     createProjectIncidentApiAdminProjectsProjectIdIncidentsPost(projectId, payload),
 
+  updateIncident: (incidentId: string, payload: IncidentUpdatePayload): Promise<IncidentResponse> =>
+    updateIncidentApiAdminIncidentsIncidentIdPatch(incidentId, payload),
+
   deleteIncident: async (incidentId: string): Promise<void> => {
     await deleteIncidentApiAdminIncidentsIncidentIdDelete(incidentId)
   },
 
   addIncidentUpdate: (incidentId: string, payload: IncidentUpdateCreate) =>
     addIncidentUpdateApiAdminIncidentsIncidentIdUpdatesPost(incidentId, payload),
+
+  updateIncidentUpdate: (updateId: string, payload: IncidentUpdateUpdate): Promise<IncidentUpdateResponse> =>
+    updateIncidentEntryApiAdminIncidentUpdatesUpdateIdPatch(updateId, payload),
 
   deleteIncidentUpdate: async (updateId: string): Promise<void> => {
     await deleteIncidentEntryApiAdminIncidentUpdatesUpdateIdDelete(updateId)

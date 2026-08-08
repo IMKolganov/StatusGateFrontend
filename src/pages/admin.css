@@ -624,6 +624,30 @@
   gap: var(--sg-space-3);
 }
 
+.incident-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sg-space-2);
+  align-items: center;
+}
+
+.incident-title-edit {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: var(--sg-space-2);
+  align-items: center;
+}
+
+.incident-title-edit input {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.incident-update-edit {
+  margin: 0;
+}
+
 .incident-updates {
   list-style: none;
   margin: 0;

@@ -26,10 +26,22 @@ const emptyUpdateForm = {
   posted_at: '',
 }
 
+type EditUpdateForm = {
+  message: string
+  status: string
+  posted_at: string
+}
 
 function fromLocalInputValue(value: string): string | undefined {
   if (!value) return undefined
   return new Date(value).toISOString()
+}
+
+function toLocalInputValue(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 export function IncidentsPage() {
@@ -39,11 +51,17 @@ export function IncidentsPage() {
   const [items, setItems] = useState<Incident[]>([])
   const [incidentForm, setIncidentForm] = useState(emptyIncidentForm)
   const [updateForms, setUpdateForms] = useState<Record<string, typeof emptyUpdateForm>>({})
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null)
+  const [titleDraft, setTitleDraft] = useState('')
+  const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null)
+  const [editUpdateForm, setEditUpdateForm] = useState<EditUpdateForm>(emptyUpdateForm)
   const [error, setError] = useState<string | null>(null)
 
   if (projectId !== trackedProjectId) {
     setTrackedProjectId(projectId)
     setItems([])
+    setEditingTitleId(null)
+    setEditingUpdateId(null)
   }
 
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects])
@@ -89,6 +107,18 @@ export function IncidentsPage() {
     }
   }
 
+  const onSaveTitle = async (incidentId: string, event: FormEvent) => {
+    event.preventDefault()
+    setError(null)
+    try {
+      await api.updateIncident(incidentId, { title: titleDraft.trim() })
+      setEditingTitleId(null)
+      load()
+    } catch (err) {
+      setError(formatApiError(err, 'Save failed'))
+    }
+  }
+
   const onAddUpdate = async (incidentId: string, event: FormEvent) => {
     event.preventDefault()
     const form = updateForms[incidentId] ?? emptyUpdateForm
@@ -100,6 +130,31 @@ export function IncidentsPage() {
         posted_at: fromLocalInputValue(form.posted_at),
       })
       setUpdateForms((prev) => ({ ...prev, [incidentId]: emptyUpdateForm }))
+      load()
+    } catch (err) {
+      setError(formatApiError(err, 'Save failed'))
+    }
+  }
+
+  const startEditUpdate = (update: NonNullable<Incident['updates']>[number]) => {
+    setEditingUpdateId(update.id)
+    setEditUpdateForm({
+      message: update.message,
+      status: update.status,
+      posted_at: toLocalInputValue(update.posted_at),
+    })
+  }
+
+  const onSaveUpdate = async (updateId: string, event: FormEvent) => {
+    event.preventDefault()
+    setError(null)
+    try {
+      await api.updateIncidentUpdate(updateId, {
+        message: editUpdateForm.message,
+        status: editUpdateForm.status,
+        posted_at: fromLocalInputValue(editUpdateForm.posted_at),
+      })
+      setEditingUpdateId(null)
       load()
     } catch (err) {
       setError(formatApiError(err, 'Save failed'))
@@ -149,21 +204,70 @@ export function IncidentsPage() {
 
       {projectId && items.map((incident) => {
         const updateForm = updateForms[incident.id] ?? emptyUpdateForm
+        const editingTitle = editingTitleId === incident.id
         return (
           <section key={incident.id} className="panel incident-panel">
             <div className="incident-panel-header">
-              <h2>{incident.title}</h2>
-              <button type="button" className="btn btn-danger btn-sm" onClick={() => void api.deleteIncident(incident.id).then(load)}>Delete</button>
+              {editingTitle ? (
+                <form className="incident-title-edit" onSubmit={(e) => void onSaveTitle(incident.id, e)}>
+                  <input
+                    value={titleDraft}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    required
+                    aria-label="Incident title"
+                  />
+                  <button type="submit" className="btn btn-primary btn-sm">Save</button>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingTitleId(null)}>Cancel</button>
+                </form>
+              ) : (
+                <>
+                  <h2>{incident.title}</h2>
+                  <div className="incident-panel-actions">
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => {
+                        setEditingTitleId(incident.id)
+                        setTitleDraft(incident.title)
+                      }}
+                    >
+                      Edit title
+                    </button>
+                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void api.deleteIncident(incident.id).then(load)}>Delete</button>
+                  </div>
+                </>
+              )}
             </div>
             <ul className="incident-updates">
               {(incident.updates ?? []).map((update) => (
                 <li key={update.id} className="incident-update-row">
-                  <div className="incident-update-meta">
-                    <time>{new Date(update.posted_at).toLocaleString()}</time>
-                    <span className={`history-status history-status-${update.status}`}>{update.status}</span>
-                  </div>
-                  <p>{update.message}</p>
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => void api.deleteIncidentUpdate(update.id).then(load)}>Remove</button>
+                  {editingUpdateId === update.id ? (
+                    <form className="stack-form incident-update-edit" onSubmit={(e) => void onSaveUpdate(update.id, e)}>
+                      <label>Message<textarea value={editUpdateForm.message} onChange={(e) => setEditUpdateForm({ ...editUpdateForm, message: e.target.value })} required rows={3} /></label>
+                      <label>Status
+                        <select value={editUpdateForm.status} onChange={(e) => setEditUpdateForm({ ...editUpdateForm, status: e.target.value })}>
+                          {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                        </select>
+                      </label>
+                      <label>When<input type="datetime-local" value={editUpdateForm.posted_at} onChange={(e) => setEditUpdateForm({ ...editUpdateForm, posted_at: e.target.value })} required /></label>
+                      <div className="incident-panel-actions">
+                        <button type="submit" className="btn btn-primary btn-sm">Save</button>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingUpdateId(null)}>Cancel</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="incident-update-meta">
+                        <time>{new Date(update.posted_at).toLocaleString()}</time>
+                        <span className={`history-status history-status-${update.status}`}>{update.status}</span>
+                      </div>
+                      <p>{update.message}</p>
+                      <div className="incident-panel-actions">
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => startEditUpdate(update)}>Edit</button>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => void api.deleteIncidentUpdate(update.id).then(load)}>Remove</button>
+                      </div>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
