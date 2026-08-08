@@ -142,7 +142,11 @@ export type {
   VpnCheckConfig,
 }
 
-export type { PublicTunnelConnectionEvent, PublicTunnelMetricPoint } from './tunnelMetrics'
+export type {
+  PublicTunnelConnectionEvent,
+  PublicTunnelLatestDiagnostics,
+  PublicTunnelMetricPoint,
+} from './tunnelMetrics'
 
 export { DEFAULT_SPEED_TEST_URL_TEMPLATE }
 

@@ -1052,6 +1052,36 @@
   margin-bottom: var(--sg-space-4);
 }
 
+.tunnel-diag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--sg-space-3);
+}
+
+.tunnel-diag {
+  display: grid;
+  gap: 0.25rem;
+  padding: var(--sg-space-3);
+  border: 1px solid var(--sg-border, #e5e7eb);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sg-surface-muted, #f8fafc) 80%, transparent);
+}
+
+.tunnel-diag--wide {
+  grid-column: 1 / -1;
+}
+
+.tunnel-diag__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  word-break: break-all;
+}
+
+.tunnel-diag__sub {
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
 .tunnel-summary__item {
   display: grid;
   gap: 0.2rem;
@@ -1130,6 +1160,25 @@
   );
 }
 
+.tunnel-legend__swatch--throughput {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--sg-success, #059669);
+}
+
+.tunnel-legend__swatch--throughput-cached {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--sg-success, #059669);
+}
+
+.tunnel-panel--throughput {
+  margin-top: var(--sg-space-6);
+}
+
 .tunnel-chart-wrap {
   width: 100%;
 }
@@ -1188,6 +1237,39 @@
   stroke: var(--sg-warning, #d97706);
   stroke-width: 1.75;
   stroke-dasharray: 5 4;
+}
+
+.tunnel-chart__axis-title--throughput {
+  fill: var(--sg-success, #047857);
+}
+
+.tunnel-chart__throughput {
+  stroke: var(--sg-success, #059669);
+  stroke-width: 2;
+  stroke-dasharray: 2 6;
+}
+
+.tunnel-chart__throughput-stem {
+  stroke: color-mix(in srgb, var(--sg-success, #059669) 45%, transparent);
+  stroke-width: 1.5;
+}
+
+.tunnel-chart__throughput-stem--cached {
+  stroke-dasharray: 2 3;
+  stroke: color-mix(in srgb, var(--sg-success, #059669) 30%, transparent);
+}
+
+.tunnel-chart__throughput-dot {
+  fill: var(--sg-success, #059669);
+  stroke: #fff;
+  stroke-width: 1.5;
+  cursor: crosshair;
+}
+
+.tunnel-chart__throughput-dot--cached {
+  fill: #fff;
+  stroke: var(--sg-success, #059669);
+  stroke-width: 2;
 }
 
 .tunnel-chart__outage {

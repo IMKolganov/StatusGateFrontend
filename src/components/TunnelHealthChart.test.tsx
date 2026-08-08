@@ -123,6 +123,53 @@ describe('TunnelHealthChart', () => {
   })
 })
 
+describe('TunnelThroughputChart', () => {
+  it('explains empty throughput window', async () => {
+    const { TunnelThroughputChart } = await import('./TunnelThroughputChart')
+    render(
+      <TunnelThroughputChart
+        points={[
+          {
+            checked_at: '2026-08-08T10:15:00.000Z',
+            outcome: 'up',
+            gateway_ping_avg_ms: 30,
+          },
+        ]}
+        rangeStart="2026-08-08T10:00:00.000Z"
+        rangeEnd="2026-08-08T12:00:00.000Z"
+      />,
+    )
+    expect(screen.getByText(/No full download speed tests/i)).toBeInTheDocument()
+  })
+
+  it('renders live and cached throughput markers', async () => {
+    const { TunnelThroughputChart } = await import('./TunnelThroughputChart')
+    const { container } = render(
+      <TunnelThroughputChart
+        points={[
+          {
+            checked_at: '2026-08-08T10:15:00.000Z',
+            outcome: 'up',
+            download_mbps: 114.6,
+            download_cached: false,
+          },
+          {
+            checked_at: '2026-08-08T11:15:00.000Z',
+            outcome: 'up',
+            download_mbps: 91.2,
+            download_cached: true,
+          },
+        ]}
+        rangeStart="2026-08-08T10:00:00.000Z"
+        rangeEnd="2026-08-08T12:00:00.000Z"
+      />,
+    )
+    expect(container.querySelector('.tunnel-chart__throughput')).toBeTruthy()
+    expect(container.querySelectorAll('.tunnel-chart__throughput-dot')).toHaveLength(2)
+    expect(container.querySelectorAll('.tunnel-chart__throughput-dot--cached')).toHaveLength(1)
+  })
+})
+
 describe('VpnNetworkDetails tunnel link', () => {
   it('shows tunnel live link when gateway ping and href are present', () => {
     const { container } = render(

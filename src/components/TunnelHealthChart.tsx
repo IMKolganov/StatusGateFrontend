@@ -222,6 +222,12 @@ export function TunnelHealthChart({ points, events, rangeStart, rangeEnd }: Prop
                   if (point.gateway_ping_loss_percent != null) {
                     lines.push(`Packet loss: ${Number(point.gateway_ping_loss_percent).toFixed(0)}%`)
                   }
+                  if (point.probe_latency_ms != null) {
+                    lines.push(`HTTP probe: ${Number(point.probe_latency_ms).toFixed(0)} ms`)
+                  }
+                  if (point.exit_ip) {
+                    lines.push(`Exit IP: ${point.exit_ip}`)
+                  }
                   setHover({ x, y, lines })
                 }}
               />
