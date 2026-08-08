@@ -49,8 +49,10 @@ export function TunnelStatusPage() {
     }
 
     const schedule = () => {
+      if (cancelled) return
       window.clearTimeout(timer)
       timer = window.setTimeout(() => {
+        if (cancelled) return
         if (document.visibilityState === 'visible') {
           void load().finally(schedule)
         } else {
@@ -60,6 +62,7 @@ export function TunnelStatusPage() {
     }
 
     const onVisibility = () => {
+      if (cancelled) return
       if (document.visibilityState === 'visible') {
         void load()
       }

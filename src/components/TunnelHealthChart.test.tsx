@@ -49,6 +49,29 @@ describe('TunnelHealthChart', () => {
     expect(container.querySelector('.tunnel-chart__ping')).toBeTruthy()
     expect(container.querySelector('.tunnel-chart__event-dot')).toBeTruthy()
   })
+
+  it('renders outage markers when only down points exist', () => {
+    const { container } = render(
+      <TunnelHealthChart
+        points={[
+          {
+            checked_at: '2026-08-08T10:20:00.000Z',
+            outcome: 'down',
+          },
+          {
+            checked_at: '2026-08-08T10:40:00.000Z',
+            outcome: 'timeout',
+          },
+        ]}
+        events={[]}
+        rangeStart="2026-08-08T10:00:00.000Z"
+        rangeEnd="2026-08-08T12:00:00.000Z"
+      />,
+    )
+    expect(container.querySelector('svg.tunnel-chart')).toBeTruthy()
+    expect(container.querySelectorAll('.tunnel-chart__outage')).toHaveLength(2)
+    expect(container.querySelector('.tunnel-chart__ping')).toBeNull()
+  })
 })
 
 describe('VpnNetworkDetails tunnel link', () => {
