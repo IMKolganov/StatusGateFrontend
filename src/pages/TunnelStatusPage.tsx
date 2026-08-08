@@ -32,19 +32,21 @@ export function TunnelStatusPage() {
 
     let cancelled = false
     let timer: number | undefined
+    let requestId = 0
 
     const load = async () => {
+      const currentRequest = ++requestId
       try {
         const next = await api.getPublicTunnelMetrics(slug, serviceSlug, { hours: 2 })
-        if (cancelled) return
+        if (cancelled || currentRequest !== requestId) return
         setMetrics(next)
         setError(null)
         setUpdatedAt(new Date())
       } catch (err: unknown) {
-        if (cancelled) return
+        if (cancelled || currentRequest !== requestId) return
         setError(err instanceof ApiError ? err.message : 'Failed to load tunnel metrics')
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled && currentRequest === requestId) setLoading(false)
       }
     }
 
@@ -131,8 +133,8 @@ export function TunnelStatusPage() {
               <p className="muted">No connection events in this window.</p>
             ) : (
               <ul className="tunnel-events__list">
-                {[...metrics.events].reverse().map((event) => (
-                  <li key={`${event.event_type}-${event.occurred_at}`}>
+                {[...metrics.events].reverse().map((event, index) => (
+                  <li key={event.id ?? `${event.event_type}-${event.occurred_at}-${index}`}>
                     <span className={`tunnel-event-type tunnel-event-type--${event.event_type}`}>
                       {EVENT_LABELS[event.event_type] ?? event.event_type}
                     </span>

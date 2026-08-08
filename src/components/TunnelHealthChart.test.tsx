@@ -72,6 +72,55 @@ describe('TunnelHealthChart', () => {
     expect(container.querySelectorAll('.tunnel-chart__outage')).toHaveLength(2)
     expect(container.querySelector('.tunnel-chart__ping')).toBeNull()
   })
+
+  it('still renders the chart when only connection events exist', () => {
+    const { container } = render(
+      <TunnelHealthChart
+        points={[]}
+        events={[
+          {
+            id: '00000000-0000-4000-8000-000000000099',
+            occurred_at: '2026-08-08T10:30:00.000Z',
+            event_type: 'tunnel_down',
+          },
+        ]}
+        rangeStart="2026-08-08T10:00:00.000Z"
+        rangeEnd="2026-08-08T12:00:00.000Z"
+      />,
+    )
+    expect(container.querySelector('svg.tunnel-chart')).toBeTruthy()
+    expect(container.querySelector('.tunnel-chart__event-dot')).toBeTruthy()
+    expect(container.querySelector('.tunnel-chart--empty')).toBeNull()
+    expect(container.textContent).not.toMatch(/No probe samples/i)
+  })
+
+  it('breaks the ping line across outage gaps', () => {
+    const { container } = render(
+      <TunnelHealthChart
+        points={[
+          {
+            checked_at: '2026-08-08T10:10:00.000Z',
+            outcome: 'up',
+            gateway_ping_avg_ms: 20,
+          },
+          {
+            checked_at: '2026-08-08T10:30:00.000Z',
+            outcome: 'down',
+          },
+          {
+            checked_at: '2026-08-08T10:50:00.000Z',
+            outcome: 'up',
+            gateway_ping_avg_ms: 40,
+          },
+        ]}
+        events={[]}
+        rangeStart="2026-08-08T10:00:00.000Z"
+        rangeEnd="2026-08-08T12:00:00.000Z"
+      />,
+    )
+    const path = container.querySelector('.tunnel-chart__ping')?.getAttribute('d') ?? ''
+    expect(path.match(/\bM\b/g)?.length).toBe(2)
+  })
 })
 
 describe('VpnNetworkDetails tunnel link', () => {

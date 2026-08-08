@@ -19,6 +19,37 @@ function formatTick(ms: number): string {
   return new Date(ms).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
+function buildSegmentedPath(
+  points: PublicTunnelMetricPoint[],
+  options: {
+    valueOf: (point: PublicTunnelMetricPoint) => number | null | undefined
+    xFor: (iso: string) => number
+    yFor: (value: number) => number
+  },
+): string {
+  const parts: string[] = []
+  let drawing = false
+
+  for (let index = 0; index < points.length; index += 1) {
+    const point = points[index]
+    const raw = options.valueOf(point)
+    const hasValue = raw != null && Number.isFinite(raw)
+    const isOutage = point.outcome !== 'up' && point.outcome !== 'degraded'
+
+    if (!hasValue || isOutage) {
+      drawing = false
+      continue
+    }
+
+    const x = options.xFor(point.checked_at)
+    const y = options.yFor(Number(raw))
+    parts.push(`${drawing ? 'L' : 'M'} ${x.toFixed(1)} ${y.toFixed(1)}`)
+    drawing = true
+  }
+
+  return parts.join(' ')
+}
+
 export function TunnelHealthChart({ points, events, rangeStart, rangeEnd }: Props) {
   const start = toMs(rangeStart)
   const end = Math.max(toMs(rangeEnd), start + 1)
@@ -34,27 +65,20 @@ export function TunnelHealthChart({ points, events, rangeStart, rangeEnd }: Prop
   const yForPing = (ms: number) => PAD.top + innerH - (ms / maxPing) * innerH
   const yForLoss = (pct: number) => PAD.top + innerH - (Math.min(Math.max(pct, 0), 100) / 100) * innerH
 
-  const pingPath = points
-    .filter((point) => point.gateway_ping_avg_ms != null)
-    .map((point, index) => {
-      const x = xFor(point.checked_at)
-      const y = yForPing(Number(point.gateway_ping_avg_ms))
-      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
-    })
-    .join(' ')
-
-  const lossPath = points
-    .filter((point) => point.gateway_ping_loss_percent != null)
-    .map((point, index) => {
-      const x = xFor(point.checked_at)
-      const y = yForLoss(Number(point.gateway_ping_loss_percent))
-      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
-    })
-    .join(' ')
+  const pingPath = buildSegmentedPath(points, {
+    valueOf: (point) => point.gateway_ping_avg_ms,
+    xFor,
+    yFor: yForPing,
+  })
+  const lossPath = buildSegmentedPath(points, {
+    valueOf: (point) => point.gateway_ping_loss_percent,
+    xFor,
+    yFor: yForLoss,
+  })
 
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((fraction) => start + (end - start) * fraction)
 
-  if (points.length === 0) {
+  if (points.length === 0 && events.length === 0) {
     return (
       <div className="tunnel-chart tunnel-chart--empty" role="img" aria-label="No tunnel samples yet">
         <p className="muted">No probe samples in this window yet.</p>
@@ -77,12 +101,12 @@ export function TunnelHealthChart({ points, events, rangeStart, rangeEnd }: Prop
         className="tunnel-chart__plot"
       />
 
-      {points.map((point) => {
+      {points.map((point, index) => {
         if (point.outcome === 'up' || point.outcome === 'degraded') return null
         const x = xFor(point.checked_at)
         return (
           <line
-            key={`out-${point.checked_at}`}
+            key={`out-${point.checked_at}-${index}`}
             x1={x}
             x2={x}
             y1={PAD.top}
@@ -113,10 +137,11 @@ export function TunnelHealthChart({ points, events, rangeStart, rangeEnd }: Prop
       {pingPath && <path d={pingPath} className="tunnel-chart__ping" fill="none" />}
       {lossPath && <path d={lossPath} className="tunnel-chart__loss" fill="none" />}
 
-      {events.map((event) => {
+      {events.map((event, index) => {
         const x = xFor(event.occurred_at)
+        const key = event.id ?? `${event.event_type}-${event.occurred_at}-${index}`
         return (
-          <g key={`${event.event_type}-${event.occurred_at}`}>
+          <g key={key}>
             <line
               x1={x}
               x2={x}

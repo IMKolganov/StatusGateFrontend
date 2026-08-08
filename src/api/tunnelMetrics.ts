@@ -8,6 +8,7 @@ export type PublicTunnelMetricPoint = {
 }
 
 export type PublicTunnelConnectionEvent = {
+  id?: string
   occurred_at: string
   event_type: string
   outcome?: string | null
