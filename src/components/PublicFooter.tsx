@@ -2,11 +2,7 @@ import { brandConfig } from '../brand/config'
 
 const currentYear = new Date().getFullYear()
 
-const versionLabel = [
-  `v${__APP_VERSION__}`,
-  __GIT_SHA__ ? `build ${__GIT_SHA__}` : '',
-  __BUILD_DATE__,
-]
+const versionLabel = [`v${__APP_VERSION__}`, __GIT_SHA__ ? `build ${__GIT_SHA__}` : '']
   .filter(Boolean)
   .join(' · ')
 
