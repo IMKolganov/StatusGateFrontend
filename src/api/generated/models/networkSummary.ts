@@ -50,4 +50,12 @@ export interface NetworkSummary {
   speed_test_last_success_at?: string | null;
   /** True when displayed Mbps come from a previous successful measurement. */
   speed_test_showing_last_success?: boolean | null;
+  /** Lowest successful download speed observed for this VPN. */
+  speed_test_min_mbps?: number | null;
+  /** Highest successful download speed observed for this VPN. */
+  speed_test_max_mbps?: number | null;
+  /** Average successful download speed observed for this VPN. */
+  speed_test_avg_mbps?: number | null;
+  /** Number of successful speed samples included in min/max/avg. */
+  speed_test_sample_count?: number | null;
 }

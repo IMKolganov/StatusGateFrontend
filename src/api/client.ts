@@ -84,13 +84,14 @@ import type { RegisterRequest } from './generated/models/registerRequest'
 import type { SpeedTestAdvisoryResponse } from './generated/models/speedTestAdvisoryResponse'
 import type { TwoFactorSetupResponse } from './generated/models/twoFactorSetupResponse'
 import type { VpnCheckConfig } from './generated/models/vpnCheckConfig'
+import type { PublicTunnelMetrics } from './tunnelMetrics'
 import {
   getPublicProjectHistoryApiStatusProjectsSlugHistoryGet,
   getPublicProjectStatusApiStatusProjectsSlugGet,
   getPublicSystemStatusApiStatusProjectsSlugSystemStatusGet,
   listPublicProjectsApiStatusProjectsGet,
 } from './generated/public-status/public-status'
-import { ApiError } from './mutator'
+import { ApiError, customFetch } from './mutator'
 import { DEFAULT_SPEED_TEST_URL_TEMPLATE } from '../utils/speedTestConfig'
 
 export type Account = AccountResponse
@@ -132,6 +133,7 @@ export type {
   PublicProjectStatus,
   PublicProjectSummary,
   PublicSystemStatus,
+  PublicTunnelMetrics,
   PurgeCheckHistoryResponse,
   RegistrationStatusResponse,
   RegisterRequest,
@@ -139,6 +141,8 @@ export type {
   TwoFactorSetupResponse,
   VpnCheckConfig,
 }
+
+export type { PublicTunnelConnectionEvent, PublicTunnelMetricPoint } from './tunnelMetrics'
 
 export { DEFAULT_SPEED_TEST_URL_TEMPLATE }
 
@@ -283,4 +287,16 @@ export const api = {
     slug: string,
     params?: { end?: string; days?: number },
   ): Promise<PublicSystemStatus> => getPublicSystemStatusApiStatusProjectsSlugSystemStatusGet(slug, params),
+
+  getPublicTunnelMetrics: (
+    projectSlug: string,
+    serviceSlug: string,
+    params?: { hours?: number },
+  ): Promise<PublicTunnelMetrics> => {
+    const search = new URLSearchParams()
+    if (params?.hours != null) search.set('hours', String(params.hours))
+    const query = search.toString()
+    const path = `/api/status/projects/${encodeURIComponent(projectSlug)}/services/${encodeURIComponent(serviceSlug)}/tunnel-metrics`
+    return customFetch<PublicTunnelMetrics>(query ? `${path}?${query}` : path)
+  },
 }

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { NetworkSummary } from '../api/generated/models/networkSummary'
 import { formatSpeedTestError } from '../utils/speedTestError'
 
@@ -10,6 +11,16 @@ type NetworkDetailsProps = {
   collapsible?: boolean
   defaultOpen?: boolean
   summaryLabel?: string
+  /** Public live tunnel chart URL when gateway ping is available. */
+  tunnelHref?: string | null
+}
+
+export function hasGatewayPing(summary: NetworkSummary): boolean {
+  return (
+    summary.gateway_ping_avg_ms != null
+    || summary.gateway_ping_jitter_ms != null
+    || summary.gateway_ping_loss_percent != null
+  )
 }
 
 function formatBytes(value: number): string {
@@ -30,7 +41,7 @@ function buildSpeedTestDetails(summary: NetworkSummary): string[] {
   const lastSuccessAt = formatTimestamp(summary.speed_test_last_success_at ?? summary.speed_test_measured_at)
   const lastAttemptAt = formatTimestamp(summary.speed_test_measured_at)
 
-  if (summary.download_mbps != null) {
+  if (summary.download_mbps != null && Number(summary.download_mbps) > 0) {
     lines.push(`Displayed: ${Number(summary.download_mbps).toFixed(2)} Mbps`)
   }
   if (
@@ -38,6 +49,17 @@ function buildSpeedTestDetails(summary: NetworkSummary): string[] {
     && summary.download_duration_ms != null
   ) {
     lines.push(`Transfer: ${formatBytes(Number(summary.download_bytes))} in ${summary.download_duration_ms} ms`)
+  }
+  if (summary.speed_test_min_mbps != null) {
+    lines.push(`Min: ${Number(summary.speed_test_min_mbps).toFixed(2)} Mbps`)
+  }
+  if (summary.speed_test_avg_mbps != null) {
+    const samples = summary.speed_test_sample_count
+    const suffix = samples != null && samples > 0 ? ` (${samples} samples)` : ''
+    lines.push(`Average: ${Number(summary.speed_test_avg_mbps).toFixed(2)} Mbps${suffix}`)
+  }
+  if (summary.speed_test_max_mbps != null) {
+    lines.push(`Max: ${Number(summary.speed_test_max_mbps).toFixed(2)} Mbps`)
   }
   if (lastSuccessAt) {
     lines.push(`Last successful: ${lastSuccessAt}`)
@@ -61,12 +83,17 @@ function buildSpeedTestDetails(summary: NetworkSummary): string[] {
 }
 
 function formatDownloadSpeed(summary: NetworkSummary): string | null {
-  if (summary.download_mbps != null) {
+  if (summary.download_mbps != null && Number(summary.download_mbps) > 0) {
     const base = `${Number(summary.download_mbps).toFixed(2)} Mbps`
     return summary.speed_test_showing_last_success ? `${base} (cached)` : base
   }
-  if (summary.speed_test_ok === false) {
-    const reason = formatSpeedTestError(summary.speed_test_error)
+  if (summary.speed_test_ok === false || (summary.download_mbps != null && Number(summary.download_mbps) <= 0)) {
+    const reason = formatSpeedTestError(
+      summary.speed_test_error
+      || (summary.download_mbps != null && Number(summary.download_mbps) <= 0
+        ? 'Speed test downloaded no data'
+        : null),
+    )
     if (/deferred/i.test(reason)) {
       return reason
     }
@@ -145,6 +172,7 @@ export function VpnNetworkDetails({
   collapsible = false,
   defaultOpen = false,
   summaryLabel = 'Network details',
+  tunnelHref = null,
 }: NetworkDetailsProps) {
   const rows: Array<[string, string, string[]?]> = []
 
@@ -184,26 +212,38 @@ export function VpnNetworkDetails({
   if (summary.probe_latency_ms != null) rows.push(['Probe latency', `${summary.probe_latency_ms} ms`])
   if (summary.probe_url) rows.push(['Probe URL', String(summary.probe_url)])
 
-  if (rows.length === 0) return null
+  const showTunnelLink = Boolean(tunnelHref && hasGatewayPing(summary))
+  if (rows.length === 0 && !showTunnelLink) return null
 
   const content = (
-    <dl className={collapsible ? 'network-summary' : `network-summary ${className}`.trim()}>
-      {rows.map(([label, value, details]) => (
-        <div key={label} className="network-summary__row">
-          <dt>{label}</dt>
-          <dd>
-            {details && details.length > 0 ? (
-              <SpeedTestValue value={value} details={details} />
-            ) : (
-              value
-            )}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      {rows.length > 0 && (
+        <dl className={collapsible ? 'network-summary' : `network-summary ${className}`.trim()}>
+          {rows.map(([label, value, details]) => (
+            <div key={label} className="network-summary__row">
+              <dt>{label}</dt>
+              <dd>
+                {details && details.length > 0 ? (
+                  <SpeedTestValue value={value} details={details} />
+                ) : (
+                  value
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {showTunnelLink && tunnelHref && (
+        <p className="network-summary__tunnel-link">
+          <Link to={tunnelHref}>Tunnel live (2h)</Link>
+        </p>
+      )}
+    </>
   )
 
-  if (!collapsible) return content
+  if (!collapsible) {
+    return className ? <div className={className}>{content}</div> : content
+  }
 
   return (
     <details className={`network-summary-details ${className}`.trim()} open={defaultOpen}>

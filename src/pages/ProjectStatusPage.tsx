@@ -94,6 +94,11 @@ export function ProjectStatusPage() {
                             className="network-summary--service"
                             collapsible
                             defaultOpen={service.status !== 'up' && service.status !== 'degraded'}
+                            tunnelHref={
+                              project
+                                ? `/projects/${project.slug}/services/${service.slug}/tunnel`
+                                : null
+                            }
                           />
                         )}
                       </div>

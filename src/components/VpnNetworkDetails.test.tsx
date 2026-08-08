@@ -29,6 +29,43 @@ describe('VpnNetworkDetails', () => {
     expect(screen.getByText(/Last error: Speed test failed/i)).toBeInTheDocument()
   })
 
+  it('shows min average and max speed in the popover', () => {
+    render(
+      <VpnNetworkDetails
+        summary={{
+          download_mbps: 114.6,
+          speed_test_ok: true,
+          speed_test_min_mbps: 80.1,
+          speed_test_avg_mbps: 97.4,
+          speed_test_max_mbps: 135.3,
+          speed_test_sample_count: 4,
+        }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /114\.60 Mbps/i }))
+    expect(screen.getByText(/Min: 80\.10 Mbps/i)).toBeInTheDocument()
+    expect(screen.getByText(/Average: 97\.40 Mbps \(4 samples\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/Max: 135\.30 Mbps/i)).toBeInTheDocument()
+  })
+
+  it('does not treat zero mbps as a displayed success', () => {
+    render(
+      <VpnNetworkDetails
+        summary={{
+          download_mbps: 0,
+          download_bytes: 1,
+          download_duration_ms: 448,
+          speed_test_ok: true,
+          speed_test_showing_last_success: true,
+          speed_test_error: 'Speed test downloaded no data',
+        }}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: /Could not measure speed: Speed test downloaded no data/i })).toBeInTheDocument()
+  })
+
   it('explains deferred measurement when timestamps are missing', () => {
     render(
       <VpnNetworkDetails

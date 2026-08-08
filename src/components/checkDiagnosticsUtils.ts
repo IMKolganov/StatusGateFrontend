@@ -38,6 +38,10 @@ export function networkSummaryFromRecord(raw: Record<string, unknown> | null | u
     speed_test_measured_at: str('speed_test_measured_at'),
     speed_test_last_success_at: str('speed_test_last_success_at'),
     speed_test_showing_last_success: bool('speed_test_showing_last_success'),
+    speed_test_min_mbps: num('speed_test_min_mbps'),
+    speed_test_max_mbps: num('speed_test_max_mbps'),
+    speed_test_avg_mbps: num('speed_test_avg_mbps'),
+    speed_test_sample_count: num('speed_test_sample_count'),
   }
 
   return Object.values(summary).some((value) => value != null && value !== '' && !(Array.isArray(value) && value.length === 0))
