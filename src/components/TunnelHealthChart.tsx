@@ -30,8 +30,7 @@ function buildSegmentedPath(
   const parts: string[] = []
   let drawing = false
 
-  for (let index = 0; index < points.length; index += 1) {
-    const point = points[index]
+  for (const point of points) {
     const raw = options.valueOf(point)
     const hasValue = raw != null && Number.isFinite(raw)
     const isOutage = point.outcome !== 'up' && point.outcome !== 'degraded'
