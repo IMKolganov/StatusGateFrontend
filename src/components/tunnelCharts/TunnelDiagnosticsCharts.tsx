@@ -151,12 +151,13 @@ export function TunnelDiagnosticsCharts({ points, events, rangeStart, rangeEnd }
             points: { show: false },
             // SmokePing-style escalation: fill gets hotter as loss climbs toward 100%.
             fill: (u) => {
-              const gradient = u.ctx.createLinearGradient(
-                0,
-                u.bbox.top + u.bbox.height,
-                0,
-                u.bbox.top,
-              )
+              const { top, height } = u.bbox
+              // uPlot can ask for the fill before layout — bbox is NaN then and
+              // createLinearGradient throws on non-finite coordinates.
+              if (!Number.isFinite(top) || !Number.isFinite(height) || height <= 0) {
+                return 'rgba(217, 119, 6, 0.15)'
+              }
+              const gradient = u.ctx.createLinearGradient(0, top + height, 0, top)
               gradient.addColorStop(0, 'rgba(217, 119, 6, 0.06)')
               gradient.addColorStop(0.4, 'rgba(217, 119, 6, 0.3)')
               gradient.addColorStop(1, 'rgba(220, 38, 38, 0.55)')
