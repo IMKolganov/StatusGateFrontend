@@ -901,6 +901,13 @@
   color: var(--sg-text-muted);
 }
 
+.public-footer__version {
+  margin: 0.15rem 0 0;
+  font-size: 0.7rem;
+  color: color-mix(in srgb, var(--sg-text-muted) 75%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 .about-page {
   display: flex;
   flex-direction: column;
