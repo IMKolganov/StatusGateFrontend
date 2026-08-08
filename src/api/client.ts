@@ -166,7 +166,7 @@ export const api = {
     await logoutApiAuthLogoutPost()
   },
 
-  me: (): Promise<AccountResponse> => meApiAuthMeGet(),
+  me: (): Promise<AccountResponse | undefined> => meApiAuthMeGet(),
 
   dashboard: (): Promise<AdminDashboardResponse> => adminDashboardApiAdminDashboardGet(),
 
