@@ -114,11 +114,73 @@ export function TunnelStatusPage() {
           </header>
 
           <section className="tunnel-panel">
-            <div className="tunnel-legend">
-              <span className="tunnel-legend__ping">Gateway ping</span>
-              <span className="tunnel-legend__loss">Packet loss</span>
-              <span className="tunnel-legend__event">Connection events</span>
+            <div className="tunnel-panel__intro">
+              <h2>Tunnel health</h2>
+              <p className="muted">
+                Gateway ping to the VPN router (left axis, ms) and packet loss from that ping
+                (right axis, %). Vertical red bars are failed checks; dots on top are connect/disconnect events.
+                Hover a point for exact values.
+              </p>
             </div>
+
+            <div className="tunnel-summary">
+              <div className="tunnel-summary__item">
+                <span className="tunnel-summary__label">Latest ping</span>
+                <strong>
+                  {latest?.gateway_ping_avg_ms != null
+                    ? `${Number(latest.gateway_ping_avg_ms).toFixed(1)} ms`
+                    : '—'}
+                </strong>
+              </div>
+              <div className="tunnel-summary__item">
+                <span className="tunnel-summary__label">Latest loss</span>
+                <strong>
+                  {latest?.gateway_ping_loss_percent != null
+                    ? `${Number(latest.gateway_ping_loss_percent).toFixed(0)}%`
+                    : '—'}
+                </strong>
+              </div>
+              <div className="tunnel-summary__item">
+                <span className="tunnel-summary__label">Samples</span>
+                <strong>{metrics.points.length}</strong>
+              </div>
+              <div className="tunnel-summary__item">
+                <span className="tunnel-summary__label">Events</span>
+                <strong>{metrics.events.length}</strong>
+              </div>
+            </div>
+
+            <ul className="tunnel-legend" aria-label="Chart legend">
+              <li className="tunnel-legend__ping">
+                <span className="tunnel-legend__swatch tunnel-legend__swatch--ping" aria-hidden />
+                <span>
+                  <strong>Gateway ping</strong>
+                  <span className="muted"> solid line · left axis · milliseconds</span>
+                </span>
+              </li>
+              <li className="tunnel-legend__loss">
+                <span className="tunnel-legend__swatch tunnel-legend__swatch--loss" aria-hidden />
+                <span>
+                  <strong>Packet loss</strong>
+                  <span className="muted"> dashed line · right axis · 0–100%</span>
+                </span>
+              </li>
+              <li className="tunnel-legend__outage">
+                <span className="tunnel-legend__swatch tunnel-legend__swatch--outage" aria-hidden />
+                <span>
+                  <strong>Failed check</strong>
+                  <span className="muted"> red vertical bar (down / timeout / error)</span>
+                </span>
+              </li>
+              <li className="tunnel-legend__event">
+                <span className="tunnel-legend__swatch tunnel-legend__swatch--event" aria-hidden />
+                <span>
+                  <strong>Connection event</strong>
+                  <span className="muted"> green = up, red = down / reconnect</span>
+                </span>
+              </li>
+            </ul>
+
             <TunnelHealthChart
               points={metrics.points}
               events={metrics.events}
