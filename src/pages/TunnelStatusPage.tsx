@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api, ApiError, type PublicTunnelMetrics } from '../api/client'
 import { PublicLayout } from '../components/PublicLayout'
-import { TunnelHealthChart } from '../components/TunnelHealthChart'
-import { TunnelThroughputChart } from '../components/TunnelThroughputChart'
+import { TunnelDiagnosticsCharts } from '../components/tunnelCharts/TunnelDiagnosticsCharts'
 import './public.css'
 
 const POLL_MS = 15_000
@@ -199,7 +198,7 @@ export function TunnelStatusPage() {
               <div className="tunnel-diag">
                 <span className="tunnel-summary__label">Min / max</span>
                 <strong>
-                  {latest?.speed_test_min_mbps != null && latest?.speed_test_max_mbps != null
+                  {latest?.speed_test_min_mbps != null && latest.speed_test_max_mbps != null
                     ? `${Number(latest.speed_test_min_mbps).toFixed(0)}–${Number(latest.speed_test_max_mbps).toFixed(0)}`
                     : '—'}
                 </strong>
@@ -217,87 +216,17 @@ export function TunnelStatusPage() {
             </div>
           </section>
 
-          <section className="tunnel-panel tunnel-panel--throughput">
+          <section className="tunnel-panel tunnel-panel--charts">
             <div className="tunnel-panel__intro">
-              <h2>Throughput through the tunnel</h2>
+              <h2>Tunnel timeline</h2>
               <p className="muted">
-                Real download Mbps measured by pulling a payload through the VPN (not ICMP). Tests
-                are rate-limited across services, so markers are sparse. Filled = fresh full test;
-                hollow = cached / deferred while waiting for a free slot.
+                Latency, packet loss, and download throughput over the window. The crosshair is
+                synchronized across panels — hover any chart to compare all metrics at the same
+                moment. Click a legend entry to toggle its series.
               </p>
             </div>
 
-            <ul className="tunnel-legend" aria-label="Throughput chart legend">
-              <li>
-                <span
-                  className="tunnel-legend__swatch tunnel-legend__swatch--throughput"
-                  aria-hidden
-                />
-                <span>
-                  <strong>Fresh download test</strong>
-                  <span className="muted"> full file pull · Mbps capacity</span>
-                </span>
-              </li>
-              <li>
-                <span
-                  className="tunnel-legend__swatch tunnel-legend__swatch--throughput-cached"
-                  aria-hidden
-                />
-                <span>
-                  <strong>Cached / deferred</strong>
-                  <span className="muted"> last known Mbps while staggered</span>
-                </span>
-              </li>
-            </ul>
-
-            <TunnelThroughputChart
-              points={metrics.points}
-              rangeStart={metrics.range_start}
-              rangeEnd={metrics.range_end}
-            />
-          </section>
-
-          <section className="tunnel-panel">
-            <div className="tunnel-panel__intro">
-              <h2>Latency &amp; packet loss</h2>
-              <p className="muted">
-                Lightweight gateway ping each monitoring cycle — reachability and path quality to
-                the VPN router. Useful for outages and jitter, not for megabit capacity.
-              </p>
-            </div>
-
-            <ul className="tunnel-legend" aria-label="Latency chart legend">
-              <li className="tunnel-legend__ping">
-                <span className="tunnel-legend__swatch tunnel-legend__swatch--ping" aria-hidden />
-                <span>
-                  <strong>Gateway ping</strong>
-                  <span className="muted"> solid line · left axis · milliseconds</span>
-                </span>
-              </li>
-              <li className="tunnel-legend__loss">
-                <span className="tunnel-legend__swatch tunnel-legend__swatch--loss" aria-hidden />
-                <span>
-                  <strong>Packet loss</strong>
-                  <span className="muted"> dashed line · right axis · 0–100%</span>
-                </span>
-              </li>
-              <li className="tunnel-legend__outage">
-                <span className="tunnel-legend__swatch tunnel-legend__swatch--outage" aria-hidden />
-                <span>
-                  <strong>Failed check</strong>
-                  <span className="muted"> red vertical bar</span>
-                </span>
-              </li>
-              <li className="tunnel-legend__event">
-                <span className="tunnel-legend__swatch tunnel-legend__swatch--event" aria-hidden />
-                <span>
-                  <strong>Connection event</strong>
-                  <span className="muted"> connect / disconnect markers</span>
-                </span>
-              </li>
-            </ul>
-
-            <TunnelHealthChart
+            <TunnelDiagnosticsCharts
               points={metrics.points}
               events={metrics.events}
               rangeStart={metrics.range_start}

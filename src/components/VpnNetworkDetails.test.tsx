@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { VpnNetworkDetails } from './VpnNetworkDetails'
 
@@ -99,5 +100,34 @@ describe('VpnNetworkDetails', () => {
         name: /Speed test deferred \(waiting for a free slot among VPN services\)/i,
       }),
     ).toBeInTheDocument()
+  })
+
+  it('shows tunnel live link when gateway ping and href are present', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <VpnNetworkDetails
+          summary={{
+            gateway_ping_avg_ms: 34.5,
+            gateway_ping_loss_percent: 0,
+          }}
+          tunnelHref="/projects/demo/services/helsinki/tunnel"
+        />
+      </MemoryRouter>,
+    )
+    const link = container.querySelector('a[href="/projects/demo/services/helsinki/tunnel"]')
+    expect(link).toBeTruthy()
+    expect(link).toHaveTextContent(/Tunnel live \(2h\)/i)
+  })
+
+  it('hides tunnel link when gateway ping is missing', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <VpnNetworkDetails
+          summary={{ exit_ip: '1.2.3.4' }}
+          tunnelHref="/projects/demo/services/helsinki/tunnel"
+        />
+      </MemoryRouter>,
+    )
+    expect(container.querySelector('a[href="/projects/demo/services/helsinki/tunnel"]')).toBeNull()
   })
 })

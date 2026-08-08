@@ -1104,212 +1104,77 @@
   color: var(--sg-text-heading);
 }
 
-.tunnel-legend {
-  list-style: none;
-  margin: 0 0 var(--sg-space-4);
-  padding: 0;
-  display: grid;
-  gap: var(--sg-space-2);
-}
-
-.tunnel-legend li {
-  display: flex;
-  gap: var(--sg-space-3);
-  align-items: flex-start;
-  font-size: 0.875rem;
-  line-height: 1.35;
-}
-
-.tunnel-legend__swatch {
-  flex: 0 0 auto;
-  width: 1.35rem;
-  height: 0.7rem;
-  margin-top: 0.3rem;
-  border-radius: 999px;
-}
-
-.tunnel-legend__swatch--ping {
-  background: var(--sg-accent, #2563eb);
-}
-
-.tunnel-legend__swatch--loss {
-  background: repeating-linear-gradient(
-    90deg,
-    var(--sg-warning, #d97706) 0 0.35rem,
-    transparent 0.35rem 0.55rem
-  );
-  border: 1px solid var(--sg-warning, #d97706);
-  background-color: color-mix(in srgb, var(--sg-warning, #d97706) 25%, transparent);
-}
-
-.tunnel-legend__swatch--outage {
-  width: 0.28rem;
-  height: 1rem;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--sg-danger, #dc2626) 55%, transparent);
-}
-
-.tunnel-legend__swatch--event {
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 50%;
-  background: linear-gradient(
-    90deg,
-    var(--sg-success, #16a34a) 50%,
-    var(--sg-danger, #dc2626) 50%
-  );
-}
-
-.tunnel-legend__swatch--throughput {
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 50%;
-  background: var(--sg-success, #059669);
-}
-
-.tunnel-legend__swatch--throughput-cached {
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 50%;
-  background: transparent;
-  border: 2px solid var(--sg-success, #059669);
-}
-
-.tunnel-panel--throughput {
+.tunnel-panel--charts {
   margin-top: var(--sg-space-6);
 }
 
-.tunnel-chart-wrap {
-  width: 100%;
+.tunnel-charts {
+  display: grid;
+  gap: var(--sg-space-5);
 }
 
-.tunnel-chart {
-  width: 100%;
-  height: auto;
-  display: block;
+.tunnel-charts__panel h3 {
+  margin: 0 0 var(--sg-space-1);
+  font-size: 1rem;
+  color: var(--sg-text-heading);
 }
 
-.tunnel-chart--empty {
-  min-height: 10rem;
+.tunnel-charts__hint {
+  margin: 0 0 var(--sg-space-2);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.tunnel-charts__note {
+  margin: 0 0 var(--sg-space-2);
+  padding: var(--sg-space-2) var(--sg-space-3);
+  border: 1px dashed var(--sg-border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.tunnel-charts-empty {
+  min-height: 8rem;
   display: grid;
   place-items: center;
+  border: 1px dashed var(--sg-border, #e5e7eb);
+  border-radius: 10px;
 }
 
-.tunnel-chart__plot {
-  fill: color-mix(in srgb, var(--sg-surface-muted, #f8fafc) 80%, transparent);
+.tunnel-uplot {
+  width: 100%;
+  position: relative;
 }
 
-.tunnel-chart__grid {
-  stroke: var(--sg-border, #e5e7eb);
-  stroke-width: 1;
+.tunnel-uplot .u-legend {
+  font-size: 0.8rem;
+  color: var(--sg-text-muted);
 }
 
-.tunnel-chart__label,
-.tunnel-chart__axis-note,
-.tunnel-chart__axis-title {
-  fill: var(--sg-text-muted);
-  font-size: 11px;
+.tunnel-uplot .u-legend .u-series > * {
+  padding: 0.1rem 0.35rem;
 }
 
-.tunnel-chart__axis-title {
-  font-size: 12px;
-  font-weight: 600;
+.tunnel-uplot .u-legend .u-series.u-off > * {
+  opacity: 0.45;
 }
 
-.tunnel-chart__axis-title--loss,
-.tunnel-chart__label--loss {
-  fill: var(--sg-warning, #b45309);
+.tunnel-uplot-tip {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sg-surface, #111827) 8%, #111827);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-.tunnel-chart__ping {
-  stroke: var(--sg-accent, #2563eb);
-  stroke-width: 2.25;
-}
-
-.tunnel-chart__ping-dot {
-  fill: var(--sg-accent, #2563eb);
-  stroke: #fff;
-  stroke-width: 1;
-  cursor: crosshair;
-}
-
-.tunnel-chart__loss {
-  stroke: var(--sg-warning, #d97706);
-  stroke-width: 1.75;
-  stroke-dasharray: 5 4;
-}
-
-.tunnel-chart__axis-title--throughput {
-  fill: var(--sg-success, #047857);
-}
-
-.tunnel-chart__throughput {
-  stroke: var(--sg-success, #059669);
-  stroke-width: 2;
-  stroke-dasharray: 2 6;
-}
-
-.tunnel-chart__throughput-stem {
-  stroke: color-mix(in srgb, var(--sg-success, #059669) 45%, transparent);
-  stroke-width: 1.5;
-}
-
-.tunnel-chart__throughput-stem--cached {
-  stroke-dasharray: 2 3;
-  stroke: color-mix(in srgb, var(--sg-success, #059669) 30%, transparent);
-}
-
-.tunnel-chart__throughput-dot {
-  fill: var(--sg-success, #059669);
-  stroke: #fff;
-  stroke-width: 1.5;
-  cursor: crosshair;
-}
-
-.tunnel-chart__throughput-dot--cached {
-  fill: #fff;
-  stroke: var(--sg-success, #059669);
-  stroke-width: 2;
-}
-
-.tunnel-chart__outage {
-  stroke: color-mix(in srgb, var(--sg-danger, #dc2626) 40%, transparent);
-  stroke-width: 3;
-}
-
-.tunnel-chart__event {
-  stroke: color-mix(in srgb, var(--sg-danger, #dc2626) 45%, transparent);
-  stroke-width: 1;
-  stroke-dasharray: 2 3;
-}
-
-.tunnel-chart__event-dot {
-  fill: var(--sg-danger, #dc2626);
-  stroke: #fff;
-  stroke-width: 1;
-  cursor: crosshair;
-}
-
-.tunnel-chart__event--tunnel_up,
-.tunnel-chart__event-dot.tunnel-chart__event--tunnel_up {
-  stroke: var(--sg-success, #16a34a);
-  fill: var(--sg-success, #16a34a);
-}
-
-.tunnel-chart__event--tunnel_down,
-.tunnel-chart__event-dot.tunnel-chart__event--tunnel_down {
-  stroke: var(--sg-danger, #dc2626);
-  fill: var(--sg-danger, #dc2626);
-}
-
-.tunnel-chart__tooltip-bg {
-  fill: color-mix(in srgb, var(--sg-surface, #111827) 92%, #000);
-  opacity: 0.92;
-}
-
-.tunnel-chart__tooltip-text {
-  fill: #fff;
-  font-size: 11px;
+.tunnel-uplot-tip__label {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .tunnel-events {

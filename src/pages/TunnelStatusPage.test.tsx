@@ -15,12 +15,16 @@ vi.mock('../api/client', () => ({
     }
   },
   api: {
-    getPublicTunnelMetrics: (...args: unknown[]) => getPublicTunnelMetrics(...args),
+    getPublicTunnelMetrics: (...args: unknown[]): unknown => getPublicTunnelMetrics(...args),
   },
 }))
 
 vi.mock('../components/PublicLayout', () => ({
   PublicLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}))
+
+vi.mock('../components/tunnelCharts/TunnelDiagnosticsCharts', () => ({
+  TunnelDiagnosticsCharts: () => <div data-testid="tunnel-charts" />,
 }))
 
 const sampleMetrics: PublicTunnelMetrics = {
@@ -98,7 +102,8 @@ describe('TunnelStatusPage', () => {
     await flushMicrotasks()
     expect(screen.getByRole('heading', { name: /Helsinki OpenVPN/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /Current tunnel diagnostics/i })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Throughput through the tunnel/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Tunnel timeline/i })).toBeInTheDocument()
+    expect(screen.getByTestId('tunnel-charts')).toBeInTheDocument()
     expect(screen.getAllByText(/203\.0\.113\.10/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/114\.6 Mbps/i).length).toBeGreaterThanOrEqual(1)
     expect(getPublicTunnelMetrics).toHaveBeenCalledTimes(1)
