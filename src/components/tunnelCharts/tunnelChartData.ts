@@ -1,4 +1,8 @@
-import type { PublicTunnelConnectionEvent, PublicTunnelMetricPoint } from '../../api/tunnelMetrics'
+import type {
+  PublicTunnelConnectionEvent,
+  PublicTunnelMetricPoint,
+  PublicTunnelPingSample,
+} from '../../api/tunnelMetrics'
 
 /** Outcomes that mean the tunnel responded; anything else is an outage sample. */
 const HEALTHY_OUTCOMES = new Set(['up', 'degraded'])
@@ -145,6 +149,108 @@ export function buildTunnelChartData(points: PublicTunnelMetricPoint[]): TunnelC
     hasLoss: loss.some((value) => value != null),
     speedSampleCount: freshSpeedCount + cachedSpeedCount,
     freshSpeedCount,
+  }
+}
+
+export type ContinuousPingData = {
+  /** [x, gateway avg, internet avg, gateway max, internet max] */
+  ping: (number | null)[][]
+  /** [x, gateway loss, internet loss] */
+  loss: (number | null)[][]
+  hasGateway: boolean
+  hasInternet: boolean
+  sampleCount: number
+}
+
+type ContinuousBucket = {
+  gatewayAvg: number | null
+  gatewayMax: number | null
+  gatewayLoss: number | null
+  internetAvg: number | null
+  internetMax: number | null
+  internetLoss: number | null
+}
+
+/**
+ * Build aligned uPlot data from the continuous pinger's per-minute aggregates.
+ * Gateway and internet rows for the same minute are merged into one x value;
+ * holes larger than a couple of minutes break the line with an explicit null.
+ */
+export function buildContinuousPingData(samples: PublicTunnelPingSample[]): ContinuousPingData {
+  const num = (value: number | null | undefined): number | null =>
+    value != null && Number.isFinite(value) ? Number(value) : null
+
+  const buckets = new Map<number, ContinuousBucket>()
+  for (const sample of samples) {
+    const x = toSeconds(sample.bucket_start)
+    let bucket = buckets.get(x)
+    if (!bucket) {
+      bucket = {
+        gatewayAvg: null,
+        gatewayMax: null,
+        gatewayLoss: null,
+        internetAvg: null,
+        internetMax: null,
+        internetLoss: null,
+      }
+      buckets.set(x, bucket)
+    }
+    if (sample.target === 'gateway') {
+      bucket.gatewayAvg = num(sample.avg_ms)
+      bucket.gatewayMax = num(sample.max_ms)
+      bucket.gatewayLoss = num(sample.loss_percent)
+    } else if (sample.target === 'internet') {
+      bucket.internetAvg = num(sample.avg_ms)
+      bucket.internetMax = num(sample.max_ms)
+      bucket.internetLoss = num(sample.loss_percent)
+    }
+  }
+
+  const sortedXs = [...buckets.keys()].sort((a, b) => a - b)
+
+  const xs: number[] = []
+  const gatewayAvg: (number | null)[] = []
+  const internetAvg: (number | null)[] = []
+  const gatewayMax: (number | null)[] = []
+  const internetMax: (number | null)[] = []
+  const gatewayLoss: (number | null)[] = []
+  const internetLoss: (number | null)[] = []
+
+  const pushNullRow = (x: number) => {
+    xs.push(x)
+    gatewayAvg.push(null)
+    internetAvg.push(null)
+    gatewayMax.push(null)
+    internetMax.push(null)
+    gatewayLoss.push(null)
+    internetLoss.push(null)
+  }
+
+  // Buckets are minute-aligned, so anything beyond ~2.5 minutes is a real hole.
+  const gapSeconds = 150
+  let prevX: number | null = null
+  for (const x of sortedXs) {
+    if (prevX != null && x - prevX > gapSeconds) {
+      pushNullRow(prevX + 1)
+    }
+    const bucket = buckets.get(x)
+    if (!bucket) continue
+    xs.push(x)
+    gatewayAvg.push(bucket.gatewayAvg)
+    internetAvg.push(bucket.internetAvg)
+    gatewayMax.push(bucket.gatewayMax)
+    internetMax.push(bucket.internetMax)
+    gatewayLoss.push(bucket.gatewayLoss)
+    internetLoss.push(bucket.internetLoss)
+    prevX = x
+  }
+
+  return {
+    ping: [xs, gatewayAvg, internetAvg, gatewayMax, internetMax],
+    loss: [xs, gatewayLoss, internetLoss],
+    hasGateway: gatewayAvg.some((value) => value != null) || gatewayLoss.some((value) => value != null),
+    hasInternet: internetAvg.some((value) => value != null) || internetLoss.some((value) => value != null),
+    sampleCount: samples.length,
   }
 }
 

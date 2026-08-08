@@ -163,6 +163,14 @@ export function TunnelStatusPage() {
                 <strong>{formatMs(latest?.probe_latency_ms, 0)}</strong>
               </div>
               <div className="tunnel-diag">
+                <span className="tunnel-summary__label">Google reachability</span>
+                <strong>
+                  {latest?.google_probe_ok === false
+                    ? 'failed'
+                    : formatMs(latest?.google_probe_latency_ms, 0)}
+                </strong>
+              </div>
+              <div className="tunnel-diag">
                 <span className="tunnel-summary__label">Gateway ping</span>
                 <strong>{formatMs(latest?.gateway_ping_avg_ms)}</strong>
               </div>
@@ -228,6 +236,7 @@ export function TunnelStatusPage() {
 
             <TunnelDiagnosticsCharts
               points={metrics.points}
+              pingSamples={metrics.ping_samples ?? []}
               events={metrics.events}
               rangeStart={metrics.range_start}
               rangeEnd={metrics.range_end}

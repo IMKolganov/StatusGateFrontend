@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { PublicTunnelMetricPoint } from '../../api/tunnelMetrics'
-import { buildEventMarkers, buildTunnelChartData, isHealthyOutcome } from './tunnelChartData'
+import type { PublicTunnelMetricPoint, PublicTunnelPingSample } from '../../api/tunnelMetrics'
+import {
+  buildContinuousPingData,
+  buildEventMarkers,
+  buildTunnelChartData,
+  isHealthyOutcome,
+} from './tunnelChartData'
 
 const BASE = Date.parse('2026-08-08T10:00:00.000Z')
 
@@ -94,6 +99,90 @@ describe('buildTunnelChartData', () => {
     const data = buildTunnelChartData([point(120), point(0), point(60)])
     const xs = data.ping[0] as number[]
     expect([...xs].sort((a, b) => a - b)).toEqual(xs)
+  })
+})
+
+function sample(
+  offsetSec: number,
+  target: 'gateway' | 'internet',
+  extra: Partial<PublicTunnelPingSample> = {},
+): PublicTunnelPingSample {
+  return {
+    bucket_start: new Date(BASE + offsetSec * 1000).toISOString(),
+    target,
+    target_host: target === 'gateway' ? '10.8.0.1' : '8.8.8.8',
+    samples_sent: 55,
+    samples_received: 55,
+    loss_percent: 0,
+    min_ms: 28,
+    avg_ms: 33,
+    max_ms: 90,
+    jitter_ms: 5,
+    ...extra,
+  }
+}
+
+describe('buildContinuousPingData', () => {
+  it('returns empty aligned arrays for no samples', () => {
+    const data = buildContinuousPingData([])
+    expect(data.ping[0]).toEqual([])
+    expect(data.loss[0]).toEqual([])
+    expect(data.sampleCount).toBe(0)
+    expect(data.hasGateway).toBe(false)
+    expect(data.hasInternet).toBe(false)
+  })
+
+  it('merges gateway and internet rows of the same minute into one x value', () => {
+    const data = buildContinuousPingData([
+      sample(0, 'gateway', { avg_ms: 30, max_ms: 80, loss_percent: 0 }),
+      sample(0, 'internet', { avg_ms: 45, max_ms: 140, loss_percent: 3.6 }),
+      sample(60, 'gateway', { avg_ms: 31 }),
+    ])
+    expect(data.ping[0]).toHaveLength(2)
+    expect(data.ping[1]).toEqual([30, 31]) // gateway avg
+    expect(data.ping[2]).toEqual([45, null]) // internet avg
+    expect(data.ping[3]).toEqual([80, 90]) // gateway max
+    expect(data.ping[4]).toEqual([140, null]) // internet max
+    expect(data.loss[1]).toEqual([0, 0])
+    expect(data.loss[2]).toEqual([3.6, null])
+    expect(data.hasGateway).toBe(true)
+    expect(data.hasInternet).toBe(true)
+  })
+
+  it('inserts a null gap row into holes longer than a couple of minutes', () => {
+    const data = buildContinuousPingData([
+      sample(0, 'gateway'),
+      sample(60, 'gateway'),
+      sample(600, 'gateway'),
+    ])
+    expect(data.ping[0]).toHaveLength(4)
+    expect(data.ping[1]).toEqual([33, 33, null, 33])
+  })
+
+  it('sorts unordered buckets by time', () => {
+    const data = buildContinuousPingData([
+      sample(120, 'gateway'),
+      sample(0, 'gateway'),
+      sample(60, 'gateway'),
+    ])
+    const xs = data.ping[0] as number[]
+    expect([...xs].sort((a, b) => a - b)).toEqual(xs)
+  })
+
+  it('keeps loss with no rtt (100% loss minute) as a data point', () => {
+    const data = buildContinuousPingData([
+      sample(0, 'internet', {
+        samples_received: 0,
+        loss_percent: 100,
+        min_ms: null,
+        avg_ms: null,
+        max_ms: null,
+        jitter_ms: null,
+      }),
+    ])
+    expect(data.ping[2]).toEqual([null])
+    expect(data.loss[2]).toEqual([100])
+    expect(data.hasInternet).toBe(true)
   })
 })
 

@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PublicTunnelMetricPoint } from '../../api/tunnelMetrics'
+import type { PublicTunnelMetricPoint, PublicTunnelPingSample } from '../../api/tunnelMetrics'
 import { TunnelDiagnosticsCharts } from './TunnelDiagnosticsCharts'
 
 type MockChart = {
@@ -54,6 +54,24 @@ function point(offsetSec: number, extra: Partial<PublicTunnelMetricPoint> = {}):
   }
 }
 
+function pingSample(
+  offsetSec: number,
+  target: 'gateway' | 'internet',
+): PublicTunnelPingSample {
+  return {
+    bucket_start: new Date(BASE + offsetSec * 1000).toISOString(),
+    target,
+    target_host: target === 'gateway' ? '10.8.0.1' : '8.8.8.8',
+    samples_sent: 55,
+    samples_received: 54,
+    loss_percent: 1.8,
+    min_ms: 28,
+    avg_ms: 33,
+    max_ms: 90,
+    jitter_ms: 5,
+  }
+}
+
 const RANGE = {
   rangeStart: '2026-08-08T10:00:00.000Z',
   rangeEnd: '2026-08-08T12:00:00.000Z',
@@ -104,6 +122,44 @@ describe('TunnelDiagnosticsCharts', () => {
     }
     const keys = new Set(instances.map((chart) => chart.opts.cursor?.sync?.key))
     expect(keys.size).toBe(1)
+  })
+
+  it('switches ping and loss panels to continuous series when ping samples exist', () => {
+    render(
+      <TunnelDiagnosticsCharts
+        points={[point(0), point(60)]}
+        pingSamples={[
+          pingSample(0, 'gateway'),
+          pingSample(0, 'internet'),
+          pingSample(60, 'gateway'),
+        ]}
+        events={[]}
+        {...RANGE}
+      />,
+    )
+
+    expect(screen.getByText(/In-tunnel ping \(continuous\)/i)).toBeInTheDocument()
+    expect(instances).toHaveLength(2)
+    const [ping, loss] = instances
+    expect(ping!.opts.series[1]?.label).toMatch(/Gateway avg/)
+    expect(ping!.opts.series[2]?.label).toMatch(/Internet 8\.8\.8\.8/)
+    expect(ping!.opts.series[3]?.label).toMatch(/Gateway worst/)
+    expect(ping!.opts.series[4]?.label).toMatch(/Internet worst/)
+    expect(loss!.opts.series[1]?.label).toMatch(/Gateway loss/)
+    expect(loss!.opts.series[2]?.label).toMatch(/Internet loss/)
+  })
+
+  it('renders continuous charts even when there are no check points yet', () => {
+    render(
+      <TunnelDiagnosticsCharts
+        points={[]}
+        pingSamples={[pingSample(0, 'gateway'), pingSample(60, 'gateway')]}
+        events={[]}
+        {...RANGE}
+      />,
+    )
+    expect(screen.queryByText(/No data in this window/i)).not.toBeInTheDocument()
+    expect(instances.length).toBeGreaterThanOrEqual(2)
   })
 
   it('explains a window without any speed tests instead of drawing an empty chart', () => {

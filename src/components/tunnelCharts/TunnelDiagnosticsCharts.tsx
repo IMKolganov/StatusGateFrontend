@@ -1,7 +1,11 @@
 import { useCallback, useId, useMemo } from 'react'
 import type uPlot from 'uplot'
-import type { PublicTunnelConnectionEvent, PublicTunnelMetricPoint } from '../../api/tunnelMetrics'
-import { buildEventMarkers, buildTunnelChartData } from './tunnelChartData'
+import type {
+  PublicTunnelConnectionEvent,
+  PublicTunnelMetricPoint,
+  PublicTunnelPingSample,
+} from '../../api/tunnelMetrics'
+import { buildContinuousPingData, buildEventMarkers, buildTunnelChartData } from './tunnelChartData'
 import {
   overlaysPlugin,
   tooltipPlugin,
@@ -10,14 +14,19 @@ import {
 import { UplotPanel, type PanelLiveState } from './UplotPanel'
 
 const PING_COLOR = '#2563eb'
+const INTERNET_COLOR = '#0d9488'
+const PING_MAX_COLOR = 'rgba(37, 99, 235, 0.35)'
+const INTERNET_MAX_COLOR = 'rgba(13, 148, 136, 0.35)'
 const JITTER_COLOR = '#7c3aed'
 const LOSS_COLOR = '#d97706'
+const INTERNET_LOSS_COLOR = '#dc2626'
 const THROUGHPUT_COLOR = '#059669'
 const AXIS_STROKE = '#6b7280'
 const GRID_STROKE = 'rgba(148, 163, 184, 0.3)'
 
 type Props = {
   points: PublicTunnelMetricPoint[]
+  pingSamples?: PublicTunnelPingSample[]
   events: PublicTunnelConnectionEvent[]
   rangeStart: string
   rangeEnd: string
@@ -50,6 +59,23 @@ function baseAxes(unitLabel: string): uPlot.Axis[] {
   ]
 }
 
+/** SmokePing-style escalation: fill gets hotter as loss climbs toward 100%. */
+function lossFill(base: string, mid: string, hot: string): uPlot.Series.Fill {
+  return (u) => {
+    const { top, height } = u.bbox
+    // uPlot can ask for the fill before layout — bbox is NaN then and
+    // createLinearGradient throws on non-finite coordinates.
+    if (!Number.isFinite(top) || !Number.isFinite(height) || height <= 0) {
+      return mid
+    }
+    const gradient = u.ctx.createLinearGradient(0, top + height, 0, top)
+    gradient.addColorStop(0, base)
+    gradient.addColorStop(0.4, mid)
+    gradient.addColorStop(1, hot)
+    return gradient
+  }
+}
+
 function baseOptions(
   syncKey: string,
   getState: () => PanelLiveState,
@@ -72,10 +98,11 @@ function baseOptions(
   }
 }
 
-export function TunnelDiagnosticsCharts({ points, events, rangeStart, rangeEnd }: Props) {
+export function TunnelDiagnosticsCharts({ points, pingSamples, events, rangeStart, rangeEnd }: Props) {
   const syncKey = useId()
 
   const chartData = useMemo(() => buildTunnelChartData(points), [points])
+  const continuous = useMemo(() => buildContinuousPingData(pingSamples ?? []), [pingSamples])
   const eventMarkers = useMemo(() => buildEventMarkers(events), [events])
   const overlays = useMemo(
     () => ({ outages: chartData.outages, events: eventMarkers }),
@@ -85,9 +112,12 @@ export function TunnelDiagnosticsCharts({ points, events, rangeStart, rangeEnd }
     () => ({ start: toSeconds(rangeStart), end: toSeconds(rangeEnd) }),
     [rangeStart, rangeEnd],
   )
+  const useContinuous = continuous.sampleCount > 0
 
   const pingData = useMemo(() => chartData.ping as uPlot.AlignedData, [chartData])
   const lossData = useMemo(() => chartData.loss as uPlot.AlignedData, [chartData])
+  const continuousPingData = useMemo(() => continuous.ping as uPlot.AlignedData, [continuous])
+  const continuousLossData = useMemo(() => continuous.loss as uPlot.AlignedData, [continuous])
   const throughputData = useMemo(() => chartData.throughput as uPlot.AlignedData, [chartData])
 
   const makePingOptions = useCallback(
@@ -130,6 +160,62 @@ export function TunnelDiagnosticsCharts({ points, events, rangeStart, rangeEnd }
     [syncKey],
   )
 
+  const makeContinuousPingOptions = useCallback(
+    (getState: () => PanelLiveState): Omit<uPlot.Options, 'width' | 'height'> => {
+      const base = baseOptions(syncKey, getState, (u, idx) => {
+        const rows: TooltipRow[] = []
+        const gwAvg = u.data[1]?.[idx]
+        const inetAvg = u.data[2]?.[idx]
+        const gwMax = u.data[3]?.[idx]
+        const inetMax = u.data[4]?.[idx]
+        if (gwAvg != null) rows.push({ label: 'Gateway avg', value: fmt(gwAvg, 1, 'ms') })
+        if (gwMax != null) rows.push({ label: 'Gateway worst', value: fmt(gwMax, 1, 'ms') })
+        if (inetAvg != null) rows.push({ label: 'Internet avg', value: fmt(inetAvg, 1, 'ms') })
+        if (inetMax != null) rows.push({ label: 'Internet worst', value: fmt(inetMax, 1, 'ms') })
+        if (rows.length === 0) rows.push({ label: 'Ping', value: 'no samples this minute' })
+        return rows
+      })
+      return {
+        ...base,
+        scales: {
+          ...base.scales,
+          y: {
+            range: (_u, _min, max) => [0, Math.max(max * 1.15, 10)],
+          },
+        },
+        axes: baseAxes('ms'),
+        series: [
+          {},
+          {
+            label: 'Gateway avg (ms)',
+            stroke: PING_COLOR,
+            width: 2,
+            points: { show: false },
+          },
+          {
+            label: 'Internet 8.8.8.8 avg (ms)',
+            stroke: INTERNET_COLOR,
+            width: 2,
+            points: { show: false },
+          },
+          {
+            label: 'Gateway worst (ms)',
+            stroke: PING_MAX_COLOR,
+            width: 1,
+            points: { show: false },
+          },
+          {
+            label: 'Internet worst (ms)',
+            stroke: INTERNET_MAX_COLOR,
+            width: 1,
+            points: { show: false },
+          },
+        ],
+      }
+    },
+    [syncKey],
+  )
+
   const makeLossOptions = useCallback(
     (getState: () => PanelLiveState): Omit<uPlot.Options, 'width' | 'height'> => {
       const base = baseOptions(syncKey, getState, (u, idx) => [
@@ -149,20 +235,55 @@ export function TunnelDiagnosticsCharts({ points, events, rangeStart, rangeEnd }
             stroke: LOSS_COLOR,
             width: 1.5,
             points: { show: false },
-            // SmokePing-style escalation: fill gets hotter as loss climbs toward 100%.
-            fill: (u) => {
-              const { top, height } = u.bbox
-              // uPlot can ask for the fill before layout — bbox is NaN then and
-              // createLinearGradient throws on non-finite coordinates.
-              if (!Number.isFinite(top) || !Number.isFinite(height) || height <= 0) {
-                return 'rgba(217, 119, 6, 0.15)'
-              }
-              const gradient = u.ctx.createLinearGradient(0, top + height, 0, top)
-              gradient.addColorStop(0, 'rgba(217, 119, 6, 0.06)')
-              gradient.addColorStop(0.4, 'rgba(217, 119, 6, 0.3)')
-              gradient.addColorStop(1, 'rgba(220, 38, 38, 0.55)')
-              return gradient
-            },
+            fill: lossFill(
+              'rgba(217, 119, 6, 0.06)',
+              'rgba(217, 119, 6, 0.3)',
+              'rgba(220, 38, 38, 0.55)',
+            ),
+          },
+        ],
+      }
+    },
+    [syncKey],
+  )
+
+  const makeContinuousLossOptions = useCallback(
+    (getState: () => PanelLiveState): Omit<uPlot.Options, 'width' | 'height'> => {
+      const base = baseOptions(syncKey, getState, (u, idx) => {
+        const rows: TooltipRow[] = []
+        const gwLoss = u.data[1]?.[idx]
+        const inetLoss = u.data[2]?.[idx]
+        if (gwLoss != null) rows.push({ label: 'Gateway loss', value: fmt(gwLoss, 1, '%') })
+        if (inetLoss != null) rows.push({ label: 'Internet loss', value: fmt(inetLoss, 1, '%') })
+        if (rows.length === 0) rows.push({ label: 'Loss', value: 'no samples this minute' })
+        return rows
+      })
+      return {
+        ...base,
+        scales: {
+          ...base.scales,
+          y: { range: () => [0, 100] },
+        },
+        axes: baseAxes('%'),
+        series: [
+          {},
+          {
+            label: 'Gateway loss (%)',
+            stroke: LOSS_COLOR,
+            width: 1.5,
+            dash: [5, 4],
+            points: { show: false },
+          },
+          {
+            label: 'Internet loss (%)',
+            stroke: INTERNET_LOSS_COLOR,
+            width: 1.5,
+            points: { show: false },
+            fill: lossFill(
+              'rgba(220, 38, 38, 0.05)',
+              'rgba(220, 38, 38, 0.25)',
+              'rgba(220, 38, 38, 0.55)',
+            ),
           },
         ],
       }
@@ -213,7 +334,7 @@ export function TunnelDiagnosticsCharts({ points, events, rangeStart, rangeEnd }
     [syncKey],
   )
 
-  if (points.length === 0) {
+  if (points.length === 0 && !useContinuous) {
     return (
       <div className="tunnel-charts-empty">
         <p className="muted">No data in this window — the tunnel has not been probed yet.</p>
@@ -224,12 +345,31 @@ export function TunnelDiagnosticsCharts({ points, events, rangeStart, rangeEnd }
   return (
     <div className="tunnel-charts">
       <div className="tunnel-charts__panel">
-        <h3>Gateway ping</h3>
+        <h3>{useContinuous ? 'In-tunnel ping (continuous)' : 'Gateway ping'}</h3>
         <p className="muted tunnel-charts__hint">
-          Light health probe each check cycle. Red bands are failed checks; dashed verticals are
-          connection events.
+          {useContinuous ? (
+            <>
+              One ping per second, aggregated per minute. Solid lines are averages, faint lines are
+              the worst packet each minute — short stalls show up as spikes. Gateway is the first
+              VPN hop; Internet (8.8.8.8) goes through the exit, the same path your traffic takes.
+            </>
+          ) : (
+            <>
+              Light health probe each check cycle. Red bands are failed checks; dashed verticals
+              are connection events.
+            </>
+          )}
         </p>
-        {chartData.hasPing ? (
+        {useContinuous ? (
+          <UplotPanel
+            makeOptions={makeContinuousPingOptions}
+            data={continuousPingData}
+            overlays={overlays}
+            range={range}
+            height={230}
+            ariaLabel="Continuous in-tunnel ping latency in milliseconds over time"
+          />
+        ) : chartData.hasPing ? (
           <UplotPanel
             makeOptions={makePingOptions}
             data={pingData}
@@ -246,9 +386,26 @@ export function TunnelDiagnosticsCharts({ points, events, rangeStart, rangeEnd }
       <div className="tunnel-charts__panel">
         <h3>Packet loss</h3>
         <p className="muted tunnel-charts__hint">
-          Loss from the gateway ping. The fill gets hotter as loss escalates.
+          {useContinuous ? (
+            <>
+              Per-minute loss from the continuous pinger. The filled red series is loss on the
+              internet path through the exit — the one that makes video stall; the dashed amber
+              line is loss to the gateway.
+            </>
+          ) : (
+            <>Loss from the gateway ping. The fill gets hotter as loss escalates.</>
+          )}
         </p>
-        {chartData.hasLoss ? (
+        {useContinuous ? (
+          <UplotPanel
+            makeOptions={makeContinuousLossOptions}
+            data={continuousLossData}
+            overlays={overlays}
+            range={range}
+            height={170}
+            ariaLabel="Continuous packet loss percentage over time"
+          />
+        ) : chartData.hasLoss ? (
           <UplotPanel
             makeOptions={makeLossOptions}
             data={lossData}
