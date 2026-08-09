@@ -16,12 +16,15 @@ describe('tunnelChartOptions', () => {
   })
 
   it('builds lossFill gradients and falls back when bbox is invalid', () => {
-    const fill = lossFill('#000', '#111', '#222')
+    const fill = lossFill('#000', '#111', '#222') as (u: {
+      bbox: { top: number; height: number }
+      ctx: { createLinearGradient: (...args: number[]) => { addColorStop: (...args: unknown[]) => void } }
+    }) => string
     expect(
       fill({
         bbox: { top: 0, height: 0 },
         ctx: { createLinearGradient: vi.fn() },
-      } as never),
+      }),
     ).toBe('#111')
 
     const addColorStop = vi.fn()
@@ -29,7 +32,7 @@ describe('tunnelChartOptions', () => {
     fill({
       bbox: { top: 10, height: 100 },
       ctx: { createLinearGradient },
-    } as never)
+    })
     expect(createLinearGradient).toHaveBeenCalled()
     expect(addColorStop).toHaveBeenCalledTimes(3)
   })
@@ -68,7 +71,8 @@ describe('tunnelChartPlugins', () => {
       ],
     }))
 
-    plugin.hooks!.draw!({
+    const draw = plugin.hooks!.draw as (u: unknown) => void
+    draw({
       bbox: { left: 0, width: 100, top: 0, height: 50 },
       valToPos: (x: number) => x,
       ctx: {
@@ -86,7 +90,7 @@ describe('tunnelChartPlugins', () => {
         strokeStyle: '',
         lineWidth: 1,
       },
-    } as never)
+    })
 
     expect(save).toHaveBeenCalled()
     expect(fillRect).toHaveBeenCalled()
@@ -112,18 +116,22 @@ describe('tunnelChartPlugins', () => {
       valToPos: () => 5,
     }
 
-    plugin.hooks!.init!(u as never)
-    plugin.hooks!.setCursor!(u as never)
+    const init = plugin.hooks!.init as (u: unknown) => void
+    const setCursor = plugin.hooks!.setCursor as (u: unknown) => void
+    const destroy = plugin.hooks!.destroy as (u: unknown) => void
+
+    init(u)
+    setCursor(u)
     const tip = over.querySelector('.tunnel-uplot-tip') as HTMLDivElement
     expect(tip.style.display).toBe('block')
     expect(tip.textContent).toMatch(/Ping/)
     expect(tip.textContent).toMatch(/Connected/)
 
     u.cursor.idx = null
-    plugin.hooks!.setCursor!(u as never)
+    setCursor(u)
     expect(tip.style.display).toBe('none')
 
-    plugin.hooks!.destroy!(u as never)
+    destroy(u)
     expect(over.querySelector('.tunnel-uplot-tip')).toBeNull()
   })
 })

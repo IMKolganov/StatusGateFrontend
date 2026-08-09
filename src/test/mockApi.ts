@@ -19,7 +19,7 @@ type Api = typeof ApiClient
 type ApiOverrides = Partial<{ [K in keyof Api]: Api[K] }>
 
 /** Builds a partial `api` object with vitest mocks for every method. */
-export function createApiMock(overrides: ApiOverrides = {}): Api {
+export function createApiMock(overrides: ApiOverrides = {}): ApiOverrides {
   const methods = [
     'registrationStatus',
     'googleLogin',
@@ -68,7 +68,7 @@ export function createApiMock(overrides: ApiOverrides = {}): Api {
     'getPublicTunnelMetrics',
   ] as const satisfies ReadonlyArray<keyof Api>
 
-  const mock = {} as Api
+  const mock: ApiOverrides = {}
   for (const key of methods) {
     mock[key] = vi.fn() as Api[typeof key]
   }
