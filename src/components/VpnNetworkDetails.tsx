@@ -10,6 +10,8 @@ type NetworkDetailsProps = {
   className?: string
   collapsible?: boolean
   defaultOpen?: boolean
+  /** When set, forces open/closed (e.g. page-level expand all). */
+  expanded?: boolean | null
   summaryLabel?: string
   /** Public live tunnel chart URL when gateway ping is available. */
   tunnelHref?: string | null
@@ -195,9 +197,17 @@ export function VpnNetworkDetails({
   className = '',
   collapsible = false,
   defaultOpen = false,
+  expanded = null,
   summaryLabel = 'Network details',
   tunnelHref = null,
 }: NetworkDetailsProps) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  useEffect(() => {
+    if (expanded === true) setOpen(true)
+    if (expanded === false) setOpen(false)
+  }, [expanded])
+
   const rows: Array<[string, string, string[]?]> = []
 
   if (summary.interface) rows.push(['Interface', String(summary.interface)])
@@ -289,7 +299,11 @@ export function VpnNetworkDetails({
   }
 
   return (
-    <details className={`network-summary-details ${className}`.trim()} open={defaultOpen}>
+    <details
+      className={`network-summary-details ${className}`.trim()}
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
       <summary>{summaryLabel}</summary>
       {content}
     </details>

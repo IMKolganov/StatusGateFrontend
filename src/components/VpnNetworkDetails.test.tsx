@@ -152,4 +152,28 @@ describe('VpnNetworkDetails', () => {
     expect(screen.getByText(/15\.50 Mbps/)).toBeInTheDocument()
     expect(screen.getByText(/200\.00 Mbps/)).toBeInTheDocument()
   })
+
+  it('respects expanded prop for collapsible details', () => {
+    const { rerender } = render(
+      <VpnNetworkDetails
+        summary={{ download_mbps: 10, speed_test_ok: true }}
+        collapsible
+        defaultOpen={false}
+        expanded={false}
+      />,
+    )
+    const details = document.querySelector('details.network-summary-details')
+    expect(details).not.toBeNull()
+    expect(details).not.toHaveAttribute('open')
+
+    rerender(
+      <VpnNetworkDetails
+        summary={{ download_mbps: 10, speed_test_ok: true }}
+        collapsible
+        defaultOpen={false}
+        expanded
+      />,
+    )
+    expect(document.querySelector('details.network-summary-details')).toHaveAttribute('open')
+  })
 })

@@ -454,6 +454,15 @@
 
 .current-status h2 {
   font-size: 1.125rem;
+  margin: 0;
+}
+
+.current-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sg-space-4);
+  flex-wrap: wrap;
   margin: 0 0 var(--sg-space-3);
 }
 

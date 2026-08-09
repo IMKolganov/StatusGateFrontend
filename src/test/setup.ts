@@ -2,7 +2,7 @@ import '@testing-library/jest-dom/vitest'
 
 // Vite `define` constants are not injected into vitest project configs — shim them.
 const globals = globalThis as Record<string, unknown>
-globals.__APP_VERSION__ ??= '0.1.0'
+globals.__APP_VERSION__ ??= '0.2.0'
 
 // jsdom has no Path2D; uplot builds series paths with it during draw.
 if (typeof globalThis.Path2D === 'undefined') {
