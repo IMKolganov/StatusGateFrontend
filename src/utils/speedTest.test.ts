@@ -23,7 +23,7 @@ describe('speedTestMibStringFromBytes', () => {
 
   it('formats bytes as MiB with up to two decimals', () => {
     expect(speedTestMibStringFromBytes(1024 * 1024)).toBe('1')
-    expect(speedTestMibStringFromBytes(DEFAULT_SPEED_TEST_MIB * 1024 * 1024)).toBe('0.5')
+    expect(speedTestMibStringFromBytes(DEFAULT_SPEED_TEST_MIB * 1024 * 1024)).toBe('5')
   })
 })
 

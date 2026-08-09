@@ -490,7 +490,7 @@ export function ComponentsPage() {
                         placeholder={String(DEFAULT_SPEED_TEST_MIB)}
                       />
                       <span className="field-hint">
-                        Download size for throughput measurement through the tunnel. Leave empty for {DEFAULT_SPEED_TEST_MIB} MiB (512 KiB). Use a higher timeout for larger tests.
+                        Download size for throughput measurement through the tunnel. Leave empty for {DEFAULT_SPEED_TEST_MIB} MiB. Use a higher timeout for larger tests.
                       </span>
                     </label>
                   </>
