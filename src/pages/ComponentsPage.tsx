@@ -1,9 +1,9 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type MonitoringSettings, type NetworkSummary, type Project } from '../api/client'
+import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type MonitoringSettings, type Project } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
 import { CheckDiagnostics } from '../components/CheckDiagnostics'
-import { logTailFromDetails, networkSummaryFromRecord } from '../components/checkDiagnosticsUtils'
+import { logTailFromDetails, networkSummaryFromDetails } from '../components/checkDiagnosticsUtils'
 import { ConnectionEventsTimeline } from '../components/ConnectionEventsTimeline'
 import { formatApiError } from '../utils/apiError'
 import {
@@ -61,40 +61,6 @@ function statusClass(outcome: string | null | undefined): string {
 
 function checkTypeLabel(value: string): string {
   return CHECK_TYPES.find((t) => t.value === value)?.label ?? value
-}
-
-function networkSummaryFromDetails(details: Record<string, unknown> | null | undefined): NetworkSummary | null {
-  if (!details || typeof details.network !== 'object' || details.network === null) return null
-  const network = details.network as Record<string, unknown>
-  const probe = typeof network.probe === 'object' && network.probe !== null ? (network.probe as Record<string, unknown>) : {}
-  const gatewayPing = typeof network.gateway_ping === 'object' && network.gateway_ping !== null
-    ? (network.gateway_ping as Record<string, unknown>)
-    : {}
-  const speedTest = typeof network.speed_test === 'object' && network.speed_test !== null
-    ? (network.speed_test as Record<string, unknown>)
-    : {}
-
-  return networkSummaryFromRecord({
-    interface: network.interface,
-    ipv4_address: network.ipv4_address,
-    gateway: network.gateway,
-    dns_servers: network.dns_servers,
-    mtu: network.mtu,
-    connect_time_ms: network.connect_time_ms,
-    proxy_url: network.proxy_url,
-    inbound_protocol: network.inbound_protocol,
-    probe_url: probe.url,
-    exit_ip: probe.exit_ip,
-    probe_latency_ms: probe.latency_ms,
-    gateway_ping_avg_ms: gatewayPing.avg_ms,
-    gateway_ping_loss_percent: gatewayPing.loss_percent,
-    gateway_ping_jitter_ms: gatewayPing.jitter_ms,
-    download_mbps: speedTest.mbps,
-    download_bytes: speedTest.bytes,
-    download_duration_ms: speedTest.duration_ms,
-    speed_test_ok: typeof speedTest.ok === 'boolean' ? speedTest.ok : undefined,
-    speed_test_error: typeof speedTest.error === 'string' ? speedTest.error : undefined,
-  })
 }
 
 export function ComponentsPage() {

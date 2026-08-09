@@ -50,14 +50,26 @@ export function estimateSpeedTestsPerMinute(
   defaultSpeedTestIntervalSeconds: number,
 ): number {
   let total = 0
+  let unboundedDuePerCycle = 0
+  let unboundedPollInterval = defaultPollIntervalSeconds
   for (const component of components) {
     if (!component.is_active || !component.speed_test_enabled || !isVpnCheckType(component.check_type)) {
       continue
     }
     const pollInterval = Math.max(component.poll_interval_seconds ?? defaultPollIntervalSeconds, 1)
     const speedInterval = component.speed_test_interval_seconds ?? defaultSpeedTestIntervalSeconds
-    const interval = speedInterval <= 0 ? pollInterval : Math.max(pollInterval, speedInterval)
+    if (speedInterval <= 0) {
+      if (unboundedDuePerCycle === 0) unboundedPollInterval = pollInterval
+      unboundedDuePerCycle += 1
+      continue
+    }
+    const interval = Math.max(pollInterval, speedInterval)
     total += 60 / interval
+  }
+  if (unboundedDuePerCycle > 0) {
+    // Match backend: shared live slot allows one unbounded test per min-gap window.
+    const cyclesPerMinute = 60 / Math.max(unboundedPollInterval, CLOUDFLARE_SPEED_TEST_MIN_GAP_SECONDS)
+    total += Math.min(unboundedDuePerCycle, 1) * cyclesPerMinute
   }
   return total
 }
