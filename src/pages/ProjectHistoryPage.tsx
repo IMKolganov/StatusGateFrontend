@@ -16,6 +16,13 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
+function formatIncidentRange(startsAt?: string | null, endsAt?: string | null): string | null {
+  if (!startsAt) return null
+  const start = new Date(startsAt).toLocaleString()
+  if (!endsAt) return `${start} → open`
+  return `${start} → ${new Date(endsAt).toLocaleString()}`
+}
+
 export function ProjectHistoryPage() {
   const { slug } = useParams<{ slug: string }>()
   const [trackedSlug, setTrackedSlug] = useState(slug)
@@ -101,6 +108,13 @@ export function ProjectHistoryPage() {
                             </span>
                           )}
                         </div>
+                        {(entry.service_name || entry.starts_at) && (
+                          <p className="history-entry-scope">
+                            {[entry.service_name, formatIncidentRange(entry.starts_at, entry.ends_at)]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </p>
+                        )}
                         <p className="history-entry-message">{entry.message}</p>
                       </li>
                     ))}

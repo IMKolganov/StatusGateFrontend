@@ -23,6 +23,8 @@ import {
   deleteIncidentApiAdminIncidentsIncidentIdDelete,
   deleteIncidentEntryApiAdminIncidentUpdatesUpdateIdDelete,
   listProjectIncidentsApiAdminProjectsProjectIdIncidentsGet,
+  updateIncidentApiAdminIncidentsIncidentIdPatch,
+  updateIncidentEntryApiAdminIncidentUpdatesUpdateIdPatch,
 } from './generated/admin-incidents/admin-incidents'
 import {
   getMonitoringSettingsApiAdminMonitoringSettingsGet,
@@ -49,14 +51,17 @@ import {
 import type { AccountAdminResponse } from './generated/models/accountAdminResponse'
 import type { AccountResponse } from './generated/models/accountResponse'
 import type { AdminDashboardResponse } from './generated/models/adminDashboardResponse'
-import type { ApiResponseLoginResultData } from './generated/models/apiResponseLoginResultData'
 import type { CheckResultResponse } from './generated/models/checkResultResponse'
+import type { MfaRequiredResponse } from './generated/models/mfaRequiredResponse'
 import type { ComponentKindCreate } from './generated/models/componentKindCreate'
 import type { ComponentKindResponse } from './generated/models/componentKindResponse'
 import type { ComponentKindUpdate } from './generated/models/componentKindUpdate'
 import type { IncidentCreate } from './generated/models/incidentCreate'
 import type { IncidentResponse } from './generated/models/incidentResponse'
 import type { IncidentUpdateCreate } from './generated/models/incidentUpdateCreate'
+import type { IncidentUpdatePayload } from './generated/models/incidentUpdatePayload'
+import type { IncidentUpdateResponse } from './generated/models/incidentUpdateResponse'
+import type { IncidentUpdateUpdate } from './generated/models/incidentUpdateUpdate'
 import type { MonitoredComponentCreate } from './generated/models/monitoredComponentCreate'
 import type { MonitoredComponentResponse } from './generated/models/monitoredComponentResponse'
 import type { MonitoredComponentUpdate } from './generated/models/monitoredComponentUpdate'
@@ -84,13 +89,14 @@ import type { RegisterRequest } from './generated/models/registerRequest'
 import type { SpeedTestAdvisoryResponse } from './generated/models/speedTestAdvisoryResponse'
 import type { TwoFactorSetupResponse } from './generated/models/twoFactorSetupResponse'
 import type { VpnCheckConfig } from './generated/models/vpnCheckConfig'
+import type { PublicTunnelMetrics } from './tunnelMetrics'
 import {
   getPublicProjectHistoryApiStatusProjectsSlugHistoryGet,
   getPublicProjectStatusApiStatusProjectsSlugGet,
   getPublicSystemStatusApiStatusProjectsSlugSystemStatusGet,
   listPublicProjectsApiStatusProjectsGet,
 } from './generated/public-status/public-status'
-import { ApiError } from './mutator'
+import { ApiError, customFetch } from './mutator'
 import { DEFAULT_SPEED_TEST_URL_TEMPLATE } from '../utils/speedTestConfig'
 
 export type Account = AccountResponse
@@ -104,10 +110,12 @@ export type Incident = IncidentResponse
 
 export type ConnectionEvent = ConnectionEventResponse
 
+/** Login/Google login payload: account session or MFA challenge. */
+export type ApiResponseLoginResultData = AccountResponse | MfaRequiredResponse
+
 export type {
   AccountAdminResponse,
   AdminDashboardResponse,
-  ApiResponseLoginResultData,
   CheckResultResponse,
   ConnectionEventResponse,
   ComponentKindCreate,
@@ -132,6 +140,7 @@ export type {
   PublicProjectStatus,
   PublicProjectSummary,
   PublicSystemStatus,
+  PublicTunnelMetrics,
   PurgeCheckHistoryResponse,
   RegistrationStatusResponse,
   RegisterRequest,
@@ -139,6 +148,12 @@ export type {
   TwoFactorSetupResponse,
   VpnCheckConfig,
 }
+
+export type {
+  PublicTunnelConnectionEvent,
+  PublicTunnelLatestDiagnostics,
+  PublicTunnelMetricPoint,
+} from './tunnelMetrics'
 
 export { DEFAULT_SPEED_TEST_URL_TEMPLATE }
 
@@ -162,7 +177,7 @@ export const api = {
     await logoutApiAuthLogoutPost()
   },
 
-  me: (): Promise<AccountResponse> => meApiAuthMeGet(),
+  me: (): Promise<AccountResponse | undefined> => meApiAuthMeGet(),
 
   dashboard: (): Promise<AdminDashboardResponse> => adminDashboardApiAdminDashboardGet(),
 
@@ -254,12 +269,18 @@ export const api = {
   createProjectIncident: (projectId: string, payload: IncidentCreate): Promise<IncidentResponse> =>
     createProjectIncidentApiAdminProjectsProjectIdIncidentsPost(projectId, payload),
 
+  updateIncident: (incidentId: string, payload: IncidentUpdatePayload): Promise<IncidentResponse> =>
+    updateIncidentApiAdminIncidentsIncidentIdPatch(incidentId, payload),
+
   deleteIncident: async (incidentId: string): Promise<void> => {
     await deleteIncidentApiAdminIncidentsIncidentIdDelete(incidentId)
   },
 
   addIncidentUpdate: (incidentId: string, payload: IncidentUpdateCreate) =>
     addIncidentUpdateApiAdminIncidentsIncidentIdUpdatesPost(incidentId, payload),
+
+  updateIncidentUpdate: (updateId: string, payload: IncidentUpdateUpdate): Promise<IncidentUpdateResponse> =>
+    updateIncidentEntryApiAdminIncidentUpdatesUpdateIdPatch(updateId, payload),
 
   deleteIncidentUpdate: async (updateId: string): Promise<void> => {
     await deleteIncidentEntryApiAdminIncidentUpdatesUpdateIdDelete(updateId)
@@ -283,4 +304,16 @@ export const api = {
     slug: string,
     params?: { end?: string; days?: number },
   ): Promise<PublicSystemStatus> => getPublicSystemStatusApiStatusProjectsSlugSystemStatusGet(slug, params),
+
+  getPublicTunnelMetrics: (
+    projectSlug: string,
+    serviceSlug: string,
+    params?: { hours?: number },
+  ): Promise<PublicTunnelMetrics> => {
+    const search = new URLSearchParams()
+    if (params?.hours != null) search.set('hours', String(params.hours))
+    const query = search.toString()
+    const path = `/api/status/projects/${encodeURIComponent(projectSlug)}/services/${encodeURIComponent(serviceSlug)}/tunnel-metrics`
+    return customFetch<PublicTunnelMetrics>(query ? `${path}?${query}` : path)
+  },
 }

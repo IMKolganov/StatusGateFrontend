@@ -1,9 +1,9 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type MonitoringSettings, type NetworkSummary, type Project } from '../api/client'
+import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type MonitoringSettings, type Project } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
 import { CheckDiagnostics } from '../components/CheckDiagnostics'
-import { logTailFromDetails, networkSummaryFromRecord } from '../components/checkDiagnosticsUtils'
+import { logTailFromDetails, networkSummaryFromDetails } from '../components/checkDiagnosticsUtils'
 import { ConnectionEventsTimeline } from '../components/ConnectionEventsTimeline'
 import { formatApiError } from '../utils/apiError'
 import {
@@ -14,7 +14,9 @@ import {
 } from '../utils/speedTest'
 import {
   buildLocalSpeedTestWarning,
+  DEFAULT_PROBE_URL,
   DEFAULT_SPEED_TEST_URL_TEMPLATE,
+  isCloudflareSpeedTestTemplate,
   validateSpeedTestUrlTemplate,
 } from '../utils/speedTestConfig'
 import { slugFromName } from '../utils/slug'
@@ -59,40 +61,6 @@ function statusClass(outcome: string | null | undefined): string {
 
 function checkTypeLabel(value: string): string {
   return CHECK_TYPES.find((t) => t.value === value)?.label ?? value
-}
-
-function networkSummaryFromDetails(details: Record<string, unknown> | null | undefined): NetworkSummary | null {
-  if (!details || typeof details.network !== 'object' || details.network === null) return null
-  const network = details.network as Record<string, unknown>
-  const probe = typeof network.probe === 'object' && network.probe !== null ? (network.probe as Record<string, unknown>) : {}
-  const gatewayPing = typeof network.gateway_ping === 'object' && network.gateway_ping !== null
-    ? (network.gateway_ping as Record<string, unknown>)
-    : {}
-  const speedTest = typeof network.speed_test === 'object' && network.speed_test !== null
-    ? (network.speed_test as Record<string, unknown>)
-    : {}
-
-  return networkSummaryFromRecord({
-    interface: network.interface,
-    ipv4_address: network.ipv4_address,
-    gateway: network.gateway,
-    dns_servers: network.dns_servers,
-    mtu: network.mtu,
-    connect_time_ms: network.connect_time_ms,
-    proxy_url: network.proxy_url,
-    inbound_protocol: network.inbound_protocol,
-    probe_url: probe.url,
-    exit_ip: probe.exit_ip,
-    probe_latency_ms: probe.latency_ms,
-    gateway_ping_avg_ms: gatewayPing.avg_ms,
-    gateway_ping_loss_percent: gatewayPing.loss_percent,
-    gateway_ping_jitter_ms: gatewayPing.jitter_ms,
-    download_mbps: speedTest.mbps,
-    download_bytes: speedTest.bytes,
-    download_duration_ms: speedTest.duration_ms,
-    speed_test_ok: typeof speedTest.ok === 'boolean' ? speedTest.ok : undefined,
-    speed_test_error: typeof speedTest.error === 'string' ? speedTest.error : undefined,
-  })
 }
 
 export function ComponentsPage() {
@@ -162,9 +130,7 @@ export function ComponentsPage() {
     const defaultTemplate = monitoringSettings.default_speed_test_url_template
     const defaultSpeedInterval = monitoringSettings.default_speed_test_interval_seconds
     const defaultPoll = monitoringSettings.default_poll_interval_seconds
-    const usesCloudflare = (form.speed_test_url_template.trim() || defaultTemplate).startsWith(
-      'https://speed.cloudflare.com/',
-    )
+    const usesCloudflare = isCloudflareSpeedTestTemplate(form.speed_test_url_template.trim() || defaultTemplate)
 
     const projectedItems = items.map((item) => {
       if (item.id !== editingId) return item
@@ -208,7 +174,7 @@ export function ComponentsPage() {
         ...current,
         component_kind_id: componentKindId,
         check_type: 'openvpn',
-        check_url: current.check_url || 'https://ifconfig.me/ip',
+        check_url: current.check_url || DEFAULT_PROBE_URL,
         timeout_seconds: Math.max(current.timeout_seconds, 60),
       }))
       return
@@ -218,7 +184,7 @@ export function ComponentsPage() {
         ...current,
         component_kind_id: componentKindId,
         check_type: 'xray',
-        check_url: current.check_url || 'https://ifconfig.me/ip',
+        check_url: current.check_url || DEFAULT_PROBE_URL,
         timeout_seconds: Math.max(current.timeout_seconds, 60),
       }))
       return
@@ -263,7 +229,7 @@ export function ComponentsPage() {
       slug,
       description: form.description || null,
       environment: form.environment || null,
-      check_url: form.check_url || (isVpnKind ? 'https://ifconfig.me/ip' : ''),
+      check_url: form.check_url || (isVpnKind ? DEFAULT_PROBE_URL : ''),
       check_method: form.check_method,
       check_type: form.check_type,
       check_config: isVpnKind ? { config_text: form.vpn_config_text.trim() } : null,
@@ -437,7 +403,7 @@ export function ComponentsPage() {
               <input
                 value={form.check_url}
                 onChange={(e) => setForm({ ...form, check_url: e.target.value })}
-                placeholder={isVpnKind ? 'https://ifconfig.me/ip' : 'https://example.com/health'}
+                placeholder={isVpnKind ? DEFAULT_PROBE_URL : 'https://example.com/health'}
                 required={!isVpnKind}
               />
             </label>
@@ -524,7 +490,7 @@ export function ComponentsPage() {
                         placeholder={String(DEFAULT_SPEED_TEST_MIB)}
                       />
                       <span className="field-hint">
-                        Download size for throughput measurement through the tunnel. Leave empty for {DEFAULT_SPEED_TEST_MIB} MiB (512 KiB). Use a higher timeout for larger tests.
+                        Download size for throughput measurement through the tunnel. Leave empty for {DEFAULT_SPEED_TEST_MIB} MiB. Use a higher timeout for larger tests.
                       </span>
                     </label>
                   </>

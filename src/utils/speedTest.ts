@@ -1,7 +1,8 @@
 /** Keep in sync with backend MIN/MAX_SPEED_TEST_BYTES. */
 export const MIN_SPEED_TEST_BYTES = 1_024
 export const MAX_SPEED_TEST_BYTES = 52_428_800
-export const DEFAULT_SPEED_TEST_MIB = 0.5
+/** Keep in sync with backend DEFAULT_SPEED_TEST_BYTES (5 MiB). */
+export const DEFAULT_SPEED_TEST_MIB = 5
 
 const MIN_SPEED_TEST_MIB = MIN_SPEED_TEST_BYTES / (1024 * 1024)
 const MAX_SPEED_TEST_MIB = MAX_SPEED_TEST_BYTES / (1024 * 1024)
