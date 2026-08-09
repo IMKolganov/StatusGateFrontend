@@ -11,6 +11,7 @@
     "typecheck:eslint": "tsc -b --pretty",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "api:export": "docker run --rm -v \"$(pwd)/..:/repo\" -w /repo/backend -e JWT_SECRET=export-openapi-local-dev-secret-32chars statusgate-backend-test python scripts/export_openapi.py",
     "api:generate": "orval",
     "api:sync": "npm run api:export && npm run api:generate"

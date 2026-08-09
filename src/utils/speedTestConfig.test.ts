@@ -6,6 +6,9 @@ import {
   estimateSpeedTestHttpRequestsPerMinute,
   estimateSpeedTestsPerMinute,
   isCloudflareSpeedTestTemplate,
+  isVpnCheckType,
+  usesDefaultCloudflareTemplate,
+  validateSpeedTestUrlTemplate,
 } from './speedTestConfig'
 
 function vpn(partial: Partial<MonitoredComponent> & Pick<MonitoredComponent, 'id' | 'slug'>): MonitoredComponent {
@@ -88,5 +91,43 @@ describe('isCloudflareSpeedTestTemplate / warning', () => {
     const warning = buildLocalSpeedTestWarning(components, 60, 60, true)
     expect(warning).toMatch(/HTTP requests/)
     expect(warning).toMatch(/24\.0/)
+  })
+
+  it('skips warning when not Cloudflare or no active VPN speed tests', () => {
+    const components = [vpn({ id: '1', slug: 'a', speed_test_interval_seconds: 60, poll_interval_seconds: 60 })]
+    expect(buildLocalSpeedTestWarning(components, 60, 60, false)).toBeNull()
+    expect(buildLocalSpeedTestWarning([], 60, 60, true)).toBeNull()
+  })
+})
+
+describe('validateSpeedTestUrlTemplate', () => {
+  it('requires https and a {bytes} placeholder', () => {
+    expect(validateSpeedTestUrlTemplate('')).toMatch(/required/i)
+    expect(validateSpeedTestUrlTemplate('https://x.example/down')).toMatch(/\{bytes\}/)
+    expect(validateSpeedTestUrlTemplate('http://x.example/down?bytes={bytes}')).toMatch(/HTTPS/)
+    expect(validateSpeedTestUrlTemplate('https://x.example/down?bytes={bytes}')).toBeNull()
+  })
+})
+
+describe('isVpnCheckType / usesDefaultCloudflareTemplate', () => {
+  it('recognizes VPN check types', () => {
+    expect(isVpnCheckType('openvpn')).toBe(true)
+    expect(isVpnCheckType('xray')).toBe(true)
+    expect(isVpnCheckType('http_status')).toBe(false)
+  })
+
+  it('falls back to the monitoring default template', () => {
+    expect(
+      usesDefaultCloudflareTemplate(
+        { speed_test_url_template: null },
+        'https://speed.cloudflare.com/__down?bytes={bytes}',
+      ),
+    ).toBe(true)
+    expect(
+      usesDefaultCloudflareTemplate(
+        { speed_test_url_template: 'https://cdn.example.com/x?b={bytes}' },
+        'https://speed.cloudflare.com/__down?bytes={bytes}',
+      ),
+    ).toBe(false)
   })
 })
