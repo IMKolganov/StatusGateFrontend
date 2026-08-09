@@ -9,7 +9,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshAccount = useCallback(async () => {
     try {
       const current = await api.me()
-      setAccount(current)
+      setAccount(current ?? null)
     } catch {
       setAccount(null)
     }
@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api
       .me()
       .then((current) => {
-        if (!cancelled) setAccount(current)
+        if (!cancelled) setAccount(current ?? null)
       })
       .catch(() => {
         if (!cancelled) setAccount(null)

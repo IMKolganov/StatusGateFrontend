@@ -21,6 +21,7 @@ import { ProjectHistoryPage } from './pages/ProjectHistoryPage'
 import { ProjectStatusPage } from './pages/ProjectStatusPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { SecurityPage } from './pages/SecurityPage'
+import { TunnelStatusPage } from './pages/TunnelStatusPage'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/projects/:slug" element={<ProjectStatusPage />} />
           <Route path="/projects/:slug/history" element={<ProjectHistoryPage />} />
+          <Route path="/projects/:slug/services/:serviceSlug/tunnel" element={<TunnelStatusPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register/complete" element={<RegisterCompletePage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />

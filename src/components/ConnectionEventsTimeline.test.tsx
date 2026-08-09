@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConnectionEventsTimeline } from './ConnectionEventsTimeline'
 import * as useConnectionEventsModule from './useConnectionEvents'
 import type { ConnectionEvent } from '../api/client'
@@ -58,6 +58,8 @@ describe('ConnectionEventsTimeline', () => {
       reset: mockReset,
     })
   })
+
+  afterEach(() => cleanup())
 
   it('loads events when details opens', () => {
     render(<ConnectionEventsTimeline componentId="component-1" componentName="Norway VPN" />)
@@ -127,5 +129,68 @@ describe('ConnectionEventsTimeline', () => {
 
     expect(screen.getByText('Connected')).toBeInTheDocument()
     expect(screen.getByText('VPN session event: tunnel_up')).toBeInTheDocument()
+  })
+
+  it('shows truncation, log tails, non-up outcomes, and copies text', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+
+    vi.mocked(useConnectionEventsModule.useConnectionEvents).mockReturnValue({
+      events: [
+        {
+          ...sampleEvent,
+          outcome: 'down',
+          details: { log_tail: 'openvpn: connected' },
+        },
+      ],
+      loading: false,
+      error: null,
+      total: 12,
+      hasMore: true,
+      load: mockLoad,
+      reset: mockReset,
+    })
+
+    render(<ConnectionEventsTimeline componentId="component-1" componentName="Norway VPN" />)
+    openTimeline()
+
+    const panel = document.querySelector('.connection-events__panel')!
+    const scoped = within(panel as HTMLElement)
+
+    expect(scoped.getByText(/Showing latest 1 of 12 events/i)).toBeInTheDocument()
+    expect(scoped.getByText('down')).toBeInTheDocument()
+    expect(scoped.getByText('openvpn: connected')).toBeInTheDocument()
+
+    fireEvent.click(scoped.getByRole('button', { name: /^Copy$/i }))
+    await waitFor(() => expect(writeText).toHaveBeenCalled())
+    expect(await scoped.findByRole('button', { name: /^Copied$/i })).toBeInTheDocument()
+
+    fireEvent.click(scoped.getByRole('button', { name: /^Refresh$/i }))
+    expect(mockLoad.mock.calls.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('falls back when clipboard write fails', async () => {
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: vi.fn().mockRejectedValue(new Error('denied')),
+      },
+    })
+    document.execCommand = vi.fn().mockReturnValue(false)
+
+    vi.mocked(useConnectionEventsModule.useConnectionEvents).mockReturnValue({
+      events: [sampleEvent],
+      loading: false,
+      error: null,
+      total: 1,
+      hasMore: false,
+      load: mockLoad,
+      reset: mockReset,
+    })
+
+    render(<ConnectionEventsTimeline componentId="component-1" componentName="Norway VPN" />)
+    openTimeline()
+    const panel = document.querySelector('.connection-events__panel')!
+    fireEvent.click(within(panel as HTMLElement).getByRole('button', { name: /^Copy$/i }))
+    expect(await within(panel as HTMLElement).findByRole('button', { name: /Copy failed/i })).toBeInTheDocument()
   })
 })

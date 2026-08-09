@@ -48,7 +48,7 @@ async function tryRefreshSession(): Promise<boolean> {
 }
 
 function shouldRetryWithRefresh(url: string): boolean {
-  return !url.endsWith('/api/auth/me') && !url.endsWith('/api/auth/login')
+  return !url.endsWith('/api/auth/login')
 }
 
 export const customFetch = async <T>(url: string, options: RequestInit = {}): Promise<T> => {

@@ -26,12 +26,14 @@ export function ProjectStatusPage() {
   const [project, setProject] = useState<PublicProjectStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [detailsExpanded, setDetailsExpanded] = useState<boolean | null>(null)
 
   if (slug !== trackedSlug) {
     setTrackedSlug(slug)
     setProject(null)
     setLoading(true)
     setError(null)
+    setDetailsExpanded(null)
   }
 
   useEffect(() => {
@@ -45,6 +47,8 @@ export function ProjectStatusPage() {
       })
       .finally(() => setLoading(false))
   }, [slug])
+
+  const hasNetworkDetails = Boolean(project?.services.some((service) => service.network_summary))
 
   return (
     <PublicLayout>
@@ -75,7 +79,18 @@ export function ProjectStatusPage() {
 
           {project.services.length > 0 && (
             <section className="current-status">
-              <h2>Current status</h2>
+              <div className="current-status-header">
+                <h2>Current status</h2>
+                {hasNetworkDetails && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setDetailsExpanded((current) => !(current ?? false))}
+                  >
+                    {detailsExpanded ? 'Collapse all details' : 'Expand all details'}
+                  </button>
+                )}
+              </div>
               <ul className="service-list">
                 {project.services.map((service) => (
                   <li key={service.id} className="service-row">
@@ -94,6 +109,8 @@ export function ProjectStatusPage() {
                             className="network-summary--service"
                             collapsible
                             defaultOpen={service.status !== 'up' && service.status !== 'degraded'}
+                            expanded={detailsExpanded}
+                            tunnelHref={`/projects/${project.slug}/services/${service.slug}/tunnel`}
                           />
                         )}
                       </div>
