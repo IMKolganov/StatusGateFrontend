@@ -51,8 +51,8 @@ import {
 import type { AccountAdminResponse } from './generated/models/accountAdminResponse'
 import type { AccountResponse } from './generated/models/accountResponse'
 import type { AdminDashboardResponse } from './generated/models/adminDashboardResponse'
-import type { ApiResponseLoginResultData } from './generated/models/apiResponseLoginResultData'
 import type { CheckResultResponse } from './generated/models/checkResultResponse'
+import type { MfaRequiredResponse } from './generated/models/mfaRequiredResponse'
 import type { ComponentKindCreate } from './generated/models/componentKindCreate'
 import type { ComponentKindResponse } from './generated/models/componentKindResponse'
 import type { ComponentKindUpdate } from './generated/models/componentKindUpdate'
@@ -110,10 +110,12 @@ export type Incident = IncidentResponse
 
 export type ConnectionEvent = ConnectionEventResponse
 
+/** Login/Google login payload: account session or MFA challenge. */
+export type ApiResponseLoginResultData = AccountResponse | MfaRequiredResponse
+
 export type {
   AccountAdminResponse,
   AdminDashboardResponse,
-  ApiResponseLoginResultData,
   CheckResultResponse,
   ConnectionEventResponse,
   ComponentKindCreate,

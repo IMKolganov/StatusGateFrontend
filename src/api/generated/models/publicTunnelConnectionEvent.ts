@@ -5,8 +5,10 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface IncidentUpdateUpdate {
+export interface PublicTunnelConnectionEvent {
+  id: string;
+  occurred_at: string;
+  event_type: string;
+  outcome?: string | null;
   message?: string | null;
-  status?: string | null;
-  posted_at?: string | null;
 }

@@ -4,10 +4,10 @@
  * StatusGate API
  * OpenAPI spec version: 0.2.0
  */
-import type { PublicProjectStatus } from './publicProjectStatus';
+import type { PublicTunnelMetrics } from './publicTunnelMetrics';
 
-export interface ApiResponsePublicProjectStatus {
+export interface ApiResponsePublicTunnelMetrics {
   success: boolean;
   message: string;
-  data?: PublicProjectStatus;
+  data?: PublicTunnelMetrics;
 }

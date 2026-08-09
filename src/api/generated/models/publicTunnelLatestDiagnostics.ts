@@ -5,23 +5,20 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface NetworkSummary {
-  interface?: string | null;
-  ipv4_address?: string | null;
-  gateway?: string | null;
-  dns_servers?: string[] | null;
-  mtu?: number | null;
-  connect_time_ms?: number | null;
-  proxy_url?: string | null;
-  inbound_protocol?: string | null;
-  probe_url?: string | null;
+/**
+ * Public-safe snapshot of the newest check — full tunnel diagnostics, not ping-only.
+ */
+export interface PublicTunnelLatestDiagnostics {
+  checked_at?: string | null;
+  outcome?: string | null;
   exit_ip?: string | null;
+  connect_time_ms?: number | null;
   probe_latency_ms?: number | null;
   google_probe_ok?: boolean | null;
   google_probe_latency_ms?: number | null;
   gateway_ping_avg_ms?: number | null;
-  gateway_ping_loss_percent?: number | null;
   gateway_ping_jitter_ms?: number | null;
+  gateway_ping_loss_percent?: number | null;
   download_mbps?: number | null;
   download_bytes?: number | null;
   download_duration_ms?: number | null;
@@ -49,12 +46,12 @@ export interface NetworkSummary {
   direct_download_mbps?: number | null;
   direct_download_bytes?: number | null;
   direct_download_duration_ms?: number | null;
-  direct_download_cached?: boolean | null;
   direct_download_measured_at?: string | null;
   direct_upload_mbps?: number | null;
   direct_upload_bytes?: number | null;
   direct_upload_duration_ms?: number | null;
-  direct_upload_cached?: boolean | null;
   direct_upload_measured_at?: string | null;
   direct_speed_test_skip_reason?: string | null;
+  fresh_speed_tests_in_window?: number;
+  uptime_percent?: number | null;
 }
