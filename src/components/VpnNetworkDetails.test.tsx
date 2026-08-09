@@ -130,4 +130,26 @@ describe('VpnNetworkDetails', () => {
     )
     expect(container.querySelector('a[href="/projects/demo/services/helsinki/tunnel"]')).toBeNull()
   })
+
+  it('shows VPN upload and WAN speeds', () => {
+    render(
+      <VpnNetworkDetails
+        summary={{
+          download_mbps: 80,
+          speed_test_ok: true,
+          upload_mbps: 15.5,
+          upload_speed_test_ok: true,
+          direct_download_mbps: 200,
+          direct_upload_mbps: 40,
+        }}
+      />,
+    )
+
+    expect(screen.getAllByText('VPN download').length).toBeGreaterThan(0)
+    expect(screen.getByText('VPN upload')).toBeInTheDocument()
+    expect(screen.getByText('WAN download')).toBeInTheDocument()
+    expect(screen.getByText('WAN upload')).toBeInTheDocument()
+    expect(screen.getByText(/15\.50 Mbps/)).toBeInTheDocument()
+    expect(screen.getByText(/200\.00 Mbps/)).toBeInTheDocument()
+  })
 })

@@ -82,6 +82,17 @@ function buildSpeedTestDetails(summary: NetworkSummary): string[] {
   return lines
 }
 
+function formatMbpsValue(
+  mbps: number | null | undefined,
+  options?: { cached?: boolean | null },
+): string | null {
+  if (mbps != null && Number(mbps) > 0) {
+    const base = `${Number(mbps).toFixed(2)} Mbps`
+    return options?.cached ? `${base} (cached)` : base
+  }
+  return null
+}
+
 function formatDownloadSpeed(summary: NetworkSummary): string | null {
   if (summary.download_mbps != null && Number(summary.download_mbps) > 0) {
     const base = `${Number(summary.download_mbps).toFixed(2)} Mbps`
@@ -98,6 +109,19 @@ function formatDownloadSpeed(summary: NetworkSummary): string | null {
       return reason
     }
     return `Could not measure speed: ${reason}`
+  }
+  return null
+}
+
+function formatUploadSpeed(summary: NetworkSummary): string | null {
+  if (summary.upload_mbps != null && Number(summary.upload_mbps) > 0) {
+    const base = `${Number(summary.upload_mbps).toFixed(2)} Mbps`
+    return summary.upload_speed_test_showing_last_success ? `${base} (cached)` : base
+  }
+  if (summary.upload_speed_test_ok === false) {
+    const reason = formatSpeedTestError(summary.upload_speed_test_error)
+    if (/deferred/i.test(reason)) return reason
+    return `Could not measure upload: ${reason}`
   }
   return null
 }
@@ -196,7 +220,26 @@ export function VpnNetworkDetails({
 
   const downloadSpeed = formatDownloadSpeed(summary)
   if (downloadSpeed) {
-    rows.push(['Download speed', downloadSpeed, buildSpeedTestDetails(summary)])
+    rows.push(['VPN download', downloadSpeed, buildSpeedTestDetails(summary)])
+  }
+
+  const uploadSpeed = formatUploadSpeed(summary)
+  if (uploadSpeed) {
+    rows.push(['VPN upload', uploadSpeed])
+  }
+
+  const wanDownload = formatMbpsValue(summary.direct_download_mbps, {
+    cached: summary.direct_download_cached,
+  })
+  if (wanDownload) {
+    rows.push(['WAN download', wanDownload])
+  }
+
+  const wanUpload = formatMbpsValue(summary.direct_upload_mbps, {
+    cached: summary.direct_upload_cached,
+  })
+  if (wanUpload) {
+    rows.push(['WAN upload', wanUpload])
   }
 
   if (

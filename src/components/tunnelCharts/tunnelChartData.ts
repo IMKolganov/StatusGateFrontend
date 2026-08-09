@@ -23,15 +23,25 @@ export type TunnelChartData = {
   ping: (number | null)[][]
   /** [x, loss percent] */
   loss: (number | null)[][]
-  /** [x, fresh mbps, cached mbps] */
+  /**
+   * Download throughput:
+   * [x, vpnFresh, vpnCached, wanDownload]
+   */
   throughput: (number | null)[][]
+  /**
+   * Upload throughput:
+   * [x, vpnFresh, vpnCached, wanUpload]
+   */
+  uploadThroughput: (number | null)[][]
   /** Unix seconds of samples whose outcome was an outage. */
   outages: number[]
   hasPing: boolean
   hasLoss: boolean
-  /** Any download samples (fresh or cached) in the window. */
+  /** Any download samples (fresh, cached, or WAN) in the window. */
   speedSampleCount: number
   freshSpeedCount: number
+  uploadSampleCount: number
+  freshUploadCount: number
 }
 
 export function isHealthyOutcome(outcome: string): boolean {
@@ -55,6 +65,10 @@ type Row = {
   loss: number | null
   fresh: number | null
   cached: number | null
+  wanDownload: number | null
+  uploadFresh: number | null
+  uploadCached: number | null
+  wanUpload: number | null
   isOutage: boolean
 }
 
@@ -75,6 +89,26 @@ function toRow(point: PublicTunnelMetricPoint): Row {
     }
   }
 
+  let uploadFresh: number | null = null
+  let uploadCached: number | null = null
+  const uploadMbps = num(point.upload_mbps)
+  if (!isOutage && uploadMbps != null && uploadMbps > 0) {
+    if (point.upload_cached === true) {
+      uploadCached = uploadMbps
+    } else {
+      uploadFresh = uploadMbps
+    }
+  }
+
+  const wanDownload =
+    !isOutage && num(point.direct_download_mbps) != null && Number(point.direct_download_mbps) > 0
+      ? num(point.direct_download_mbps)
+      : null
+  const wanUpload =
+    !isOutage && num(point.direct_upload_mbps) != null && Number(point.direct_upload_mbps) > 0
+      ? num(point.direct_upload_mbps)
+      : null
+
   return {
     x: toSeconds(point.checked_at),
     ping: isOutage ? null : num(point.gateway_ping_avg_ms),
@@ -82,6 +116,10 @@ function toRow(point: PublicTunnelMetricPoint): Row {
     loss: isOutage ? null : num(point.gateway_ping_loss_percent),
     fresh,
     cached,
+    wanDownload,
+    uploadFresh,
+    uploadCached,
+    wanUpload,
     isOutage,
   }
 }
@@ -107,6 +145,10 @@ export function buildTunnelChartData(points: PublicTunnelMetricPoint[]): TunnelC
   const loss: (number | null)[] = []
   const fresh: (number | null)[] = []
   const cached: (number | null)[] = []
+  const wanDownload: (number | null)[] = []
+  const uploadFresh: (number | null)[] = []
+  const uploadCached: (number | null)[] = []
+  const wanUpload: (number | null)[] = []
   const outages: number[] = []
 
   const pushNullRow = (x: number) => {
@@ -116,6 +158,10 @@ export function buildTunnelChartData(points: PublicTunnelMetricPoint[]): TunnelC
     loss.push(null)
     fresh.push(null)
     cached.push(null)
+    wanDownload.push(null)
+    uploadFresh.push(null)
+    uploadCached.push(null)
+    wanUpload.push(null)
   }
 
   let prevX: number | null = null
@@ -133,22 +179,33 @@ export function buildTunnelChartData(points: PublicTunnelMetricPoint[]): TunnelC
     loss.push(row.loss)
     fresh.push(row.fresh)
     cached.push(row.cached)
+    wanDownload.push(row.wanDownload)
+    uploadFresh.push(row.uploadFresh)
+    uploadCached.push(row.uploadCached)
+    wanUpload.push(row.wanUpload)
     if (row.isOutage) outages.push(row.x)
     prevX = row.x
   }
 
   const freshSpeedCount = fresh.filter((value) => value != null).length
   const cachedSpeedCount = cached.filter((value) => value != null).length
+  const wanDownloadCount = wanDownload.filter((value) => value != null).length
+  const freshUploadCount = uploadFresh.filter((value) => value != null).length
+  const cachedUploadCount = uploadCached.filter((value) => value != null).length
+  const wanUploadCount = wanUpload.filter((value) => value != null).length
 
   return {
     ping: [xs, ping, jitter],
     loss: [xs, loss],
-    throughput: [xs, fresh, cached],
+    throughput: [xs, fresh, cached, wanDownload],
+    uploadThroughput: [xs, uploadFresh, uploadCached, wanUpload],
     outages,
     hasPing: ping.some((value) => value != null),
     hasLoss: loss.some((value) => value != null),
-    speedSampleCount: freshSpeedCount + cachedSpeedCount,
+    speedSampleCount: freshSpeedCount + cachedSpeedCount + wanDownloadCount,
     freshSpeedCount,
+    uploadSampleCount: freshUploadCount + cachedUploadCount + wanUploadCount,
+    freshUploadCount,
   }
 }
 

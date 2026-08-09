@@ -83,8 +83,28 @@ describe('buildTunnelChartData', () => {
     ])
     expect(data.throughput[1]).toEqual([110.5, null, null])
     expect(data.throughput[2]).toEqual([null, 91.2, null])
+    expect(data.throughput[3]).toEqual([null, null, null])
     expect(data.speedSampleCount).toBe(2)
     expect(data.freshSpeedCount).toBe(1)
+  })
+
+  it('maps WAN download and VPN/WAN upload series', () => {
+    const data = buildTunnelChartData([
+      point(0, {
+        download_mbps: 80,
+        download_cached: false,
+        upload_mbps: 20,
+        upload_cached: false,
+        direct_download_mbps: 200,
+        direct_upload_mbps: 40,
+      }),
+    ])
+    expect(data.throughput[1]).toEqual([80])
+    expect(data.throughput[3]).toEqual([200])
+    expect(data.uploadThroughput[1]).toEqual([20])
+    expect(data.uploadThroughput[3]).toEqual([40])
+    expect(data.uploadSampleCount).toBe(2)
+    expect(data.freshUploadCount).toBe(1)
   })
 
   it('ignores download values on outage samples and zero mbps', () => {

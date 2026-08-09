@@ -187,7 +187,7 @@ export function TunnelStatusPage() {
                 </strong>
               </div>
               <div className="tunnel-diag tunnel-diag--wide">
-                <span className="tunnel-summary__label">Download capacity</span>
+                <span className="tunnel-summary__label">VPN download</span>
                 <strong>{formatMbps(latest?.download_mbps)}</strong>
                 <span className="muted tunnel-diag__sub">
                   {latest?.speed_test_showing_last_success
@@ -200,11 +200,36 @@ export function TunnelStatusPage() {
                 </span>
               </div>
               <div className="tunnel-diag">
-                <span className="tunnel-summary__label">Avg (history)</span>
+                <span className="tunnel-summary__label">VPN upload</span>
+                <strong>{formatMbps(latest?.upload_mbps)}</strong>
+                <span className="muted tunnel-diag__sub">
+                  {latest?.upload_speed_test_showing_last_success
+                    ? 'Cached / last success'
+                    : latest?.upload_speed_test_ok === false
+                      ? latest.upload_speed_test_error || 'Upload test failed'
+                      : 'Through the VPN'}
+                </span>
+              </div>
+              <div className="tunnel-diag">
+                <span className="tunnel-summary__label">WAN download</span>
+                <strong>{formatMbps(latest?.direct_download_mbps)}</strong>
+                <span className="muted tunnel-diag__sub">Host without VPN</span>
+              </div>
+              <div className="tunnel-diag">
+                <span className="tunnel-summary__label">WAN upload</span>
+                <strong>{formatMbps(latest?.direct_upload_mbps)}</strong>
+                <span className="muted tunnel-diag__sub">
+                  {latest?.direct_speed_test_skip_reason
+                    ? `Skipped: ${latest.direct_speed_test_skip_reason}`
+                    : 'Host without VPN'}
+                </span>
+              </div>
+              <div className="tunnel-diag">
+                <span className="tunnel-summary__label">Avg VPN ↓ (history)</span>
                 <strong>{formatMbps(latest?.speed_test_avg_mbps)}</strong>
               </div>
               <div className="tunnel-diag">
-                <span className="tunnel-summary__label">Min / max</span>
+                <span className="tunnel-summary__label">Min / max VPN ↓</span>
                 <strong>
                   {latest?.speed_test_min_mbps != null && latest.speed_test_max_mbps != null
                     ? `${Number(latest.speed_test_min_mbps).toFixed(0)}–${Number(latest.speed_test_max_mbps).toFixed(0)}`
@@ -228,9 +253,9 @@ export function TunnelStatusPage() {
             <div className="tunnel-panel__intro">
               <h2>Tunnel timeline</h2>
               <p className="muted">
-                Latency, packet loss, and download throughput over the window. The crosshair is
-                synchronized across panels — hover any chart to compare all metrics at the same
-                moment. Click a legend entry to toggle its series.
+                Latency, packet loss, and download/upload throughput (VPN vs host WAN) over the
+                window. The crosshair is synchronized across panels — hover any chart to compare
+                all metrics at the same moment. Click a legend entry to toggle its series.
               </p>
             </div>
 

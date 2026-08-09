@@ -7,22 +7,21 @@ import type {
 } from '../../api/tunnelMetrics'
 import { buildContinuousPingData, buildEventMarkers, buildTunnelChartData } from './tunnelChartData'
 import {
-  overlaysPlugin,
-  tooltipPlugin,
-  type TooltipRow,
-} from './tunnelChartPlugins'
+  INTERNET_COLOR,
+  INTERNET_LOSS_COLOR,
+  INTERNET_MAX_COLOR,
+  JITTER_COLOR,
+  LOSS_COLOR,
+  PING_COLOR,
+  PING_MAX_COLOR,
+  baseAxes,
+  baseOptions,
+  fmt,
+  lossFill,
+  makeThroughputChartOptions,
+} from './tunnelChartOptions'
 import { UplotPanel, type PanelLiveState } from './UplotPanel'
-
-const PING_COLOR = '#2563eb'
-const INTERNET_COLOR = '#0d9488'
-const PING_MAX_COLOR = 'rgba(37, 99, 235, 0.35)'
-const INTERNET_MAX_COLOR = 'rgba(13, 148, 136, 0.35)'
-const JITTER_COLOR = '#7c3aed'
-const LOSS_COLOR = '#d97706'
-const INTERNET_LOSS_COLOR = '#dc2626'
-const THROUGHPUT_COLOR = '#059669'
-const AXIS_STROKE = '#6b7280'
-const GRID_STROKE = 'rgba(148, 163, 184, 0.3)'
+import { INTERNET_PING_HOST } from '../../utils/speedTestConfig'
 
 type Props = {
   points: PublicTunnelMetricPoint[]
@@ -34,68 +33,6 @@ type Props = {
 
 function toSeconds(iso: string): number {
   return Math.floor(new Date(iso).getTime() / 1000)
-}
-
-function fmt(value: number | null | undefined, digits: number, unit: string): string {
-  if (value == null || !Number.isFinite(value)) return '—'
-  return `${Number(value).toFixed(digits)} ${unit}`
-}
-
-function baseAxes(unitLabel: string): uPlot.Axis[] {
-  return [
-    {
-      stroke: AXIS_STROKE,
-      grid: { stroke: GRID_STROKE, width: 1 },
-      ticks: { stroke: GRID_STROKE, width: 1 },
-    },
-    {
-      stroke: AXIS_STROKE,
-      grid: { stroke: GRID_STROKE, width: 1 },
-      ticks: { stroke: GRID_STROKE, width: 1 },
-      size: 56,
-      label: unitLabel,
-      labelSize: 14,
-    },
-  ]
-}
-
-/** SmokePing-style escalation: fill gets hotter as loss climbs toward 100%. */
-function lossFill(base: string, mid: string, hot: string): uPlot.Series.Fill {
-  return (u) => {
-    const { top, height } = u.bbox
-    // uPlot can ask for the fill before layout — bbox is NaN then and
-    // createLinearGradient throws on non-finite coordinates.
-    if (!Number.isFinite(top) || !Number.isFinite(height) || height <= 0) {
-      return mid
-    }
-    const gradient = u.ctx.createLinearGradient(0, top + height, 0, top)
-    gradient.addColorStop(0, base)
-    gradient.addColorStop(0.4, mid)
-    gradient.addColorStop(1, hot)
-    return gradient
-  }
-}
-
-function baseOptions(
-  syncKey: string,
-  getState: () => PanelLiveState,
-  formatRows: (u: uPlot, idx: number) => TooltipRow[],
-): Pick<uPlot.Options, 'cursor' | 'legend' | 'plugins' | 'scales'> {
-  const getOverlays = () => getState().overlays
-  return {
-    cursor: {
-      sync: { key: syncKey, setSeries: false },
-      points: { size: 7 },
-    },
-    legend: { live: false },
-    plugins: [overlaysPlugin(getOverlays), tooltipPlugin(formatRows, getOverlays)],
-    scales: {
-      x: {
-        time: true,
-        range: () => [getState().range.start, getState().range.end],
-      },
-    },
-  }
 }
 
 export function TunnelDiagnosticsCharts({ points, pingSamples, events, rangeStart, rangeEnd }: Props) {
@@ -119,6 +56,10 @@ export function TunnelDiagnosticsCharts({ points, pingSamples, events, rangeStar
   const continuousPingData = useMemo(() => continuous.ping as uPlot.AlignedData, [continuous])
   const continuousLossData = useMemo(() => continuous.loss as uPlot.AlignedData, [continuous])
   const throughputData = useMemo(() => chartData.throughput as uPlot.AlignedData, [chartData])
+  const uploadThroughputData = useMemo(
+    () => chartData.uploadThroughput as uPlot.AlignedData,
+    [chartData],
+  )
 
   const makePingOptions = useCallback(
     (getState: () => PanelLiveState): Omit<uPlot.Options, 'width' | 'height'> => {
@@ -193,7 +134,7 @@ export function TunnelDiagnosticsCharts({ points, pingSamples, events, rangeStar
             points: { show: false },
           },
           {
-            label: 'Internet 8.8.8.8 avg (ms)',
+            label: `Internet ${INTERNET_PING_HOST} avg (ms)`,
             stroke: INTERNET_COLOR,
             width: 2,
             points: { show: false },
@@ -292,45 +233,12 @@ export function TunnelDiagnosticsCharts({ points, pingSamples, events, rangeStar
   )
 
   const makeThroughputOptions = useCallback(
-    (getState: () => PanelLiveState): Omit<uPlot.Options, 'width' | 'height'> => {
-      const base = baseOptions(syncKey, getState, (u, idx) => {
-        const rows: TooltipRow[] = []
-        const fresh = u.data[1]?.[idx]
-        const cached = u.data[2]?.[idx]
-        if (fresh != null) rows.push({ label: 'Download (fresh test)', value: fmt(fresh, 1, 'Mbps') })
-        if (cached != null) rows.push({ label: 'Download (cached)', value: fmt(cached, 1, 'Mbps') })
-        if (fresh == null && cached == null) {
-          rows.push({ label: 'Download', value: 'no test at this sample' })
-        }
-        return rows
-      })
-      return {
-        ...base,
-        scales: {
-          ...base.scales,
-          y: {
-            range: (_u, _min, max) => [0, Math.max(max * 1.2, 10)],
-          },
-        },
-        axes: baseAxes('Mbps'),
-        series: [
-          {},
-          {
-            label: 'Fresh download test (Mbps)',
-            stroke: THROUGHPUT_COLOR,
-            // Speed tests are sparse: markers only, no line interpolation between them.
-            paths: () => null,
-            points: { show: true, size: 9, width: 2, stroke: THROUGHPUT_COLOR, fill: THROUGHPUT_COLOR },
-          },
-          {
-            label: 'Cached / deferred (Mbps)',
-            stroke: THROUGHPUT_COLOR,
-            paths: () => null,
-            points: { show: true, size: 8, width: 2, stroke: THROUGHPUT_COLOR, fill: '#ffffff' },
-          },
-        ],
-      }
-    },
+    (getState: () => PanelLiveState) => makeThroughputChartOptions(syncKey, getState, 'download'),
+    [syncKey],
+  )
+
+  const makeUploadThroughputOptions = useCallback(
+    (getState: () => PanelLiveState) => makeThroughputChartOptions(syncKey, getState, 'upload'),
     [syncKey],
   )
 
@@ -351,7 +259,7 @@ export function TunnelDiagnosticsCharts({ points, pingSamples, events, rangeStar
             <>
               One ping per second, aggregated per minute. Solid lines are averages, faint lines are
               the worst packet each minute — short stalls show up as spikes. Gateway is the first
-              VPN hop; Internet (8.8.8.8) goes through the exit, the same path your traffic takes.
+              VPN hop; Internet ({INTERNET_PING_HOST}) goes through the exit, the same path your traffic takes.
             </>
           ) : (
             <>
@@ -420,17 +328,16 @@ export function TunnelDiagnosticsCharts({ points, pingSamples, events, rangeStar
       </div>
 
       <div className="tunnel-charts__panel">
-        <h3>Throughput</h3>
+        <h3>Download throughput</h3>
         <p className="muted tunnel-charts__hint">
-          Full download speed tests through the VPN. Tests share a rate limit across services, so
-          markers are sparse — filled is a fresh test, hollow reuses a cached result.
+          Full download tests through the VPN versus the host WAN (without VPN). Tests share a
+          rate limit — filled markers are fresh, hollow are cached VPN results; blue is host WAN.
         </p>
         {chartData.speedSampleCount > 0 ? (
           <>
             {chartData.freshSpeedCount === 0 && (
               <p className="muted tunnel-charts__note">
-                No fresh speed test ran in this window — only cached values are shown while the
-                service waits for a free test slot.
+                No fresh VPN download ran in this window — only cached or WAN values are shown.
               </p>
             )}
             <UplotPanel
@@ -439,13 +346,43 @@ export function TunnelDiagnosticsCharts({ points, pingSamples, events, rangeStar
               overlays={overlays}
               range={range}
               height={210}
-              ariaLabel="Tunnel download throughput in megabits per second"
+              ariaLabel="Download throughput through VPN and host WAN in megabits per second"
             />
           </>
         ) : (
           <p className="muted tunnel-charts__note">
-            Throughput was not measured in this window. Full download tests run on a shared
+            Download throughput was not measured in this window. Full tests run on a shared
             schedule, not on every probe — this is not missing data.
+          </p>
+        )}
+      </div>
+
+      <div className="tunnel-charts__panel">
+        <h3>Upload throughput</h3>
+        <p className="muted tunnel-charts__hint">
+          Upload capacity through the VPN versus the host without VPN. Same shared schedule as
+          downloads — useful for spotting asymmetric tunnels (slow upload with strong download).
+        </p>
+        {chartData.uploadSampleCount > 0 ? (
+          <>
+            {chartData.freshUploadCount === 0 && (
+              <p className="muted tunnel-charts__note">
+                No fresh VPN upload ran in this window — only cached or WAN values are shown.
+              </p>
+            )}
+            <UplotPanel
+              makeOptions={makeUploadThroughputOptions}
+              data={uploadThroughputData}
+              overlays={overlays}
+              range={range}
+              height={210}
+              ariaLabel="Upload throughput through VPN and host WAN in megabits per second"
+            />
+          </>
+        ) : (
+          <p className="muted tunnel-charts__note">
+            Upload throughput was not measured in this window yet. Cloudflare __up runs with the
+            download test when the template supports it.
           </p>
         )}
       </div>

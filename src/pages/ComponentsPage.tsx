@@ -14,7 +14,9 @@ import {
 } from '../utils/speedTest'
 import {
   buildLocalSpeedTestWarning,
+  DEFAULT_PROBE_URL,
   DEFAULT_SPEED_TEST_URL_TEMPLATE,
+  isCloudflareSpeedTestTemplate,
   validateSpeedTestUrlTemplate,
 } from '../utils/speedTestConfig'
 import { slugFromName } from '../utils/slug'
@@ -162,9 +164,7 @@ export function ComponentsPage() {
     const defaultTemplate = monitoringSettings.default_speed_test_url_template
     const defaultSpeedInterval = monitoringSettings.default_speed_test_interval_seconds
     const defaultPoll = monitoringSettings.default_poll_interval_seconds
-    const usesCloudflare = (form.speed_test_url_template.trim() || defaultTemplate).startsWith(
-      'https://speed.cloudflare.com/',
-    )
+    const usesCloudflare = isCloudflareSpeedTestTemplate(form.speed_test_url_template.trim() || defaultTemplate)
 
     const projectedItems = items.map((item) => {
       if (item.id !== editingId) return item
@@ -208,7 +208,7 @@ export function ComponentsPage() {
         ...current,
         component_kind_id: componentKindId,
         check_type: 'openvpn',
-        check_url: current.check_url || 'https://ifconfig.me/ip',
+        check_url: current.check_url || DEFAULT_PROBE_URL,
         timeout_seconds: Math.max(current.timeout_seconds, 60),
       }))
       return
@@ -218,7 +218,7 @@ export function ComponentsPage() {
         ...current,
         component_kind_id: componentKindId,
         check_type: 'xray',
-        check_url: current.check_url || 'https://ifconfig.me/ip',
+        check_url: current.check_url || DEFAULT_PROBE_URL,
         timeout_seconds: Math.max(current.timeout_seconds, 60),
       }))
       return
@@ -263,7 +263,7 @@ export function ComponentsPage() {
       slug,
       description: form.description || null,
       environment: form.environment || null,
-      check_url: form.check_url || (isVpnKind ? 'https://ifconfig.me/ip' : ''),
+      check_url: form.check_url || (isVpnKind ? DEFAULT_PROBE_URL : ''),
       check_method: form.check_method,
       check_type: form.check_type,
       check_config: isVpnKind ? { config_text: form.vpn_config_text.trim() } : null,
@@ -437,7 +437,7 @@ export function ComponentsPage() {
               <input
                 value={form.check_url}
                 onChange={(e) => setForm({ ...form, check_url: e.target.value })}
-                placeholder={isVpnKind ? 'https://ifconfig.me/ip' : 'https://example.com/health'}
+                placeholder={isVpnKind ? DEFAULT_PROBE_URL : 'https://example.com/health'}
                 required={!isVpnKind}
               />
             </label>

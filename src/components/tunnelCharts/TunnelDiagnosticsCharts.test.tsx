@@ -112,8 +112,9 @@ describe('TunnelDiagnosticsCharts', () => {
     expect(ping!.opts.series[1]?.label).toMatch(/Gateway ping/)
     expect(ping!.opts.series[2]?.label).toMatch(/Jitter/)
     expect(loss!.opts.series[1]?.label).toMatch(/Packet loss/)
-    expect(throughput!.opts.series[1]?.label).toMatch(/Fresh download/)
-    expect(throughput!.opts.series[2]?.label).toMatch(/Cached/)
+    expect(throughput!.opts.series[1]?.label).toMatch(/VPN download \(fresh\)/)
+    expect(throughput!.opts.series[3]?.label).toMatch(/WAN download/)
+    expect(throughput!.opts.series[2]?.label).toMatch(/cached/i)
 
     for (const chart of instances) {
       // overlays + tooltip plugins on every panel
@@ -164,7 +165,7 @@ describe('TunnelDiagnosticsCharts', () => {
 
   it('explains a window without any speed tests instead of drawing an empty chart', () => {
     render(<TunnelDiagnosticsCharts points={[point(0), point(60)]} events={[]} {...RANGE} />)
-    expect(screen.getByText(/Throughput was not measured in this window/i)).toBeInTheDocument()
+    expect(screen.getByText(/Download throughput was not measured in this window/i)).toBeInTheDocument()
     // only ping + loss charts
     expect(instances).toHaveLength(2)
   })
@@ -177,7 +178,7 @@ describe('TunnelDiagnosticsCharts', () => {
         {...RANGE}
       />,
     )
-    expect(screen.getByText(/only cached values are shown/i)).toBeInTheDocument()
+    expect(screen.getByText(/only cached or WAN values are shown/i)).toBeInTheDocument()
     expect(instances).toHaveLength(3)
   })
 

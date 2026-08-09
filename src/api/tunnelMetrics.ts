@@ -14,8 +14,19 @@ export type PublicTunnelMetricPoint = {
   download_bytes?: number | null
   download_duration_ms?: number | null
   download_cached?: boolean | null
+  upload_mbps?: number | null
+  upload_bytes?: number | null
+  upload_duration_ms?: number | null
+  upload_cached?: boolean | null
+  direct_download_mbps?: number | null
+  direct_download_cached?: boolean | null
+  direct_upload_mbps?: number | null
+  direct_upload_cached?: boolean | null
   speed_test_ok?: boolean | null
   speed_test_measured_at?: string | null
+  upload_speed_test_ok?: boolean | null
+  upload_speed_test_measured_at?: string | null
+  direct_speed_test_measured_at?: string | null
 }
 
 /** One minute of the continuous in-tunnel pinger (1 packet/second). */
@@ -56,6 +67,27 @@ export type PublicTunnelLatestDiagnostics = {
   speed_test_max_mbps?: number | null
   speed_test_avg_mbps?: number | null
   speed_test_sample_count?: number | null
+  upload_mbps?: number | null
+  upload_bytes?: number | null
+  upload_duration_ms?: number | null
+  upload_speed_test_ok?: boolean | null
+  upload_speed_test_error?: string | null
+  upload_speed_test_measured_at?: string | null
+  upload_speed_test_last_success_at?: string | null
+  upload_speed_test_showing_last_success?: boolean | null
+  upload_speed_test_min_mbps?: number | null
+  upload_speed_test_max_mbps?: number | null
+  upload_speed_test_avg_mbps?: number | null
+  upload_speed_test_sample_count?: number | null
+  direct_download_mbps?: number | null
+  direct_download_bytes?: number | null
+  direct_download_duration_ms?: number | null
+  direct_download_measured_at?: string | null
+  direct_upload_mbps?: number | null
+  direct_upload_bytes?: number | null
+  direct_upload_duration_ms?: number | null
+  direct_upload_measured_at?: string | null
+  direct_speed_test_skip_reason?: string | null
   fresh_speed_tests_in_window?: number
   uptime_percent?: number | null
 }
