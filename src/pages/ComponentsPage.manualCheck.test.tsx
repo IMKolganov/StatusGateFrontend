@@ -64,6 +64,7 @@ const component: MonitoredComponent = {
   poll_interval_seconds: 60,
   connection_mode: 'ephemeral',
   is_active: true,
+  last_checked_at: null,
   created_at: '2026-08-01T00:00:00Z',
   updated_at: '2026-08-01T00:00:00Z',
   latest_network_summary: null,

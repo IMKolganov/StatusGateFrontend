@@ -21,6 +21,7 @@ import {
   makeThroughputChartOptions,
 } from './tunnelChartOptions'
 import { UplotPanel, type PanelLiveState } from './UplotPanel'
+import type { TooltipRow } from './tunnelChartPlugins'
 import { INTERNET_PING_HOST } from '../../utils/speedTestConfig'
 
 type Props = {
