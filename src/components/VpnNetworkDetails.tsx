@@ -38,48 +38,117 @@ function formatTimestamp(value: string | null | undefined): string | null {
   return date.toLocaleString()
 }
 
-function buildSpeedTestDetails(summary: NetworkSummary): string[] {
+function buildVpnSeriesDetails(options: {
+  mbps?: number | null
+  bytes?: number | null
+  durationMs?: number | null
+  minMbps?: number | null
+  avgMbps?: number | null
+  maxMbps?: number | null
+  sampleCount?: number | null
+  measuredAt?: string | null
+  lastSuccessAt?: string | null
+  showingLastSuccess?: boolean | null
+  error?: string | null
+}): string[] {
   const lines: string[] = []
-  const lastSuccessAt = formatTimestamp(summary.speed_test_last_success_at ?? summary.speed_test_measured_at)
-  const lastAttemptAt = formatTimestamp(summary.speed_test_measured_at)
+  const lastSuccessAt = formatTimestamp(options.lastSuccessAt ?? options.measuredAt)
+  const lastAttemptAt = formatTimestamp(options.measuredAt)
 
-  if (summary.download_mbps != null && Number(summary.download_mbps) > 0) {
-    lines.push(`Displayed: ${Number(summary.download_mbps).toFixed(2)} Mbps`)
+  if (options.mbps != null && Number(options.mbps) > 0) {
+    lines.push(`Displayed: ${Number(options.mbps).toFixed(2)} Mbps`)
   }
-  if (
-    summary.download_bytes != null
-    && summary.download_duration_ms != null
-  ) {
-    lines.push(`Transfer: ${formatBytes(Number(summary.download_bytes))} in ${summary.download_duration_ms} ms`)
+  if (options.bytes != null && options.durationMs != null) {
+    lines.push(`Transfer: ${formatBytes(Number(options.bytes))} in ${options.durationMs} ms`)
   }
-  if (summary.speed_test_min_mbps != null) {
-    lines.push(`Min: ${Number(summary.speed_test_min_mbps).toFixed(2)} Mbps`)
+  if (options.minMbps != null) {
+    lines.push(`Min: ${Number(options.minMbps).toFixed(2)} Mbps`)
   }
-  if (summary.speed_test_avg_mbps != null) {
-    const samples = summary.speed_test_sample_count
+  if (options.avgMbps != null) {
+    const samples = options.sampleCount
     const suffix = samples != null && samples > 0 ? ` (${samples} samples)` : ''
-    lines.push(`Average: ${Number(summary.speed_test_avg_mbps).toFixed(2)} Mbps${suffix}`)
+    lines.push(`Average: ${Number(options.avgMbps).toFixed(2)} Mbps${suffix}`)
   }
-  if (summary.speed_test_max_mbps != null) {
-    lines.push(`Max: ${Number(summary.speed_test_max_mbps).toFixed(2)} Mbps`)
+  if (options.maxMbps != null) {
+    lines.push(`Max: ${Number(options.maxMbps).toFixed(2)} Mbps`)
   }
   if (lastSuccessAt) {
     lines.push(`Last successful: ${lastSuccessAt}`)
-  } else if (summary.speed_test_showing_last_success) {
+  } else if (options.showingLastSuccess) {
     lines.push('Last successful: time not recorded yet (appears after the next live speed test).')
   }
   if (lastAttemptAt && lastAttemptAt !== lastSuccessAt) {
     lines.push(`Last attempt: ${lastAttemptAt}`)
   }
-  if (summary.speed_test_showing_last_success) {
-    if (summary.speed_test_error) {
+  if (options.showingLastSuccess) {
+    if (options.error) {
       lines.push('Showing last successful measurement after a failed live test.')
     } else {
       lines.push('Live test deferred (stagger / rate limit); showing previous measurement.')
     }
   }
-  if (summary.speed_test_error) {
-    lines.push(`Last error: ${formatSpeedTestError(summary.speed_test_error)}`)
+  if (options.error) {
+    lines.push(`Last error: ${formatSpeedTestError(options.error)}`)
+  }
+  return lines
+}
+
+function buildDownloadSpeedDetails(summary: NetworkSummary): string[] {
+  return buildVpnSeriesDetails({
+    mbps: summary.download_mbps,
+    bytes: summary.download_bytes,
+    durationMs: summary.download_duration_ms,
+    minMbps: summary.speed_test_min_mbps,
+    avgMbps: summary.speed_test_avg_mbps,
+    maxMbps: summary.speed_test_max_mbps,
+    sampleCount: summary.speed_test_sample_count,
+    measuredAt: summary.speed_test_measured_at,
+    lastSuccessAt: summary.speed_test_last_success_at,
+    showingLastSuccess: summary.speed_test_showing_last_success,
+    error: summary.speed_test_error,
+  })
+}
+
+function buildUploadSpeedDetails(summary: NetworkSummary): string[] {
+  return buildVpnSeriesDetails({
+    mbps: summary.upload_mbps,
+    bytes: summary.upload_bytes,
+    durationMs: summary.upload_duration_ms,
+    minMbps: summary.upload_speed_test_min_mbps,
+    avgMbps: summary.upload_speed_test_avg_mbps,
+    maxMbps: summary.upload_speed_test_max_mbps,
+    sampleCount: summary.upload_speed_test_sample_count,
+    measuredAt: summary.upload_speed_test_measured_at,
+    lastSuccessAt: summary.upload_speed_test_last_success_at,
+    showingLastSuccess: summary.upload_speed_test_showing_last_success,
+    error: summary.upload_speed_test_error,
+  })
+}
+
+function buildWanSpeedDetails(options: {
+  mbps?: number | null
+  bytes?: number | null
+  durationMs?: number | null
+  measuredAt?: string | null
+  cached?: boolean | null
+  skipReason?: string | null
+}): string[] {
+  const lines: string[] = []
+  if (options.mbps != null && Number(options.mbps) > 0) {
+    lines.push(`Displayed: ${Number(options.mbps).toFixed(2)} Mbps`)
+  }
+  if (options.bytes != null && options.durationMs != null) {
+    lines.push(`Transfer: ${formatBytes(Number(options.bytes))} in ${options.durationMs} ms`)
+  }
+  const measuredAt = formatTimestamp(options.measuredAt)
+  if (measuredAt) {
+    lines.push(`Measured: ${measuredAt}`)
+  }
+  if (options.cached) {
+    lines.push('Host WAN baseline (shared across VPN services); not measured inside this tunnel.')
+  }
+  if (options.skipReason) {
+    lines.push(`Skip reason: ${options.skipReason}`)
   }
   return lines
 }
@@ -131,9 +200,11 @@ function formatUploadSpeed(summary: NetworkSummary): string | null {
 function SpeedTestValue({
   value,
   details,
+  title = 'Speed test details',
 }: {
   value: string
   details: string[]
+  title?: string
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -178,9 +249,9 @@ function SpeedTestValue({
           id={panelId}
           className="network-summary__speed-popover"
           role="dialog"
-          aria-label="Speed test details"
+          aria-label={title}
         >
-          <div className="network-summary__speed-popover-title">Speed test details</div>
+          <div className="network-summary__speed-popover-title">{title}</div>
           <ul className="network-summary__speed-meta">
             {details.map((line) => (
               <li key={line}>{line}</li>
@@ -205,7 +276,7 @@ export function VpnNetworkDetails({
   const forced = expanded === true || expanded === false
   const open = forced ? expanded : internalOpen
 
-  const rows: Array<[string, string, string[]?]> = []
+  const rows: Array<[string, string, string[]?, string?]> = []
 
   if (summary.interface) rows.push(['Interface', String(summary.interface)])
   if (summary.ipv4_address) rows.push(['VPN IP', String(summary.ipv4_address)])
@@ -227,26 +298,50 @@ export function VpnNetworkDetails({
 
   const downloadSpeed = formatDownloadSpeed(summary)
   if (downloadSpeed) {
-    rows.push(['VPN download', downloadSpeed, buildSpeedTestDetails(summary)])
+    rows.push(['VPN download', downloadSpeed, buildDownloadSpeedDetails(summary), 'VPN download details'])
   }
 
   const uploadSpeed = formatUploadSpeed(summary)
   if (uploadSpeed) {
-    rows.push(['VPN upload', uploadSpeed])
+    rows.push(['VPN upload', uploadSpeed, buildUploadSpeedDetails(summary), 'VPN upload details'])
   }
 
   const wanDownload = formatMbpsValue(summary.direct_download_mbps, {
     cached: summary.direct_download_cached,
   })
   if (wanDownload) {
-    rows.push(['WAN download', wanDownload])
+    rows.push([
+      'WAN download',
+      wanDownload,
+      buildWanSpeedDetails({
+        mbps: summary.direct_download_mbps,
+        bytes: summary.direct_download_bytes,
+        durationMs: summary.direct_download_duration_ms,
+        measuredAt: summary.direct_download_measured_at,
+        cached: summary.direct_download_cached,
+        skipReason: summary.direct_speed_test_skip_reason,
+      }),
+      'WAN download details',
+    ])
   }
 
   const wanUpload = formatMbpsValue(summary.direct_upload_mbps, {
     cached: summary.direct_upload_cached,
   })
   if (wanUpload) {
-    rows.push(['WAN upload', wanUpload])
+    rows.push([
+      'WAN upload',
+      wanUpload,
+      buildWanSpeedDetails({
+        mbps: summary.direct_upload_mbps,
+        bytes: summary.direct_upload_bytes,
+        durationMs: summary.direct_upload_duration_ms,
+        measuredAt: summary.direct_upload_measured_at,
+        cached: summary.direct_upload_cached,
+        skipReason: summary.direct_speed_test_skip_reason,
+      }),
+      'WAN upload details',
+    ])
   }
 
   if (
@@ -269,12 +364,12 @@ export function VpnNetworkDetails({
     <>
       {rows.length > 0 && (
         <dl className={collapsible ? 'network-summary' : `network-summary ${className}`.trim()}>
-          {rows.map(([label, value, details]) => (
+          {rows.map(([label, value, details, detailsTitle]) => (
             <div key={label} className="network-summary__row">
               <dt>{label}</dt>
               <dd>
                 {details && details.length > 0 ? (
-                  <SpeedTestValue value={value} details={details} />
+                  <SpeedTestValue value={value} details={details} title={detailsTitle} />
                 ) : (
                   value
                 )}

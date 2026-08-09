@@ -23,7 +23,7 @@ describe('VpnNetworkDetails', () => {
     const trigger = screen.getByRole('button', { name: /91\.20 Mbps \(cached\)/i })
     fireEvent.click(trigger)
 
-    expect(screen.getByRole('dialog', { name: /speed test details/i })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: /vpn download details/i })).toBeInTheDocument()
     expect(screen.getByText(/Last successful:/i)).toBeInTheDocument()
     expect(screen.getByText(/Last attempt:/i)).toBeInTheDocument()
     expect(screen.getByText(/Showing last successful measurement after a failed live test/i)).toBeInTheDocument()
@@ -139,8 +139,17 @@ describe('VpnNetworkDetails', () => {
           speed_test_ok: true,
           upload_mbps: 15.5,
           upload_speed_test_ok: true,
+          upload_speed_test_min_mbps: 10,
+          upload_speed_test_avg_mbps: 14,
+          upload_speed_test_max_mbps: 18,
+          upload_speed_test_sample_count: 5,
           direct_download_mbps: 200,
+          direct_download_bytes: 524288,
+          direct_download_duration_ms: 20,
+          direct_download_cached: true,
+          direct_download_measured_at: '2026-08-09T12:00:00.000Z',
           direct_upload_mbps: 40,
+          direct_upload_cached: true,
         }}
       />,
     )
@@ -151,6 +160,15 @@ describe('VpnNetworkDetails', () => {
     expect(screen.getByText('WAN upload')).toBeInTheDocument()
     expect(screen.getByText(/15\.50 Mbps/)).toBeInTheDocument()
     expect(screen.getByText(/200\.00 Mbps/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /15\.50 Mbps/i }))
+    expect(screen.getByRole('dialog', { name: /vpn upload details/i })).toBeInTheDocument()
+    expect(screen.getByText(/Min: 10\.00 Mbps/i)).toBeInTheDocument()
+    expect(screen.getByText(/Average: 14\.00 Mbps \(5 samples\)/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /200\.00 Mbps \(cached\)/i }))
+    expect(screen.getByRole('dialog', { name: /wan download details/i })).toBeInTheDocument()
+    expect(screen.getByText(/Host WAN baseline/i)).toBeInTheDocument()
   })
 
   it('respects expanded prop for collapsible details', () => {
