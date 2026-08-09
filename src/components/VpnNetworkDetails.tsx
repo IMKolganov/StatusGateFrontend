@@ -17,7 +17,7 @@ type NetworkDetailsProps = {
   tunnelHref?: string | null
 }
 
-export function hasGatewayPing(summary: NetworkSummary): boolean {
+function hasGatewayPing(summary: NetworkSummary): boolean {
   return (
     summary.gateway_ping_avg_ms != null
     || summary.gateway_ping_jitter_ms != null
@@ -201,12 +201,9 @@ export function VpnNetworkDetails({
   summaryLabel = 'Network details',
   tunnelHref = null,
 }: NetworkDetailsProps) {
-  const [open, setOpen] = useState(defaultOpen)
-
-  useEffect(() => {
-    if (expanded === true) setOpen(true)
-    if (expanded === false) setOpen(false)
-  }, [expanded])
+  const [internalOpen, setInternalOpen] = useState(defaultOpen)
+  const forced = expanded === true || expanded === false
+  const open = forced ? expanded : internalOpen
 
   const rows: Array<[string, string, string[]?]> = []
 
@@ -302,7 +299,9 @@ export function VpnNetworkDetails({
     <details
       className={`network-summary-details ${className}`.trim()}
       open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
+      onToggle={(event) => {
+        if (!forced) setInternalOpen(event.currentTarget.open)
+      }}
     >
       <summary>{summaryLabel}</summary>
       {content}

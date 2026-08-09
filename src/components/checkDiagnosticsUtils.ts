@@ -78,7 +78,7 @@ function projectSpeedSeries(
   }
 
   if (isMeaningfulSpeed(speedTest) && (speedTest.cached || speedTest.deferred || speedTest.stale)) {
-    showingLastSuccess = showingLastSuccess || Boolean(speedTest.stale || speedTest.throttled || speedTest.deferred)
+    showingLastSuccess = Boolean(speedTest.cached || speedTest.stale || speedTest.throttled || speedTest.deferred)
     if (!lastSuccessAt && measuredAt) lastSuccessAt = measuredAt
   }
   if (showingLastSuccess && !lastSuccessAt && measuredAt) lastSuccessAt = measuredAt
@@ -112,7 +112,7 @@ function projectDirect(payload: Record<string, unknown> | null): {
     }
   }
   return {
-    mbps: payload.mbps as number,
+    mbps: typeof payload.mbps === 'number' ? payload.mbps : undefined,
     bytes: typeof payload.bytes === 'number' ? payload.bytes : undefined,
     duration_ms: typeof payload.duration_ms === 'number' ? payload.duration_ms : undefined,
     cached: Boolean(payload.cached || payload.deferred || payload.stale) || undefined,
@@ -121,7 +121,8 @@ function projectDirect(payload: Record<string, unknown> | null): {
 }
 
 function statsField(stats: Record<string, unknown> | null, key: string): number | undefined {
-  return stats && typeof stats[key] === 'number' ? (stats[key] as number) : undefined
+  const value = stats?.[key]
+  return typeof value === 'number' ? value : undefined
 }
 
 /** Project flat NetworkSummary-shaped records (already projected API fields). */

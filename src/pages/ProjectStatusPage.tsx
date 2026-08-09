@@ -110,11 +110,7 @@ export function ProjectStatusPage() {
                             collapsible
                             defaultOpen={service.status !== 'up' && service.status !== 'degraded'}
                             expanded={detailsExpanded}
-                            tunnelHref={
-                              project
-                                ? `/projects/${project.slug}/services/${service.slug}/tunnel`
-                                : null
-                            }
+                            tunnelHref={`/projects/${project.slug}/services/${service.slug}/tunnel`}
                           />
                         )}
                       </div>

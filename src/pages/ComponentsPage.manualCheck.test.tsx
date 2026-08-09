@@ -18,12 +18,12 @@ vi.mock('../api/client', () => ({
     }
   },
   api: {
-    listMonitoredComponents: (...args: unknown[]) => listMonitoredComponents(...args),
-    listProjects: (...args: unknown[]) => listProjects(...args),
-    listComponentKinds: (...args: unknown[]) => listComponentKinds(...args),
-    getMonitoringSettings: (...args: unknown[]) => getMonitoringSettings(...args),
-    runManualCheck: (...args: unknown[]) => runManualCheck(...args),
-    listCheckResults: vi.fn(async () => ({ items: [], total: 0 })),
+    listMonitoredComponents: (...args: unknown[]) => listMonitoredComponents(...args) as unknown,
+    listProjects: (...args: unknown[]) => listProjects(...args) as unknown,
+    listComponentKinds: (...args: unknown[]) => listComponentKinds(...args) as unknown,
+    getMonitoringSettings: (...args: unknown[]) => getMonitoringSettings(...args) as unknown,
+    runManualCheck: (...args: unknown[]) => runManualCheck(...args) as unknown,
+    listCheckResults: vi.fn(() => Promise.resolve({ items: [], total: 0 })),
   },
 }))
 
@@ -36,9 +36,9 @@ vi.mock('../components/ConnectionEventsTimeline', () => ({
 }))
 
 vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
+  const actual = await vi.importActual('react-router-dom')
   return {
-    ...actual,
+    ...(actual as Record<string, unknown>),
     Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
   }
 })
@@ -150,9 +150,7 @@ describe('ComponentsPage manual check dual-path', () => {
     await flush()
 
     expect(await screen.findByText('Helsinki OpenVPN')).toBeInTheDocument()
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Check now' }))
-    })
+    fireEvent.click(screen.getByRole('button', { name: 'Check now' }))
     await flush()
 
     expect(runManualCheck).toHaveBeenCalledWith(component.id)
