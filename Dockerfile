@@ -25,6 +25,9 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+# Fail the image build if unit tests fail (same path as `docker compose build frontend`).
+ARG RUN_TESTS=1
+RUN if [ "$RUN_TESTS" = "1" ]; then npm test; fi
 RUN npm run build
 
 FROM nginx:alpine
