@@ -88,6 +88,19 @@ describe('buildTunnelChartData', () => {
     expect(data.freshSpeedCount).toBe(1)
   })
 
+  it('treats last-success-style cached Mbps as the hollow series', () => {
+    // Backend marks failed-live + last_success as download_cached=true on metric points.
+    const data = buildTunnelChartData([
+      point(0, { download_mbps: 88, download_cached: true, upload_mbps: 12, upload_cached: true }),
+    ])
+    expect(data.throughput[1]).toEqual([null])
+    expect(data.throughput[2]).toEqual([88])
+    expect(data.uploadThroughput[1]).toEqual([null])
+    expect(data.uploadThroughput[2]).toEqual([12])
+    expect(data.freshSpeedCount).toBe(0)
+    expect(data.speedSampleCount).toBe(1)
+  })
+
   it('maps WAN download and VPN/WAN upload series', () => {
     const data = buildTunnelChartData([
       point(0, {

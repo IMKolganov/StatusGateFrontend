@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import type { MonitoredComponent } from '../api/client'
 import {
   CLOUDFLARE_SPEED_TEST_MIN_GAP_SECONDS,
+  buildLocalSpeedTestWarning,
+  estimateSpeedTestHttpRequestsPerMinute,
   estimateSpeedTestsPerMinute,
+  isCloudflareSpeedTestTemplate,
 } from './speedTestConfig'
 
 function vpn(partial: Partial<MonitoredComponent> & Pick<MonitoredComponent, 'id' | 'slug'>): MonitoredComponent {
@@ -42,11 +45,48 @@ describe('estimateSpeedTestsPerMinute', () => {
     expect(perMinute).toBeCloseTo(60 / Math.max(60, CLOUDFLARE_SPEED_TEST_MIN_GAP_SECONDS), 6)
   })
 
+  it('uses the fastest unbounded poll interval, not the first component', () => {
+    const components = [
+      vpn({ id: '1', slug: 'slow', speed_test_interval_seconds: 0, poll_interval_seconds: 300 }),
+      vpn({ id: '2', slug: 'fast', speed_test_interval_seconds: 0, poll_interval_seconds: 60 }),
+    ]
+    expect(estimateSpeedTestsPerMinute(components, 300, 3600)).toBeCloseTo(1, 6)
+  })
+
   it('still sums bounded intervals normally', () => {
     const components = [
       vpn({ id: '1', slug: 'a', speed_test_interval_seconds: 60, poll_interval_seconds: 60 }),
       vpn({ id: '2', slug: 'b', speed_test_interval_seconds: 120, poll_interval_seconds: 60 }),
     ]
     expect(estimateSpeedTestsPerMinute(components, 60, 3600)).toBeCloseTo(1 + 0.5, 6)
+  })
+
+  it('doubles HTTP estimate for Cloudflare download+upload', () => {
+    const components = [
+      vpn({ id: '1', slug: 'a', speed_test_interval_seconds: 60, poll_interval_seconds: 60 }),
+    ]
+    expect(estimateSpeedTestHttpRequestsPerMinute(components, 60, 3600, true)).toBeCloseTo(2, 6)
+    expect(estimateSpeedTestHttpRequestsPerMinute(components, 60, 3600, false)).toBeCloseTo(1, 6)
+  })
+})
+
+describe('isCloudflareSpeedTestTemplate / warning', () => {
+  it('detects the configured Cloudflare origin prefix', () => {
+    expect(isCloudflareSpeedTestTemplate('https://speed.cloudflare.com/__down?bytes={bytes}')).toBe(true)
+    expect(isCloudflareSpeedTestTemplate('https://cdn.example.com/x?b={bytes}')).toBe(false)
+  })
+
+  it('warns using HTTP-request units when many Cloudflare services poll', () => {
+    const components = Array.from({ length: 12 }, (_, index) =>
+      vpn({
+        id: String(index),
+        slug: `vpn-${index}`,
+        speed_test_interval_seconds: 60,
+        poll_interval_seconds: 60,
+      }),
+    )
+    const warning = buildLocalSpeedTestWarning(components, 60, 60, true)
+    expect(warning).toMatch(/HTTP requests/)
+    expect(warning).toMatch(/24\.0/)
   })
 })

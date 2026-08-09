@@ -50,8 +50,7 @@ export function estimateSpeedTestsPerMinute(
   defaultSpeedTestIntervalSeconds: number,
 ): number {
   let total = 0
-  let unboundedDuePerCycle = 0
-  let unboundedPollInterval = defaultPollIntervalSeconds
+  const unboundedPolls: number[] = []
   for (const component of components) {
     if (!component.is_active || !component.speed_test_enabled || !isVpnCheckType(component.check_type)) {
       continue
@@ -59,19 +58,33 @@ export function estimateSpeedTestsPerMinute(
     const pollInterval = Math.max(component.poll_interval_seconds ?? defaultPollIntervalSeconds, 1)
     const speedInterval = component.speed_test_interval_seconds ?? defaultSpeedTestIntervalSeconds
     if (speedInterval <= 0) {
-      if (unboundedDuePerCycle === 0) unboundedPollInterval = pollInterval
-      unboundedDuePerCycle += 1
+      unboundedPolls.push(pollInterval)
       continue
     }
     const interval = Math.max(pollInterval, speedInterval)
     total += 60 / interval
   }
-  if (unboundedDuePerCycle > 0) {
-    // Match backend: shared live slot allows one unbounded test per min-gap window.
-    const cyclesPerMinute = 60 / Math.max(unboundedPollInterval, CLOUDFLARE_SPEED_TEST_MIN_GAP_SECONDS)
-    total += Math.min(unboundedDuePerCycle, 1) * cyclesPerMinute
+  if (unboundedPolls.length > 0) {
+    // Match backend: shared live slot; fastest unbounded poller dominates.
+    const cyclesPerMinute = 60 / Math.max(Math.min(...unboundedPolls), CLOUDFLARE_SPEED_TEST_MIN_GAP_SECONDS)
+    total += cyclesPerMinute
   }
   return total
+}
+
+/** Cloudflare live slots typically issue download + upload HTTP calls. */
+export function estimateSpeedTestHttpRequestsPerMinute(
+  components: MonitoredComponent[],
+  defaultPollIntervalSeconds: number,
+  defaultSpeedTestIntervalSeconds: number,
+  usesCloudflareDefault: boolean,
+): number {
+  const slots = estimateSpeedTestsPerMinute(
+    components,
+    defaultPollIntervalSeconds,
+    defaultSpeedTestIntervalSeconds,
+  )
+  return usesCloudflareDefault ? slots * 2 : slots
 }
 
 export function buildLocalSpeedTestWarning(
@@ -85,13 +98,18 @@ export function buildLocalSpeedTestWarning(
   )
   if (activeVpn.length === 0 || !usesCloudflareDefault) return null
 
-  const perMinute = estimateSpeedTestsPerMinute(components, defaultPollIntervalSeconds, defaultSpeedTestIntervalSeconds)
+  const perMinute = estimateSpeedTestHttpRequestsPerMinute(
+    components,
+    defaultPollIntervalSeconds,
+    defaultSpeedTestIntervalSeconds,
+    usesCloudflareDefault,
+  )
   if (perMinute <= CLOUDFLARE_SPEED_TEST_GUIDANCE_REQUESTS_PER_MINUTE) return null
 
   const host = CLOUDFLARE_SPEED_TEST_ORIGIN.replace(/^https?:\/\//, '')
   return (
-    `${activeVpn.length} active VPN services may trigger about ${perMinute.toFixed(1)} speed tests per minute ` +
-    `on ${host} from this server (Cloudflare has no published limit; HTTP 429 may occur above ~` +
+    `${activeVpn.length} active VPN services may trigger about ${perMinute.toFixed(1)} speed-test HTTP requests ` +
+    `per minute on ${host} from this server (Cloudflare has no published limit; HTTP 429 may occur above ~` +
     `${CLOUDFLARE_SPEED_TEST_GUIDANCE_REQUESTS_PER_MINUTE}/min). The worker waits at least ` +
     `${CLOUDFLARE_SPEED_TEST_MIN_GAP_SECONDS}s between Cloudflare tests. Use a custom speed test URL, increase intervals, ` +
     'or reduce polling frequency.'
