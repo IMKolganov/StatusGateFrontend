@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { brandConfig } from '../brand/config'
 import { AboutPage } from './AboutPage'
 
 vi.mock('../components/PublicLayout', () => ({
@@ -16,7 +17,9 @@ describe('AboutPage', () => {
         <AboutPage />
       </MemoryRouter>,
     )
-    expect(screen.getByRole('heading', { name: /About StatusGate/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: new RegExp(`About\\s+${brandConfig.name}`, 'i') }),
+    ).toBeInTheDocument()
     expect(screen.getByText(/open-source service status platform/i)).toBeInTheDocument()
   })
 })
