@@ -48,9 +48,17 @@ export function ProjectStatusPage() {
       .finally(() => setLoading(false))
   }, [slug])
 
+  const statusGroups =
+    project?.groups && project.groups.length > 0
+      ? project.groups
+      : project
+        ? [{ name: '', sort_order: 0, services: project.services }]
+        : []
+  const hasCurrentStatus = Boolean(
+    statusGroups.some((group) => group.services.length > 0),
+  )
   const hasNetworkDetails = Boolean(
-    project?.services.some((service) => service.network_summary) ||
-      project?.groups?.some((group) => group.services.some((service) => service.network_summary)),
+    statusGroups.some((group) => group.services.some((service) => service.network_summary)),
   )
 
   return (
@@ -80,7 +88,7 @@ export function ProjectStatusPage() {
 
           {slug && <SystemStatusPanel slug={slug} />}
 
-          {project.services.length > 0 && (
+          {hasCurrentStatus && (
             <section className="current-status">
               <div className="current-status-header">
                 <h2>Current status</h2>
@@ -94,7 +102,7 @@ export function ProjectStatusPage() {
                   </button>
                 )}
               </div>
-          {((project.groups && project.groups.length > 0) ? project.groups : [{ name: '', sort_order: 0, services: project.services }]).map((group) => (
+          {statusGroups.map((group) => (
             <div key={(group.id ?? group.name) || 'all'} className="current-status-group">
               {group.name ? <h3 className="current-status-group-title">{group.name}</h3> : null}
               <ul className="service-list">
