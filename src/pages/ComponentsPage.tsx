@@ -242,7 +242,8 @@ export function ComponentsPage() {
             ? null
             : Number(form.speed_test_interval_seconds)
           : null,
-      speed_test_enabled: isVpnKind ? form.speed_test_enabled : null,
+      // Omit for HTTP: column is NOT NULL; null would wipe the value on update.
+      ...(isVpnKind ? { speed_test_enabled: form.speed_test_enabled } : {}),
       expected_status_code: form.expected_status_code,
       timeout_seconds: form.timeout_seconds,
       poll_interval_seconds: form.poll_interval_seconds === '' ? null : Number(form.poll_interval_seconds),

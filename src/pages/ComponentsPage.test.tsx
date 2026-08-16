@@ -237,6 +237,8 @@ describe('ComponentsPage', () => {
         expect.objectContaining({ name: 'Website v2', slug: 'website' }),
       ),
     )
+    const updatePayload = updateMonitoredComponent.mock.calls[0][1] as Record<string, unknown>
+    expect(updatePayload).not.toHaveProperty('speed_test_enabled')
 
     fireEvent.click(screen.getByRole('button', { name: /^Delete$/i }))
     await flush()
