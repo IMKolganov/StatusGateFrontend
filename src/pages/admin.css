@@ -702,3 +702,13 @@
     flex-wrap: wrap;
   }
 }
+
+.service-group-section + .service-group-section {
+  margin-top: var(--sg-space-5);
+}
+
+.service-group-heading {
+  margin: 0 0 var(--sg-space-3);
+  font-size: 1rem;
+  font-weight: 600;
+}

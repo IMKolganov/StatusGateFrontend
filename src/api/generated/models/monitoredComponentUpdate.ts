@@ -25,5 +25,7 @@ export interface MonitoredComponentUpdate {
   timeout_seconds?: number | null;
   poll_interval_seconds?: number | null;
   connection_mode?: string | null;
+  group_id?: string | null;
+  sort_order?: number | null;
   is_active?: boolean | null;
 }

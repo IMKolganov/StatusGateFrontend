@@ -13,6 +13,9 @@ export interface PublicServiceStatus {
   description: string | null;
   environment: string | null;
   component_kind: string;
+  group_id?: string | null;
+  group_name?: string | null;
+  group_sort_order?: number | null;
   /** Latest check outcome or 'unknown' */
   status: string;
   latency_ms?: number | null;

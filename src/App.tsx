@@ -7,6 +7,7 @@ import { AuthRoute } from './components/AuthRoute'
 import { AccountsPage } from './pages/AccountsPage'
 import { AdminPage } from './pages/AdminPage'
 import { AuthCallbackPage } from './pages/AuthCallbackPage'
+import { ComponentGroupsPage } from './pages/ComponentGroupsPage'
 import { ComponentKindsPage } from './pages/ComponentKindsPage'
 import { ComponentsPage } from './pages/ComponentsPage'
 import { IncidentsPage } from './pages/IncidentsPage'
@@ -45,6 +46,7 @@ function App() {
           <Route path="/admin/reference" element={<AdminRoute><ReferencePage /></AdminRoute>} />
           <Route path="/admin/component-kinds" element={<AdminRoute><ComponentKindsPage /></AdminRoute>} />
           <Route path="/admin/components" element={<AdminRoute><ComponentsPage /></AdminRoute>} />
+          <Route path="/admin/component-groups" element={<AdminRoute><ComponentGroupsPage /></AdminRoute>} />
           <Route path="/admin/monitoring" element={<AdminRoute><MonitoringSettingsPage /></AdminRoute>} />
           <Route path="/admin/incidents" element={<AdminRoute><IncidentsPage /></AdminRoute>} />
           <Route path="/admin/accounts" element={<AdminRoute><AccountsPage /></AdminRoute>} />

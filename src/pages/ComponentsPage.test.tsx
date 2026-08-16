@@ -6,6 +6,7 @@ import { ComponentsPage } from './ComponentsPage'
 const listMonitoredComponents = vi.fn()
 const listProjects = vi.fn()
 const listComponentKinds = vi.fn()
+const listComponentGroups = vi.fn()
 const getMonitoringSettings = vi.fn()
 const createMonitoredComponent = vi.fn()
 const updateMonitoredComponent = vi.fn()
@@ -25,6 +26,7 @@ vi.mock('../api/client', () => ({
     listMonitoredComponents: (...args: unknown[]) => listMonitoredComponents(...args),
     listProjects: (...args: unknown[]) => listProjects(...args),
     listComponentKinds: (...args: unknown[]) => listComponentKinds(...args),
+    listComponentGroups: (...args: unknown[]) => listComponentGroups(...args),
     getMonitoringSettings: (...args: unknown[]) => getMonitoringSettings(...args),
     createMonitoredComponent: (...args: unknown[]) => createMonitoredComponent(...args),
     updateMonitoredComponent: (...args: unknown[]) => updateMonitoredComponent(...args),
@@ -65,6 +67,7 @@ describe('ComponentsPage', () => {
     listMonitoredComponents.mockReset()
     listProjects.mockReset()
     listComponentKinds.mockReset()
+    listComponentGroups.mockReset()
     getMonitoringSettings.mockReset()
     createMonitoredComponent.mockReset()
     updateMonitoredComponent.mockReset()
@@ -82,6 +85,10 @@ describe('ComponentsPage', () => {
         { id: 'k3', name: 'Xray', slug: 'xray', description: null },
       ],
       total: 3,
+    })
+    listComponentGroups.mockResolvedValue({
+      items: [{ id: 'g1', project_id: 'p1', name: 'Server 1', slug: 'server-1', description: null, sort_order: 0, is_active: true, created_at: '', updated_at: '' }],
+      total: 1,
     })
     updateMonitoredComponent.mockResolvedValue({})
     deleteMonitoredComponent.mockResolvedValue(undefined)
@@ -108,6 +115,9 @@ describe('ComponentsPage', () => {
           timeout_seconds: 30,
           poll_interval_seconds: 60,
           connection_mode: null,
+          group_id: 'g1',
+          group_name: 'Server 1',
+          sort_order: 0,
           is_active: true,
           last_checked_at: null,
           created_at: '2026-01-01T00:00:00Z',
@@ -138,6 +148,7 @@ describe('ComponentsPage', () => {
     await flush()
     expect(await screen.findByRole('heading', { name: 'Services' })).toBeInTheDocument()
     expect(screen.getByText('Website')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Server 1' })).toBeInTheDocument()
 
     const formHeading = await screen.findByRole('heading', { name: 'Add service' })
     const formSection = formHeading.closest('section')!
@@ -148,6 +159,7 @@ describe('ComponentsPage', () => {
     fireEvent.change(form.getByLabelText(/^Check URL$/i), {
       target: { value: 'https://api.example.com/health' },
     })
+    fireEvent.change(form.getByLabelText(/Service group/i), { target: { value: 'g1' } })
     fireEvent.click(form.getByRole('button', { name: 'Add service' }))
     await flush()
     await waitFor(() =>
@@ -157,6 +169,8 @@ describe('ComponentsPage', () => {
           project_id: 'p1',
           component_kind_id: 'k1',
           check_url: 'https://api.example.com/health',
+          group_id: 'g1',
+          sort_order: 0,
         }),
       ),
     )

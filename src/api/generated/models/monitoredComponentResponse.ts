@@ -27,6 +27,9 @@ export interface MonitoredComponentResponse {
   timeout_seconds: number;
   poll_interval_seconds: number | null;
   connection_mode?: string;
+  group_id?: string | null;
+  group_name?: string | null;
+  sort_order?: number;
   last_checked_at: string | null;
   is_active: boolean;
   latest_outcome?: string | null;

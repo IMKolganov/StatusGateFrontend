@@ -98,10 +98,25 @@ import {
 } from './generated/public-status/public-status'
 import { ApiError, customFetch } from './mutator'
 import { DEFAULT_SPEED_TEST_URL_TEMPLATE } from '../utils/speedTestConfig'
+import type {
+  ComponentGroupCreate,
+  ComponentGroupResponse,
+  ComponentGroupUpdate,
+  PaginatedComponentGroupResponse,
+} from './componentGroups'
+
+export type {
+  ComponentGroupCreate,
+  ComponentGroupResponse,
+  ComponentGroupUpdate,
+  PaginatedComponentGroupResponse,
+  PublicServiceGroupStatus,
+} from './componentGroups'
 
 export type Account = AccountResponse
 export type Project = ProjectResponse
 export type ComponentKind = ComponentKindResponse
+export type ComponentGroup = ComponentGroupResponse
 export type MonitoredComponent = MonitoredComponentResponse
 export type CheckResult = CheckResultResponse
 export type MonitoringSettings = MonitoringSettingsResponse
@@ -213,6 +228,34 @@ export const api = {
 
   deleteComponentKind: async (id: string): Promise<void> => {
     await deleteComponentKindApiAdminComponentKindsKindIdDelete(id)
+  },
+
+  listComponentGroups: (
+    projectId: string,
+    offset = 0,
+    limit = 100,
+  ): Promise<PaginatedComponentGroupResponse> =>
+    customFetch<PaginatedComponentGroupResponse>(
+      `/api/admin/component-groups?project_id=${encodeURIComponent(projectId)}&offset=${offset}&limit=${limit}`,
+      { method: 'GET' },
+    ),
+
+  createComponentGroup: (payload: ComponentGroupCreate): Promise<ComponentGroupResponse> =>
+    customFetch<ComponentGroupResponse>('/api/admin/component-groups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+
+  updateComponentGroup: (id: string, payload: ComponentGroupUpdate): Promise<ComponentGroupResponse> =>
+    customFetch<ComponentGroupResponse>(`/api/admin/component-groups/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+
+  deleteComponentGroup: async (id: string): Promise<void> => {
+    await customFetch(`/api/admin/component-groups/${id}`, { method: 'DELETE' })
   },
 
   listMonitoredComponents: (

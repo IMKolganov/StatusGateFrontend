@@ -46,5 +46,7 @@ export interface MonitoredComponentCreate {
   poll_interval_seconds?: number | null;
   /** @pattern ^(ephemeral|persistent)$ */
   connection_mode?: string;
+  group_id?: string | null;
+  sort_order?: number;
   is_active?: boolean;
 }

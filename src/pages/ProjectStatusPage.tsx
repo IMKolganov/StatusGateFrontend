@@ -48,7 +48,10 @@ export function ProjectStatusPage() {
       .finally(() => setLoading(false))
   }, [slug])
 
-  const hasNetworkDetails = Boolean(project?.services.some((service) => service.network_summary))
+  const hasNetworkDetails = Boolean(
+    project?.services.some((service) => service.network_summary) ||
+      project?.groups?.some((group) => group.services.some((service) => service.network_summary)),
+  )
 
   return (
     <PublicLayout>
@@ -91,8 +94,11 @@ export function ProjectStatusPage() {
                   </button>
                 )}
               </div>
+          {((project.groups && project.groups.length > 0) ? project.groups : [{ name: '', sort_order: 0, services: project.services }]).map((group) => (
+            <div key={group.id ?? group.name || 'all'} className="current-status-group">
+              {group.name ? <h3 className="current-status-group-title">{group.name}</h3> : null}
               <ul className="service-list">
-                {project.services.map((service) => (
+                {group.services.map((service) => (
                   <li key={service.id} className="service-row">
                     <div className="service-main">
                       <span className={`status-dot status-${service.status}`} aria-hidden />
@@ -129,6 +135,8 @@ export function ProjectStatusPage() {
                   </li>
                 ))}
               </ul>
+            </div>
+          ))}
             </section>
           )}
         </>

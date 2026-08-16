@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, type CheckResult, type ComponentKind, type MonitoredComponent, type MonitoringSettings, type Project } from '../api/client'
+import { api, type CheckResult, type ComponentGroup, type ComponentKind, type MonitoredComponent, type MonitoringSettings, type Project } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
 import { CheckDiagnostics } from '../components/CheckDiagnostics'
 import { logTailFromDetails, networkSummaryFromDetails } from '../components/checkDiagnosticsUtils'
@@ -49,6 +49,8 @@ const emptyForm = {
   timeout_seconds: 10,
   poll_interval_seconds: '' as number | '',
   connection_mode: 'ephemeral' as 'ephemeral' | 'persistent',
+  group_id: '',
+  sort_order: 0,
   is_active: true,
 }
 
@@ -67,6 +69,7 @@ export function ComponentsPage() {
   const [items, setItems] = useState<MonitoredComponent[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [kinds, setKinds] = useState<ComponentKind[]>([])
+  const [groups, setGroups] = useState<ComponentGroup[]>([])
   const [projectId, setProjectId] = useState('')
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -103,9 +106,11 @@ export function ComponentsPage() {
   useEffect(() => {
     if (!projectId) {
       void api.listMonitoredComponents().then((r) => setItems(r.items))
+      setGroups([])
       return
     }
     void api.listMonitoredComponents(projectId).then((r) => setItems(r.items))
+    void api.listComponentGroups(projectId).then((r) => setGroups(r.items)).catch(() => setGroups([]))
   }, [projectId])
 
   const kindById = useMemo(() => new Map(kinds.map((k) => [k.id, k])), [kinds])
@@ -119,6 +124,31 @@ export function ComponentsPage() {
     () => new Map(kinds.map((k) => [k.id, k.name])),
     [kinds],
   )
+
+  const groupNameById = useMemo(
+    () => new Map(groups.map((g) => [g.id, g.name])),
+    [groups],
+  )
+
+  const groupedItems = useMemo(() => {
+    const activeGroups = [...groups].sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name))
+    const sections: { key: string; title: string; items: MonitoredComponent[] }[] = []
+    for (const group of activeGroups) {
+      const groupItems = items
+        .filter((item) => item.group_id === group.id)
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
+      if (groupItems.length > 0) {
+        sections.push({ key: group.id, title: group.name, items: groupItems })
+      }
+    }
+    const ungrouped = items
+      .filter((item) => !item.group_id || !groupNameById.has(item.group_id))
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name))
+    if (ungrouped.length > 0 || sections.length === 0) {
+      sections.push({ key: 'ungrouped', title: 'Ungrouped', items: ungrouped })
+    }
+    return sections
+  }, [groups, groupNameById, items])
 
   const selectedKindSlug = kindById.get(form.component_kind_id)?.slug
   const isVpnKind = selectedKindSlug ? VPN_KIND_SLUGS.has(selectedKindSlug) : false
@@ -248,6 +278,8 @@ export function ComponentsPage() {
       timeout_seconds: form.timeout_seconds,
       poll_interval_seconds: form.poll_interval_seconds === '' ? null : Number(form.poll_interval_seconds),
       connection_mode: isOpenVpn ? form.connection_mode : undefined,
+      group_id: form.group_id || null,
+      sort_order: form.sort_order,
       is_active: form.is_active,
     }
     try {
@@ -375,6 +407,31 @@ export function ComponentsPage() {
             )}
 
             <label>Environment<input value={form.environment} onChange={(e) => setForm({ ...form, environment: e.target.value })} placeholder="production" /></label>
+
+            <label>
+              Service group
+              <select
+                value={form.group_id}
+                onChange={(e) => setForm({ ...form, group_id: e.target.value })}
+              >
+                <option value="">Ungrouped</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+              <span className="field-hint">
+                Create groups under <Link to="/admin/component-groups">Service groups</Link>.
+              </span>
+            </label>
+            <label>
+              Sort order
+              <input
+                type="number"
+                min={0}
+                value={form.sort_order}
+                onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) || 0 })}
+              />
+            </label>
 
             {isVpnKind && (
               <label className="full-width">
@@ -531,104 +588,120 @@ export function ComponentsPage() {
 
       <section className="panel">
         <h2>{projectId ? `Services in ${projectNameById.get(projectId) ?? 'project'}` : 'All services'}</h2>
-        <table className="data-table">
-          <thead>
-            <tr>
-              {!projectId && <th>Project</th>}
-              <th>Name</th>
-              <th>Type</th>
-              <th>Check</th>
-              <th>Status</th>
-              <th>Target</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id}>
-                {!projectId && <td>{projectNameById.get(item.project_id) ?? '—'}</td>}
-                <td>{item.name}</td>
-                <td>{kindNameById.get(item.component_kind_id) ?? '—'}</td>
-                <td>{checkTypeLabel(item.check_type)}</td>
-                <td className="status-cell">
-                  <span className={`status-pill ${statusClass(item.latest_outcome)}`}>
-                    {item.latest_outcome ?? 'unknown'}
-                  </span>
-                  {item.latest_latency_ms != null && <span className="muted"> {item.latest_latency_ms}ms</span>}
-                  <CheckDiagnostics
-                    outcome={item.latest_outcome}
-                    errorMessage={item.latest_error_message}
-                    logTail={item.latest_log_tail}
-                    networkSummary={item.latest_network_summary ?? undefined}
-                    collapsible
-                  />
-                  {item.check_type === 'openvpn' && item.connection_mode === 'persistent' && (
-                    <ConnectionEventsTimeline
-                      key={`${item.id}-${connectionLogEpoch}`}
-                      componentId={item.id}
-                      componentName={item.name}
-                    />
-                  )}
-                </td>
-                <td className="mono wrap">{item.check_url}</td>
-                <td className="row-actions">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    disabled={purgingId === item.id}
-                    onClick={() => void onClearHistory(item)}
-                  >
-                    {purgingId === item.id ? 'Clearing…' : 'Clear history'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    disabled={checkingId === item.id || (item.check_type === 'openvpn' && item.connection_mode === 'persistent')}
-                    title={
-                      item.check_type === 'openvpn' && item.connection_mode === 'persistent'
-                        ? 'Persistent VPN services are checked by the background worker; use Connection log'
-                        : undefined
-                    }
-                    onClick={() => void onManualCheck(item.id)}
-                  >
-                    {checkingId === item.id ? 'Checking…' : 'Check now'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => {
-                      setProjectId(item.project_id)
-                      setEditingId(item.id)
-                      setEditingSlug(item.slug)
-                      setForm({
-                        component_kind_id: item.component_kind_id,
-                        name: item.name,
-                        description: item.description ?? '',
-                        environment: item.environment ?? '',
-                        check_url: item.check_url,
-                        check_method: item.check_method,
-                        check_type: item.check_type,
-                        vpn_config_text: item.check_config?.config_text || '',
-                        speed_test_mib: speedTestMibStringFromBytes(item.speed_test_bytes),
-                        speed_test_url_template: item.speed_test_url_template ?? '',
-                        speed_test_interval_seconds: item.speed_test_interval_seconds ?? '',
-                        speed_test_enabled: item.speed_test_enabled,
-                        expected_status_code: item.expected_status_code,
-                        timeout_seconds: item.timeout_seconds,
-                        poll_interval_seconds: item.poll_interval_seconds ?? '',
-                        connection_mode: (item.connection_mode === 'persistent' ? 'persistent' : 'ephemeral'),
-                        is_active: item.is_active,
-                      })
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button type="button" className="btn btn-danger btn-sm" onClick={() => void api.deleteMonitoredComponent(item.id).then(load)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {groupedItems.map((section) => (
+          <div key={section.key} className="service-group-section">
+            {projectId && (
+              <h3 className="service-group-heading">{section.title}</h3>
+            )}
+            <table className="data-table">
+              <thead>
+                <tr>
+                  {!projectId && <th>Project</th>}
+                  {!projectId && <th>Group</th>}
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Check</th>
+                  <th>Status</th>
+                  <th>Target</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {section.items.map((item) => (
+                  <tr key={item.id}>
+                    {!projectId && <td>{projectNameById.get(item.project_id) ?? '—'}</td>}
+                    {!projectId && <td>{item.group_name ?? 'Ungrouped'}</td>}
+                    <td>
+                      {item.name}
+                      {projectId && item.group_name && (
+                        <div className="muted">{item.group_name}</div>
+                      )}
+                    </td>
+                    <td>{kindNameById.get(item.component_kind_id) ?? '—'}</td>
+                    <td>{checkTypeLabel(item.check_type)}</td>
+                    <td className="status-cell">
+                      <span className={`status-pill ${statusClass(item.latest_outcome)}`}>
+                        {item.latest_outcome ?? 'unknown'}
+                      </span>
+                      {item.latest_latency_ms != null && <span className="muted"> {item.latest_latency_ms}ms</span>}
+                      <CheckDiagnostics
+                        outcome={item.latest_outcome}
+                        errorMessage={item.latest_error_message}
+                        logTail={item.latest_log_tail}
+                        networkSummary={item.latest_network_summary ?? undefined}
+                        collapsible
+                      />
+                      {item.check_type === 'openvpn' && item.connection_mode === 'persistent' && (
+                        <ConnectionEventsTimeline
+                          key={`${item.id}-${connectionLogEpoch}`}
+                          componentId={item.id}
+                          componentName={item.name}
+                        />
+                      )}
+                    </td>
+                    <td className="mono wrap">{item.check_url}</td>
+                    <td className="row-actions">
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        disabled={purgingId === item.id}
+                        onClick={() => void onClearHistory(item)}
+                      >
+                        {purgingId === item.id ? 'Clearing…' : 'Clear history'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        disabled={checkingId === item.id || (item.check_type === 'openvpn' && item.connection_mode === 'persistent')}
+                        title={
+                          item.check_type === 'openvpn' && item.connection_mode === 'persistent'
+                            ? 'Persistent VPN services are checked by the background worker; use Connection log'
+                            : undefined
+                        }
+                        onClick={() => void onManualCheck(item.id)}
+                      >
+                        {checkingId === item.id ? 'Checking…' : 'Check now'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => {
+                          setProjectId(item.project_id)
+                          setEditingId(item.id)
+                          setEditingSlug(item.slug)
+                          setForm({
+                            component_kind_id: item.component_kind_id,
+                            name: item.name,
+                            description: item.description ?? '',
+                            environment: item.environment ?? '',
+                            check_url: item.check_url,
+                            check_method: item.check_method,
+                            check_type: item.check_type,
+                            vpn_config_text: item.check_config?.config_text || '',
+                            speed_test_mib: speedTestMibStringFromBytes(item.speed_test_bytes),
+                            speed_test_url_template: item.speed_test_url_template ?? '',
+                            speed_test_interval_seconds: item.speed_test_interval_seconds ?? '',
+                            speed_test_enabled: item.speed_test_enabled,
+                            expected_status_code: item.expected_status_code,
+                            timeout_seconds: item.timeout_seconds,
+                            poll_interval_seconds: item.poll_interval_seconds ?? '',
+                            connection_mode: (item.connection_mode === 'persistent' ? 'persistent' : 'ephemeral'),
+                            group_id: item.group_id ?? '',
+                            sort_order: item.sort_order ?? 0,
+                            is_active: item.is_active,
+                          })
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button type="button" className="btn btn-danger btn-sm" onClick={() => void api.deleteMonitoredComponent(item.id).then(load)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
         {projectId && items.length === 0 && (
           <p className="muted">No services in this project yet.</p>
         )}
