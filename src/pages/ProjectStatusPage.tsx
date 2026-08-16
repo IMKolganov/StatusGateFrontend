@@ -95,7 +95,7 @@ export function ProjectStatusPage() {
                 )}
               </div>
           {((project.groups && project.groups.length > 0) ? project.groups : [{ name: '', sort_order: 0, services: project.services }]).map((group) => (
-            <div key={group.id ?? group.name || 'all'} className="current-status-group">
+            <div key={(group.id ?? group.name) || 'all'} className="current-status-group">
               {group.name ? <h3 className="current-status-group-title">{group.name}</h3> : null}
               <ul className="service-list">
                 {group.services.map((service) => (
