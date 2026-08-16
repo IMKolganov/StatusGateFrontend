@@ -30,6 +30,12 @@ const CHECK_TYPES = [
   { value: 'xray', label: 'Xray connection' },
 ] as const
 
+const IP_FAMILIES = [
+  { value: 'auto', label: 'Auto (IPv4 or IPv6)' },
+  { value: 'ipv4', label: 'IPv4 only' },
+  { value: 'ipv6', label: 'IPv6 only' },
+] as const
+
 const VPN_KIND_SLUGS = new Set(['openvpn', 'xray'])
 
 const emptyForm = {
@@ -47,6 +53,7 @@ const emptyForm = {
   speed_test_enabled: true,
   expected_status_code: 200,
   timeout_seconds: 10,
+  ip_family: 'auto' as 'auto' | 'ipv4' | 'ipv6',
   poll_interval_seconds: '' as number | '',
   connection_mode: 'ephemeral' as 'ephemeral' | 'persistent',
   group_id: '',
@@ -276,6 +283,7 @@ export function ComponentsPage() {
       ...(isVpnKind ? { speed_test_enabled: form.speed_test_enabled } : {}),
       expected_status_code: form.expected_status_code,
       timeout_seconds: form.timeout_seconds,
+      ...(!isVpnKind ? { ip_family: form.ip_family } : {}),
       poll_interval_seconds: form.poll_interval_seconds === '' ? null : Number(form.poll_interval_seconds),
       connection_mode: isOpenVpn ? form.connection_mode : undefined,
       group_id: form.group_id || null,
@@ -560,6 +568,20 @@ export function ComponentsPage() {
               <>
                 <label>Method<input value={form.check_method} onChange={(e) => setForm({ ...form, check_method: e.target.value })} /></label>
                 <label>Expected HTTP status<input type="number" value={form.expected_status_code} onChange={(e) => setForm({ ...form, expected_status_code: Number(e.target.value) })} /></label>
+                <label>
+                  IP family
+                  <select
+                    value={form.ip_family}
+                    onChange={(e) => setForm({ ...form, ip_family: e.target.value as 'auto' | 'ipv4' | 'ipv6' })}
+                  >
+                    {IP_FAMILIES.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <p className="field-hint muted">
+                  Use IPv4 only when the target allowlists the checker’s IPv4 (dual-stack hosts often egress via IPv6).
+                </p>
               </>
             )}
 
@@ -684,6 +706,7 @@ export function ComponentsPage() {
                             speed_test_enabled: item.speed_test_enabled,
                             expected_status_code: item.expected_status_code,
                             timeout_seconds: item.timeout_seconds,
+                            ip_family: (item.ip_family === 'ipv4' || item.ip_family === 'ipv6' ? item.ip_family : 'auto'),
                             poll_interval_seconds: item.poll_interval_seconds ?? '',
                             connection_mode: (item.connection_mode === 'persistent' ? 'persistent' : 'ephemeral'),
                             group_id: item.group_id ?? '',

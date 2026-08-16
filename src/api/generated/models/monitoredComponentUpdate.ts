@@ -23,6 +23,8 @@ export interface MonitoredComponentUpdate {
   speed_test_enabled?: boolean | null;
   expected_status_code?: number | null;
   timeout_seconds?: number | null;
+  /** @pattern ^(auto|ipv4|ipv6)$ */
+  ip_family?: string | null;
   poll_interval_seconds?: number | null;
   connection_mode?: string | null;
   group_id?: string | null;

@@ -43,6 +43,8 @@ export interface MonitoredComponentCreate {
      * @maximum 300
      */
   timeout_seconds?: number;
+  /** @pattern ^(auto|ipv4|ipv6)$ */
+  ip_family?: string;
   poll_interval_seconds?: number | null;
   /** @pattern ^(ephemeral|persistent)$ */
   connection_mode?: string;

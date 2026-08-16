@@ -353,7 +353,7 @@ export function VpnNetworkDetails({
     rows.push(['Speed test', `${formatBytes(Number(summary.download_bytes))} in ${summary.download_duration_ms} ms`])
   }
 
-  if (summary.exit_ip) rows.push(['Exit IP', String(summary.exit_ip)])
+  if (summary.exit_ip) rows.push(['Egress / exit IP', String(summary.exit_ip)])
   if (summary.probe_latency_ms != null) rows.push(['Probe latency', `${summary.probe_latency_ms} ms`])
   if (summary.probe_url) rows.push(['Probe URL', String(summary.probe_url)])
 

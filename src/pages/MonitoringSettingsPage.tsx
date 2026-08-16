@@ -152,6 +152,23 @@ export function MonitoringSettingsPage() {
           <li>Active services with check types <strong>HTTP status</strong>, <strong>JSON</strong>, or <strong>XML</strong> are polled automatically.</li>
           <li>JSON checks require HTTP 200 and a valid JSON body (not XML).</li>
           <li>XML checks require HTTP 200 and XML content.</li>
+          <li>
+            Per service, choose <strong>IP family</strong>: Auto, IPv4 only, or IPv6 only. Dual-stack
+            hosts often prefer IPv6 — pick IPv4 when the target allowlists only the checker’s IPv4.
+          </li>
+          <li>
+            If the peer closes or resets with <strong>no HTTP status</strong> (for example nginx
+            <code>deny all</code> / an IP allowlist), the outcome is <strong>error</strong> with
+            failure mode <em>no HTTP response</em> — not <strong>down</strong>. That usually means
+            the edge denied the checker, not that the origin app is unhealthy. Expected status codes
+            never apply here because no status arrives (including 403).
+          </li>
+          <li>
+            Those results include the checker’s public <strong>egress IP</strong> when the probe
+            succeeds — add it to the target allowlist, use an internal health URL, or switch the
+            service to an <strong>Xray connection</strong> / OpenVPN check when the public path is
+            intentionally locked down.
+          </li>
           <li>OpenVPN and Xray checks can run an optional download speed test through the tunnel using the URL template above.</li>
           <li>Use <strong>Check now</strong> on the Services page for an immediate manual run.</li>
         </ul>
