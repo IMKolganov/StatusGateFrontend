@@ -21,6 +21,13 @@ const quickLinks = [
       { to: '/admin/component-kinds', label: 'Service types' },
     ],
   },
+  {
+    title: 'Administration',
+    items: [
+      { to: '/admin/datagate', label: 'DataGate import' },
+      { to: '/admin/accounts', label: 'Accounts' },
+    ],
+  },
 ] as const
 
 export function AdminPage() {

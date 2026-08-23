@@ -21,6 +21,7 @@ import PublicHome from './pages/PublicHome'
 import { ProjectHistoryPage } from './pages/ProjectHistoryPage'
 import { ProjectStatusPage } from './pages/ProjectStatusPage'
 import { ProjectsPage } from './pages/ProjectsPage'
+import { DataGatePage } from './pages/DataGatePage'
 import { SecurityPage } from './pages/SecurityPage'
 import { TunnelStatusPage } from './pages/TunnelStatusPage'
 
@@ -43,6 +44,7 @@ function App() {
           <Route path="/account/security" element={<AuthRoute><SecurityPage /></AuthRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
           <Route path="/admin/projects" element={<AdminRoute><ProjectsPage /></AdminRoute>} />
+          <Route path="/admin/datagate" element={<AdminRoute><DataGatePage /></AdminRoute>} />
           <Route path="/admin/reference" element={<AdminRoute><ReferencePage /></AdminRoute>} />
           <Route path="/admin/component-kinds" element={<AdminRoute><ComponentKindsPage /></AdminRoute>} />
           <Route path="/admin/components" element={<AdminRoute><ComponentsPage /></AdminRoute>} />

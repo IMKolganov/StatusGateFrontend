@@ -44,7 +44,10 @@ const navSections: NavSection[] = [
   },
   {
     title: 'Administration',
-    items: [{ to: '/admin/accounts', label: 'Accounts', adminOnly: true }],
+    items: [
+      { to: '/admin/datagate', label: 'DataGate' },
+      { to: '/admin/accounts', label: 'Accounts', adminOnly: true },
+    ],
   },
 ]
 

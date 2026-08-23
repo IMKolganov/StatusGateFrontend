@@ -170,6 +170,72 @@ export type {
   PublicTunnelMetricPoint,
 } from './tunnelMetrics'
 
+export type DatagateIntegration = {
+  project_id: string
+  base_url: string
+  client_id: string
+  client_secret_set: boolean
+  monitor_cn_prefix: string
+  is_enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type DatagateServerSummary = {
+  id: number
+  server_type: number
+  check_type: string
+  server_name: string
+  api_url?: string | null
+  is_online: boolean
+  is_disabled: boolean
+  tags: string[]
+  host?: string | null
+  port?: number | null
+  proto?: string | null
+}
+
+export type DatagateLocalComponent = {
+  id: string
+  name: string
+  slug: string
+  check_type: string
+  datagate_server_id?: number | null
+  datagate_common_name?: string | null
+}
+
+export type DatagateMatchedPair = {
+  server: DatagateServerSummary
+  component: DatagateLocalComponent
+  name_differs: boolean
+  suggested_name: string
+  endpoint_match: boolean
+  proto?: string | null
+  already_linked: boolean
+  score: number
+}
+
+export type DatagatePreview = {
+  matched: DatagateMatchedPair[]
+  new_servers: DatagateServerSummary[]
+  unmatched_local: DatagateLocalComponent[]
+  sync_names_question?: string | null
+}
+
+export type DatagateImportResponse = {
+  items: Array<{
+    server_id: number
+    server_name: string
+    action: string
+    component_id?: string | null
+    message?: string | null
+  }>
+  created: number
+  updated: number
+  skipped: number
+  errors: number
+}
+
 export { DEFAULT_SPEED_TEST_URL_TEMPLATE }
 
 export { ApiError }
@@ -334,6 +400,49 @@ export const api = {
 
   updateAccountRoles: (id: string, access_roles: string[]): Promise<AccountAdminResponse> =>
     updateAccountRolesApiAdminAccountsAccountIdRolesPut(id, { access_roles }),
+
+  getDatagateIntegration: (projectId: string): Promise<DatagateIntegration | null> =>
+    customFetch<DatagateIntegration | null>(`/api/admin/projects/${encodeURIComponent(projectId)}/datagate`, {
+      method: 'GET',
+    }),
+
+  upsertDatagateIntegration: (
+    projectId: string,
+    payload: {
+      base_url: string
+      client_id: string
+      client_secret?: string | null
+      monitor_cn_prefix: string
+      is_enabled: boolean
+    },
+  ): Promise<DatagateIntegration> =>
+    customFetch<DatagateIntegration>(`/api/admin/projects/${encodeURIComponent(projectId)}/datagate`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  testDatagateConnection: (projectId: string): Promise<{ ok: boolean; server_count: number; message: string }> =>
+    customFetch(`/api/admin/projects/${encodeURIComponent(projectId)}/datagate/test`, { method: 'POST' }),
+
+  listDatagateServers: (projectId: string): Promise<DatagateServerSummary[]> =>
+    customFetch(`/api/admin/projects/${encodeURIComponent(projectId)}/datagate/servers`, { method: 'GET' }),
+
+  previewDatagateImport: (projectId: string): Promise<DatagatePreview> =>
+    customFetch(`/api/admin/projects/${encodeURIComponent(projectId)}/datagate/preview`, { method: 'POST' }),
+
+  importDatagateServers: (
+    projectId: string,
+    payload: {
+      sync_names: boolean
+      refresh_configs: boolean
+      import_new: boolean
+      server_ids?: number[] | null
+    },
+  ): Promise<DatagateImportResponse> =>
+    customFetch(`/api/admin/projects/${encodeURIComponent(projectId)}/datagate/import`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   listPublicProjects: (): Promise<PublicProjectSummary[]> => listPublicProjectsApiStatusProjectsGet(),
 
