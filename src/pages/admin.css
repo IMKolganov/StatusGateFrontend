@@ -712,3 +712,69 @@
   font-size: 1rem;
   font-weight: 600;
 }
+
+.datagate-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sg-space-3);
+  margin-bottom: var(--sg-space-4);
+  font-size: 0.875rem;
+  color: var(--sg-text-muted);
+}
+
+.datagate-steps .is-active {
+  color: var(--sg-text);
+  font-weight: 600;
+}
+
+.datagate-error-detail {
+  margin: var(--sg-space-2) 0 0;
+  white-space: pre-wrap;
+  font-size: 0.8125rem;
+  opacity: 0.9;
+}
+
+.datagate-result-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sg-space-2);
+  margin-bottom: var(--sg-space-4);
+}
+
+.datagate-pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--sg-text-muted) 14%, transparent);
+  color: var(--sg-text-muted);
+}
+
+.datagate-pill.is-ok {
+  background: color-mix(in srgb, var(--sg-success) 18%, transparent);
+  color: var(--sg-success);
+}
+
+.datagate-pill.is-warn {
+  background: color-mix(in srgb, var(--sg-status-degraded) 18%, transparent);
+  color: var(--sg-status-degraded);
+}
+
+.datagate-pill.is-error {
+  background: color-mix(in srgb, var(--sg-danger) 18%, transparent);
+  color: var(--sg-danger);
+}
+
+.datagate-pill.is-muted {
+  background: color-mix(in srgb, var(--sg-text-muted) 14%, transparent);
+  color: var(--sg-text-muted);
+}
+
+.datagate-row-error td {
+  background: color-mix(in srgb, var(--sg-danger) 6%, transparent);
+}
+
+.datagate-row-ok td {
+  background: color-mix(in srgb, var(--sg-success) 5%, transparent);
+}
