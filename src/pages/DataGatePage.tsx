@@ -13,6 +13,7 @@ import { AdminLayout } from '../components/AdminLayout'
 import './admin.css'
 
 type Step = 'credentials' | 'preview' | 'result'
+type BusyAction = 'save' | 'test' | 'preview' | 'import' | null
 
 const defaultCreds = {
   base_url: 'https://api.datagateapp.com',
@@ -20,6 +21,15 @@ const defaultCreds = {
   client_secret: '',
   monitor_cn_prefix: 'statusgate',
   is_enabled: true,
+}
+
+function actionTone(action: string): 'ok' | 'warn' | 'error' | 'muted' {
+  if (action === 'error' || action.startsWith('error')) return 'error'
+  if (action === 'skipped_new' || action.includes('skipped')) return 'warn'
+  if (action === 'created' || action.includes('synced') || action.includes('refreshed') || action === 'linked') {
+    return 'ok'
+  }
+  return 'muted'
 }
 
 export function DataGatePage() {
@@ -37,9 +47,21 @@ export function DataGatePage() {
   const [refreshConfigs, setRefreshConfigs] = useState(true)
   const [importNew, setImportNew] = useState(true)
   const [result, setResult] = useState<DatagateImportResponse | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<BusyAction>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorDetail, setErrorDetail] = useState<string | null>(null)
+
+  const busyLabel =
+    busy === 'save'
+      ? 'Saving credentials…'
+      : busy === 'test'
+        ? 'Testing DataGate connection…'
+        : busy === 'preview'
+          ? 'Loading servers and matching local services…'
+          : busy === 'import'
+            ? 'Importing selected servers (issuing CN / downloading configs)…'
+            : null
 
   useEffect(() => {
     void api.listProjects().then((r) => {
@@ -51,6 +73,7 @@ export function DataGatePage() {
   useEffect(() => {
     if (!projectId) return
     setError(null)
+    setErrorDetail(null)
     setMessage(null)
     setPreview(null)
     setResult(null)
@@ -67,6 +90,7 @@ export function DataGatePage() {
       })
       .catch((err) => {
         setError(err instanceof ApiError ? err.message : 'Failed to load integration')
+        setErrorDetail(err instanceof ApiError ? err.detail ?? null : null)
       })
   }, [projectId])
 
@@ -83,17 +107,34 @@ export function DataGatePage() {
 
   const allPreviewServerIds = useMemo(() => {
     if (!preview) return [] as number[]
-    return [
-      ...preview.matched.map((m) => m.server.id),
-      ...preview.new_servers.map((s) => s.id),
-    ]
+    return [...preview.matched.map((m) => m.server.id), ...preview.new_servers.map((s) => s.id)]
   }, [preview])
+
+  const selectedMatched = useMemo(
+    () => (preview ? preview.matched.filter((m) => selectedIds.has(m.server.id)).length : 0),
+    [preview, selectedIds],
+  )
+  const selectedNew = useMemo(
+    () => (preview ? preview.new_servers.filter((s) => selectedIds.has(s.id)).length : 0),
+    [preview, selectedIds],
+  )
+
+  const captureError = (err: unknown, fallback: string) => {
+    if (err instanceof ApiError) {
+      setError(err.message || fallback)
+      setErrorDetail(err.detail ?? null)
+      return
+    }
+    setError(fallback)
+    setErrorDetail(null)
+  }
 
   const onSave = async (event: FormEvent) => {
     event.preventDefault()
     if (!projectId || !canEdit) return
-    setBusy(true)
+    setBusy('save')
     setError(null)
+    setErrorDetail(null)
     setMessage(null)
     try {
       const saved = await api.upsertDatagateIntegration(projectId, {
@@ -104,33 +145,35 @@ export function DataGatePage() {
         is_enabled: form.is_enabled,
       })
       applyIntegration(saved)
-      setMessage('Integration saved.')
+      setMessage('Credentials saved. You can test the connection or open Preview.')
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Save failed')
+      captureError(err, 'Save failed')
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
   const onTest = async () => {
     if (!projectId || !canEdit) return
-    setBusy(true)
+    setBusy('test')
     setError(null)
+    setErrorDetail(null)
     setMessage(null)
     try {
       const res = await api.testDatagateConnection(projectId)
-      setMessage(res.message)
+      setMessage(res.ok ? res.message : `Test failed: ${res.message}`)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Connection test failed')
+      captureError(err, 'Connection test failed')
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
   const onPreview = async () => {
     if (!projectId) return
-    setBusy(true)
+    setBusy('preview')
     setError(null)
+    setErrorDetail(null)
     setMessage(null)
     try {
       const res = await api.previewDatagateImport(projectId)
@@ -138,10 +181,15 @@ export function DataGatePage() {
       setSelectedIds(new Set([...res.matched.map((m) => m.server.id), ...res.new_servers.map((s) => s.id)]))
       setSyncNames(Boolean(res.matched.some((m) => m.name_differs)))
       setStep('preview')
+      setMessage(
+        `Preview ready: ${res.matched.length} matched, ${res.new_servers.length} new` +
+          (res.unmatched_local.length ? `, ${res.unmatched_local.length} unmatched local` : '') +
+          '.',
+      )
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Preview failed')
+      captureError(err, 'Preview failed')
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
@@ -156,8 +204,9 @@ export function DataGatePage() {
 
   const onImport = async () => {
     if (!projectId || !canEdit) return
-    setBusy(true)
+    setBusy('import')
     setError(null)
+    setErrorDetail(null)
     setMessage(null)
     try {
       const res = await api.importDatagateServers(projectId, {
@@ -168,11 +217,18 @@ export function DataGatePage() {
       })
       setResult(res)
       setStep('result')
-      setMessage(`Import finished: ${res.created} created, ${res.updated} updated, ${res.errors} errors.`)
+      const summary = `Import finished: ${res.created} created, ${res.updated} updated, ${res.skipped} skipped, ${res.errors} errors.`
+      if (res.errors > 0) {
+        setError(summary)
+        setMessage(null)
+      } else {
+        setMessage(summary)
+      }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Import failed')
+      captureError(err, 'Import failed')
+      // Stay on preview so the user can retry without losing selection.
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
@@ -181,14 +237,39 @@ export function DataGatePage() {
       title="DataGate"
       subtitle="Import VPN servers from DataGate Monitor into StatusGate services"
     >
-      {error && <div className="alert error">{error}</div>}
-      {message && <div className="alert success">{message}</div>}
+      <nav className="datagate-steps" aria-label="Import steps">
+        <span className={step === 'credentials' ? 'is-active' : ''}>1. Credentials</span>
+        <span className={step === 'preview' ? 'is-active' : ''}>2. Preview</span>
+        <span className={step === 'result' ? 'is-active' : ''}>3. Result</span>
+      </nav>
+
+      {busyLabel && (
+        <div className="alert warning" role="status" aria-live="polite">
+          {busyLabel}
+        </div>
+      )}
+      {error && (
+        <div className="alert error" role="alert">
+          <div>{error}</div>
+          {errorDetail && <pre className="datagate-error-detail">{errorDetail}</pre>}
+        </div>
+      )}
+      {message && (
+        <div className="alert success" role="status" aria-live="polite">
+          {message}
+        </div>
+      )}
 
       <section className="panel">
         <h2>Project</h2>
         <label>
           Project
-          <select value={projectId} onChange={(e) => setProjectId(e.target.value)} required>
+          <select
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+            required
+            disabled={busy !== null}
+          >
             <option value="" disabled>
               Select project…
             </option>
@@ -219,7 +300,7 @@ export function DataGatePage() {
                 value={form.base_url}
                 onChange={(e) => setForm({ ...form, base_url: e.target.value })}
                 required
-                disabled={!canEdit}
+                disabled={!canEdit || busy !== null}
               />
             </label>
             <label>
@@ -228,7 +309,7 @@ export function DataGatePage() {
                 value={form.client_id}
                 onChange={(e) => setForm({ ...form, client_id: e.target.value })}
                 required
-                disabled={!canEdit}
+                disabled={!canEdit || busy !== null}
               />
             </label>
             <label>
@@ -238,7 +319,7 @@ export function DataGatePage() {
                 value={form.client_secret}
                 onChange={(e) => setForm({ ...form, client_secret: e.target.value })}
                 required={!secretSet}
-                disabled={!canEdit}
+                disabled={!canEdit || busy !== null}
                 autoComplete="off"
               />
             </label>
@@ -248,7 +329,7 @@ export function DataGatePage() {
                 value={form.monitor_cn_prefix}
                 onChange={(e) => setForm({ ...form, monitor_cn_prefix: e.target.value })}
                 required
-                disabled={!canEdit}
+                disabled={!canEdit || busy !== null}
               />
             </label>
             <label className="checkbox-row">
@@ -256,14 +337,14 @@ export function DataGatePage() {
                 type="checkbox"
                 checked={form.is_enabled}
                 onChange={(e) => setForm({ ...form, is_enabled: e.target.checked })}
-                disabled={!canEdit}
+                disabled={!canEdit || busy !== null}
               />
               Enabled
             </label>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               {canEdit && (
-                <button type="submit" className="btn btn-primary" disabled={busy || !projectId}>
-                  Save
+                <button type="submit" className="btn btn-primary" disabled={busy !== null || !projectId}>
+                  {busy === 'save' ? 'Saving…' : 'Save'}
                 </button>
               )}
               {canEdit && (
@@ -271,18 +352,18 @@ export function DataGatePage() {
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => void onTest()}
-                  disabled={busy || !projectId}
+                  disabled={busy !== null || !projectId || !secretSet}
                 >
-                  Test connection
+                  {busy === 'test' ? 'Testing…' : 'Test connection'}
                 </button>
               )}
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={() => void onPreview()}
-                disabled={busy || !projectId || !secretSet}
+                disabled={busy !== null || !projectId || !secretSet}
               >
-                Preview import
+                {busy === 'preview' ? 'Loading preview…' : 'Preview import'}
               </button>
             </div>
           </form>
@@ -293,16 +374,24 @@ export function DataGatePage() {
         <section className="panel">
           <h2>2. Preview</h2>
           {preview.sync_names_question && <p>{preview.sync_names_question}</p>}
+          <p className="muted">
+            Selected: {selectedIds.size} ({selectedMatched} matched, {selectedNew} new)
+          </p>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => setStep('credentials')} disabled={busy}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setStep('credentials')}
+              disabled={busy !== null}
+            >
               Back
             </button>
             <button
               type="button"
               className="btn btn-secondary"
               onClick={() => setSelectedIds(new Set(allPreviewServerIds))}
-              disabled={busy}
+              disabled={busy !== null}
             >
               Select all
             </button>
@@ -310,9 +399,17 @@ export function DataGatePage() {
               type="button"
               className="btn btn-secondary"
               onClick={() => setSelectedIds(new Set())}
-              disabled={busy}
+              disabled={busy !== null}
             >
               Clear
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => void onPreview()}
+              disabled={busy !== null}
+            >
+              Refresh preview
             </button>
           </div>
 
@@ -339,6 +436,7 @@ export function DataGatePage() {
                         type="checkbox"
                         checked={selectedIds.has(row.server.id)}
                         onChange={() => toggleServer(row.server.id)}
+                        disabled={busy !== null}
                       />
                     </td>
                     <td>
@@ -380,6 +478,7 @@ export function DataGatePage() {
                         type="checkbox"
                         checked={selectedIds.has(server.id)}
                         onChange={() => toggleServer(server.id)}
+                        disabled={busy !== null}
                       />
                     </td>
                     <td>
@@ -402,7 +501,8 @@ export function DataGatePage() {
               <ul className="muted">
                 {preview.unmatched_local.map((c) => (
                   <li key={c.id}>
-                    {c.name} ({c.check_type})
+                    {c.name} <code>{c.slug}</code> ({c.check_type}
+                    {c.datagate_server_id != null ? `, linked #${c.datagate_server_id}` : ''})
                   </li>
                 ))}
               </ul>
@@ -411,7 +511,12 @@ export function DataGatePage() {
 
           <div className="stack-form" style={{ marginTop: '1.25rem' }}>
             <label className="checkbox-row">
-              <input type="checkbox" checked={syncNames} onChange={(e) => setSyncNames(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={syncNames}
+                onChange={(e) => setSyncNames(e.target.checked)}
+                disabled={busy !== null}
+              />
               Синхронизировать имена сервисов и серверов
             </label>
             <label className="checkbox-row">
@@ -419,11 +524,17 @@ export function DataGatePage() {
                 type="checkbox"
                 checked={refreshConfigs}
                 onChange={(e) => setRefreshConfigs(e.target.checked)}
+                disabled={busy !== null}
               />
               Обновить / выпустить OVPN и Xray конфиги (CN)
             </label>
             <label className="checkbox-row">
-              <input type="checkbox" checked={importNew} onChange={(e) => setImportNew(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={importNew}
+                onChange={(e) => setImportNew(e.target.checked)}
+                disabled={busy !== null}
+              />
               Импортировать новые серверы
             </label>
             {canEdit && (
@@ -431,9 +542,11 @@ export function DataGatePage() {
                 type="button"
                 className="btn btn-primary"
                 onClick={() => void onImport()}
-                disabled={busy || selectedIds.size === 0}
+                disabled={busy !== null || selectedIds.size === 0}
               >
-                Import selected ({selectedIds.size})
+                {busy === 'import'
+                  ? 'Importing…'
+                  : `Import selected (${selectedIds.size})`}
               </button>
             )}
           </div>
@@ -443,35 +556,49 @@ export function DataGatePage() {
       {step === 'result' && result && (
         <section className="panel">
           <h2>3. Result</h2>
-          <p>
-            Created {result.created}, updated {result.updated}, skipped {result.skipped}, errors{' '}
-            {result.errors}.
-          </p>
+          <div className="datagate-result-summary">
+            <span className="datagate-pill is-ok">created {result.created}</span>
+            <span className="datagate-pill is-ok">updated {result.updated}</span>
+            <span className="datagate-pill is-warn">skipped {result.skipped}</span>
+            <span className={`datagate-pill ${result.errors ? 'is-error' : 'is-muted'}`}>
+              errors {result.errors}
+            </span>
+          </div>
           <table className="data-table">
             <thead>
               <tr>
                 <th>Server</th>
-                <th>Action</th>
+                <th>Status</th>
                 <th>Message</th>
               </tr>
             </thead>
             <tbody>
-              {result.items.map((item) => (
-                <tr key={`${item.server_id}-${item.action}`}>
-                  <td>
-                    {item.server_name} <span className="muted">#{item.server_id}</span>
-                  </td>
-                  <td>{item.action}</td>
-                  <td>{item.message ?? '—'}</td>
-                </tr>
-              ))}
+              {result.items.map((item) => {
+                const tone = actionTone(item.action)
+                return (
+                  <tr key={`${item.server_id}-${item.action}-${item.component_id ?? ''}`} className={`datagate-row-${tone}`}>
+                    <td>
+                      {item.server_name} <span className="muted">#{item.server_id}</span>
+                    </td>
+                    <td>
+                      <span className={`datagate-pill is-${tone}`}>{item.action}</span>
+                    </td>
+                    <td>{item.message ?? '—'}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button type="button" className="btn btn-secondary" onClick={() => setStep('credentials')}>
               Back to credentials
             </button>
-            <button type="button" className="btn btn-primary" onClick={() => void onPreview()} disabled={busy}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => void onPreview()}
+              disabled={busy !== null}
+            >
               Preview again
             </button>
           </div>
