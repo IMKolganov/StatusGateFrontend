@@ -45,7 +45,7 @@ export function DataGatePage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [syncNames, setSyncNames] = useState(true)
   const [refreshConfigs, setRefreshConfigs] = useState(true)
-  const [importNew, setImportNew] = useState(true)
+  const [importNew, setImportNew] = useState(false)
   const [result, setResult] = useState<DatagateImportResponse | null>(null)
   const [busy, setBusy] = useState<BusyAction>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -413,10 +413,16 @@ export function DataGatePage() {
             </button>
           </div>
 
-          <h3>Matched ({preview.matched.length})</h3>
+          <h3>Matched — will update ({preview.matched.length})</h3>
           {preview.matched.length === 0 ? (
             <p className="muted">No existing StatusGate VPN services matched.</p>
           ) : (
+            <p className="muted">
+              These keep history: import updates name/config/link on the existing service, does not create a
+              duplicate.
+            </p>
+          )}
+          {preview.matched.length > 0 && (
             <table className="data-table">
               <thead>
                 <tr>
@@ -456,43 +462,49 @@ export function DataGatePage() {
             </table>
           )}
 
-          <h3>New servers ({preview.new_servers.length})</h3>
+          <h3>New servers — create only if checked below ({preview.new_servers.length})</h3>
           {preview.new_servers.length === 0 ? (
-            <p className="muted">No new servers to import.</p>
+            <p className="muted">Nothing new to create.</p>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th />
-                  <th>Server</th>
-                  <th>Type</th>
-                  <th>Proto / host</th>
-                  <th>Online</th>
-                </tr>
-              </thead>
-              <tbody>
-                {preview.new_servers.map((server) => (
-                  <tr key={server.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(server.id)}
-                        onChange={() => toggleServer(server.id)}
-                        disabled={busy !== null}
-                      />
-                    </td>
-                    <td>
-                      {server.server_name} <span className="muted">#{server.id}</span>
-                    </td>
-                    <td>{server.check_type}</td>
-                    <td>
-                      {[server.proto, server.host, server.port].filter(Boolean).join(' · ') || '—'}
-                    </td>
-                    <td>{server.is_online ? 'yes' : 'no'}</td>
+            <>
+              <p className="muted">
+                Only enable «Import new servers» if these are truly missing. Otherwise leave it off and fix
+                matching / local services first — creating here starts a new service with empty history.
+              </p>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th />
+                    <th>Server</th>
+                    <th>Type</th>
+                    <th>Proto / host</th>
+                    <th>Online</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {preview.new_servers.map((server) => (
+                    <tr key={server.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(server.id)}
+                          onChange={() => toggleServer(server.id)}
+                          disabled={busy !== null}
+                        />
+                      </td>
+                      <td>
+                        {server.server_name} <span className="muted">#{server.id}</span>
+                      </td>
+                      <td>{server.check_type}</td>
+                      <td>
+                        {[server.proto, server.host, server.port].filter(Boolean).join(' · ') || '—'}
+                      </td>
+                      <td>{server.is_online ? 'yes' : 'no'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
 
           {preview.unmatched_local.length > 0 && (
@@ -535,7 +547,7 @@ export function DataGatePage() {
                 onChange={(e) => setImportNew(e.target.checked)}
                 disabled={busy !== null}
               />
-              Импортировать новые серверы
+              Импортировать новые серверы (создаёт сервисы без истории — только если их ещё нет)
             </label>
             {canEdit && (
               <button
