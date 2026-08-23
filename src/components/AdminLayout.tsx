@@ -30,6 +30,7 @@ const navSections: NavSection[] = [
     items: [
       { to: '/admin/projects', label: 'Projects' },
       { to: '/admin/components', label: 'Services' },
+      { to: '/admin/component-groups', label: 'Service groups' },
       { to: '/admin/monitoring', label: 'Monitoring' },
       { to: '/admin/incidents', label: 'Incidents' },
     ],
@@ -43,7 +44,10 @@ const navSections: NavSection[] = [
   },
   {
     title: 'Administration',
-    items: [{ to: '/admin/accounts', label: 'Accounts', adminOnly: true }],
+    items: [
+      { to: '/admin/datagate', label: 'DataGate' },
+      { to: '/admin/accounts', label: 'Accounts', adminOnly: true },
+    ],
   },
 ]
 

@@ -48,7 +48,18 @@ export function ProjectStatusPage() {
       .finally(() => setLoading(false))
   }, [slug])
 
-  const hasNetworkDetails = Boolean(project?.services.some((service) => service.network_summary))
+  const statusGroups =
+    project?.groups && project.groups.length > 0
+      ? project.groups
+      : project
+        ? [{ name: '', sort_order: 0, services: project.services }]
+        : []
+  const hasCurrentStatus = Boolean(
+    statusGroups.some((group) => group.services.length > 0),
+  )
+  const hasNetworkDetails = Boolean(
+    statusGroups.some((group) => group.services.some((service) => service.network_summary)),
+  )
 
   return (
     <PublicLayout>
@@ -77,7 +88,7 @@ export function ProjectStatusPage() {
 
           {slug && <SystemStatusPanel slug={slug} />}
 
-          {project.services.length > 0 && (
+          {hasCurrentStatus && (
             <section className="current-status">
               <div className="current-status-header">
                 <h2>Current status</h2>
@@ -91,8 +102,11 @@ export function ProjectStatusPage() {
                   </button>
                 )}
               </div>
+          {statusGroups.map((group) => (
+            <div key={(group.id ?? group.name) || 'all'} className="current-status-group">
+              {group.name ? <h3 className="current-status-group-title">{group.name}</h3> : null}
               <ul className="service-list">
-                {project.services.map((service) => (
+                {group.services.map((service) => (
                   <li key={service.id} className="service-row">
                     <div className="service-main">
                       <span className={`status-dot status-${service.status}`} aria-hidden />
@@ -129,6 +143,8 @@ export function ProjectStatusPage() {
                   </li>
                 ))}
               </ul>
+            </div>
+          ))}
             </section>
           )}
         </>

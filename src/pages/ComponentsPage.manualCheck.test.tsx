@@ -6,6 +6,7 @@ import { ComponentsPage } from './ComponentsPage'
 const listMonitoredComponents = vi.fn()
 const listProjects = vi.fn()
 const listComponentKinds = vi.fn()
+const listComponentGroups = vi.fn()
 const getMonitoringSettings = vi.fn()
 const runManualCheck = vi.fn()
 
@@ -21,6 +22,7 @@ vi.mock('../api/client', () => ({
     listMonitoredComponents: (...args: unknown[]) => listMonitoredComponents(...args) as unknown,
     listProjects: (...args: unknown[]) => listProjects(...args) as unknown,
     listComponentKinds: (...args: unknown[]) => listComponentKinds(...args) as unknown,
+    listComponentGroups: (...args: unknown[]) => listComponentGroups(...args) as unknown,
     getMonitoringSettings: (...args: unknown[]) => getMonitoringSettings(...args) as unknown,
     runManualCheck: (...args: unknown[]) => runManualCheck(...args) as unknown,
     listCheckResults: vi.fn(() => Promise.resolve({ items: [], total: 0 })),
@@ -131,6 +133,7 @@ describe('ComponentsPage manual check dual-path', () => {
       total: 1,
     })
     listMonitoredComponents.mockResolvedValue({ items: [component], total: 1 })
+    listComponentGroups.mockResolvedValue({ items: [], total: 0 })
     getMonitoringSettings.mockResolvedValue({
       default_poll_interval_seconds: 60,
       scheduler_interval_seconds: 30,

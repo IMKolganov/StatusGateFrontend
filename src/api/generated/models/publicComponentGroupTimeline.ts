@@ -8,7 +8,9 @@ import type { PublicDayBar } from './publicDayBar';
 import type { PublicServiceTimeline } from './publicServiceTimeline';
 
 export interface PublicComponentGroupTimeline {
+  id?: string | null;
   name: string;
+  sort_order?: number;
   component_count: number;
   uptime_percent?: number | null;
   days: PublicDayBar[];
