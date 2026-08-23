@@ -4,6 +4,7 @@ import type { Account } from '../api/client'
 import { isAdmin } from '../auth/roles'
 import { useAuth } from '../auth/useAuth'
 import { BrandLogo } from './BrandLogo'
+import { iconForAdminPath, navIcons, sectionIcons, SignOutIcon, StatusPageIcon } from './icons'
 import { ThemeToggle } from './ThemeToggle'
 import '../pages/admin.css'
 
@@ -14,7 +15,7 @@ type NavItem = {
 }
 
 type NavSection = {
-  title: string
+  title: keyof typeof sectionIcons
   items: NavItem[]
 }
 
@@ -117,6 +118,8 @@ export function AdminLayout({ children, title, subtitle }: { children: React.Rea
     })
   }
 
+  const TitleIcon = iconForAdminPath(location.pathname)
+
   return (
     <div className="admin-layout">
       <aside className="sidebar">
@@ -125,6 +128,7 @@ export function AdminLayout({ children, title, subtitle }: { children: React.Rea
           {sections.map(({ section, items }) => {
             const collapsed = displayedCollapsedSections.has(section.title)
             const activeSection = sectionIsActive(section, location.pathname, account)
+            const SectionIcon = sectionIcons[section.title]
 
             return (
               <div
@@ -138,7 +142,10 @@ export function AdminLayout({ children, title, subtitle }: { children: React.Rea
                   aria-controls={`nav-section-${section.title.replace(/\s+/g, '-').toLowerCase()}`}
                   onClick={() => toggleSection(section.title)}
                 >
-                  <span className="nav-section-title">{section.title}</span>
+                  <span className="nav-section-heading">
+                    <SectionIcon className="nav-section-icon" />
+                    <span className="nav-section-title">{section.title}</span>
+                  </span>
                   <span className="nav-section-chevron" aria-hidden />
                 </button>
                 <div
@@ -146,15 +153,19 @@ export function AdminLayout({ children, title, subtitle }: { children: React.Rea
                   className="nav-section-items"
                   hidden={collapsed}
                 >
-                  {items.map((item) => (
-                    <Link
-                      key={item.to}
-                      className={isNavActive(item.to, location.pathname) ? 'nav-link active' : 'nav-link'}
-                      to={item.to}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+                  {items.map((item) => {
+                    const ItemIcon = navIcons[item.to as keyof typeof navIcons]
+                    return (
+                      <Link
+                        key={item.to}
+                        className={isNavActive(item.to, location.pathname) ? 'nav-link active' : 'nav-link'}
+                        to={item.to}
+                      >
+                        {ItemIcon ? <ItemIcon className="nav-link-icon" /> : null}
+                        <span>{item.label}</span>
+                      </Link>
+                    )
+                  })}
                 </div>
               </div>
             )
@@ -163,16 +174,21 @@ export function AdminLayout({ children, title, subtitle }: { children: React.Rea
         <div className="sidebar-footer">
           <ThemeToggle />
           <Link className="back-home-link" to="/">
-            ← Status page
+            <StatusPageIcon className="nav-link-icon" />
+            <span>Status page</span>
           </Link>
-          <button type="button" className="btn btn-ghost btn-sm btn-block" onClick={() => { void logout() }}>
-            Sign out
+          <button type="button" className="btn btn-ghost btn-sm btn-block sidebar-sign-out" onClick={() => { void logout() }}>
+            <SignOutIcon className="nav-link-icon" />
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
       <main className="admin-content">
         <header className="page-header">
-          <h1>{title}</h1>
+          <h1 className="page-header-title">
+            <TitleIcon className="page-header-icon" />
+            <span>{title}</span>
+          </h1>
           {subtitle && <p className="page-lead">{subtitle}</p>}
         </header>
         {children}
