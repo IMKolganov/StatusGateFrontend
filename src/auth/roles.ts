@@ -10,3 +10,8 @@ export function hasAdminPanelAccess(account: Account | null | undefined): boolea
 export function isAdmin(account: Account | null | undefined): boolean {
   return account?.access_roles.includes('admin') ?? false
 }
+
+export function canManageCatalog(account: Account | null | undefined): boolean {
+  if (!account) return false
+  return account.access_roles.includes('admin') || account.access_roles.includes('operator')
+}

@@ -4,6 +4,7 @@
  * StatusGate API
  * OpenAPI spec version: 0.2.0
  */
+import type { PublicServiceGroupStatus } from '../../componentGroups';
 import type { PublicServiceStatus } from './publicServiceStatus';
 
 export interface PublicProjectStatus {
@@ -11,5 +12,6 @@ export interface PublicProjectStatus {
   name: string;
   slug: string;
   description: string | null;
+  groups?: PublicServiceGroupStatus[];
   services: PublicServiceStatus[];
 }

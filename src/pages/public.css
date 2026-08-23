@@ -466,6 +466,16 @@
   margin: 0 0 var(--sg-space-3);
 }
 
+.current-status-group + .current-status-group {
+  margin-top: var(--sg-space-5);
+}
+
+.current-status-group-title {
+  margin: 0 0 var(--sg-space-3);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 .system-status {
   display: flex;
   flex-direction: column;

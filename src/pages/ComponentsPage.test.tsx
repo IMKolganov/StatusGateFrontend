@@ -6,6 +6,7 @@ import { ComponentsPage } from './ComponentsPage'
 const listMonitoredComponents = vi.fn()
 const listProjects = vi.fn()
 const listComponentKinds = vi.fn()
+const listComponentGroups = vi.fn()
 const getMonitoringSettings = vi.fn()
 const createMonitoredComponent = vi.fn()
 const updateMonitoredComponent = vi.fn()
@@ -25,6 +26,7 @@ vi.mock('../api/client', () => ({
     listMonitoredComponents: (...args: unknown[]) => listMonitoredComponents(...args),
     listProjects: (...args: unknown[]) => listProjects(...args),
     listComponentKinds: (...args: unknown[]) => listComponentKinds(...args),
+    listComponentGroups: (...args: unknown[]) => listComponentGroups(...args),
     getMonitoringSettings: (...args: unknown[]) => getMonitoringSettings(...args),
     createMonitoredComponent: (...args: unknown[]) => createMonitoredComponent(...args),
     updateMonitoredComponent: (...args: unknown[]) => updateMonitoredComponent(...args),
@@ -65,6 +67,7 @@ describe('ComponentsPage', () => {
     listMonitoredComponents.mockReset()
     listProjects.mockReset()
     listComponentKinds.mockReset()
+    listComponentGroups.mockReset()
     getMonitoringSettings.mockReset()
     createMonitoredComponent.mockReset()
     updateMonitoredComponent.mockReset()
@@ -82,6 +85,10 @@ describe('ComponentsPage', () => {
         { id: 'k3', name: 'Xray', slug: 'xray', description: null },
       ],
       total: 3,
+    })
+    listComponentGroups.mockResolvedValue({
+      items: [{ id: 'g1', project_id: 'p1', name: 'Server 1', slug: 'server-1', description: null, sort_order: 0, is_active: true, created_at: '', updated_at: '' }],
+      total: 1,
     })
     updateMonitoredComponent.mockResolvedValue({})
     deleteMonitoredComponent.mockResolvedValue(undefined)
@@ -106,8 +113,12 @@ describe('ComponentsPage', () => {
           speed_test_enabled: false,
           expected_status_code: 200,
           timeout_seconds: 30,
+          ip_family: 'auto',
           poll_interval_seconds: 60,
           connection_mode: null,
+          group_id: 'g1',
+          group_name: 'Server 1',
+          sort_order: 0,
           is_active: true,
           last_checked_at: null,
           created_at: '2026-01-01T00:00:00Z',
@@ -138,6 +149,7 @@ describe('ComponentsPage', () => {
     await flush()
     expect(await screen.findByRole('heading', { name: 'Services' })).toBeInTheDocument()
     expect(screen.getByText('Website')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Server 1' })).toBeInTheDocument()
 
     const formHeading = await screen.findByRole('heading', { name: 'Add service' })
     const formSection = formHeading.closest('section')!
@@ -148,6 +160,8 @@ describe('ComponentsPage', () => {
     fireEvent.change(form.getByLabelText(/^Check URL$/i), {
       target: { value: 'https://api.example.com/health' },
     })
+    fireEvent.change(form.getByLabelText(/IP family/i), { target: { value: 'ipv4' } })
+    fireEvent.change(form.getByLabelText(/Service group/i), { target: { value: 'g1' } })
     fireEvent.click(form.getByRole('button', { name: 'Add service' }))
     await flush()
     await waitFor(() =>
@@ -157,9 +171,87 @@ describe('ComponentsPage', () => {
           project_id: 'p1',
           component_kind_id: 'k1',
           check_url: 'https://api.example.com/health',
+          ip_family: 'ipv4',
+          group_id: 'g1',
+          sort_order: 0,
         }),
       ),
     )
+  })
+
+  it('omits ip_family when creating a VPN service', async () => {
+    render(
+      <MemoryRouter>
+        <ComponentsPage />
+      </MemoryRouter>,
+    )
+    await flush()
+
+    const formHeading = await screen.findByRole('heading', { name: 'Add service' })
+    const form = within(formHeading.closest('section')!)
+
+    fireEvent.change(form.getByLabelText(/^Type$/i), { target: { value: 'k2' } })
+    fireEvent.change(form.getByPlaceholderText('Norway OpenVPN'), { target: { value: 'Norway OVPN' } })
+    fireEvent.change(form.getByLabelText(/OpenVPN config/i), {
+      target: { value: 'client\ndev tun\nremote example.com 1194\n' },
+    })
+    fireEvent.click(form.getByRole('button', { name: 'Add service' }))
+    await flush()
+    await waitFor(() => expect(createMonitoredComponent).toHaveBeenCalled())
+    const payload = createMonitoredComponent.mock.calls.at(-1)?.[0] as Record<string, unknown>
+    expect(payload).not.toHaveProperty('ip_family')
+    expect(payload.check_type).toBe('openvpn')
+  })
+
+  it('loads existing ip_family when editing an HTTP service', async () => {
+    listMonitoredComponents.mockResolvedValue({
+      items: [
+        {
+          id: 'c1',
+          project_id: 'p1',
+          component_kind_id: 'k1',
+          name: 'Website',
+          slug: 'website',
+          description: null,
+          environment: null,
+          check_url: 'https://example.com',
+          check_method: 'GET',
+          check_type: 'http_status',
+          check_config: null,
+          speed_test_bytes: null,
+          speed_test_url_template: null,
+          speed_test_interval_seconds: null,
+          speed_test_enabled: false,
+          expected_status_code: 200,
+          timeout_seconds: 30,
+          ip_family: 'ipv6',
+          poll_interval_seconds: 60,
+          connection_mode: null,
+          group_id: 'g1',
+          group_name: 'Server 1',
+          sort_order: 0,
+          is_active: true,
+          last_checked_at: null,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+          latest_network_summary: null,
+        },
+      ],
+      total: 1,
+    })
+
+    render(
+      <MemoryRouter>
+        <ComponentsPage />
+      </MemoryRouter>,
+    )
+    await flush()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    await flush()
+    const formHeading = await screen.findByRole('heading', { name: 'Edit service' })
+    const form = within(formHeading.closest('section')!)
+    expect(form.getByLabelText(/IP family/i)).toHaveValue('ipv6')
   })
 
   it('requires VPN config when creating an OpenVPN service', async () => {
@@ -237,6 +329,8 @@ describe('ComponentsPage', () => {
         expect.objectContaining({ name: 'Website v2', slug: 'website' }),
       ),
     )
+    const updatePayload = updateMonitoredComponent.mock.calls[0][1] as Record<string, unknown>
+    expect(updatePayload).not.toHaveProperty('speed_test_enabled')
 
     fireEvent.click(screen.getByRole('button', { name: /^Delete$/i }))
     await flush()

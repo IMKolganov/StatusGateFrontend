@@ -79,6 +79,47 @@ describe('ProjectStatusPage', () => {
     expect(screen.getByTestId('system-status')).toBeInTheDocument()
   })
 
+  it('renders nested service groups', async () => {
+    getPublicProjectStatus.mockResolvedValue({
+      id: 'p1',
+      name: 'DataGate',
+      slug: 'datagate',
+      description: null,
+      groups: [
+        {
+          id: 'g1',
+          name: 'Helsinki 1',
+          sort_order: 0,
+          services: [
+            {
+              id: 's1',
+              name: 'Helsinki OpenVPN',
+              slug: 'helsinki-ovpn',
+              component_kind: 'OpenVPN',
+              environment: null,
+              description: null,
+              status: 'up',
+              latency_ms: 10,
+              checked_at: '2026-08-09T12:00:00Z',
+              network_summary: null,
+            },
+          ],
+        },
+      ],
+      services: [],
+    })
+    render(
+      <MemoryRouter initialEntries={['/projects/datagate']}>
+        <Routes>
+          <Route path="/projects/:slug" element={<ProjectStatusPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await flush()
+    expect(await screen.findByRole('heading', { name: 'Helsinki 1' })).toBeInTheDocument()
+    expect(screen.getByText('Helsinki OpenVPN')).toBeInTheDocument()
+  })
+
   it('shows error state', async () => {
     const { ApiError } = await import('../api/client')
     getPublicProjectStatus.mockRejectedValue(new ApiError('missing', 404))
