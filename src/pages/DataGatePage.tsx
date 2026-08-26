@@ -25,7 +25,14 @@ const defaultCreds = {
 
 function actionTone(action: string): 'ok' | 'warn' | 'error' | 'muted' {
   if (action === 'error' || action.startsWith('error')) return 'error'
-  if (action === 'skipped_new' || action.includes('skipped')) return 'warn'
+  if (
+    action === 'skipped_new' ||
+    action.includes('skipped') ||
+    action.includes('deactivated') ||
+    action.includes('deleted_removed')
+  ) {
+    return 'warn'
+  }
   if (action === 'created' || action.includes('synced') || action.includes('refreshed') || action === 'linked') {
     return 'ok'
   }
@@ -46,6 +53,8 @@ export function DataGatePage() {
   const [syncNames, setSyncNames] = useState(true)
   const [refreshConfigs, setRefreshConfigs] = useState(true)
   const [importNew, setImportNew] = useState(false)
+  const [deactivateRemoved, setDeactivateRemoved] = useState(false)
+  const [deleteRemoved, setDeleteRemoved] = useState(false)
   const [result, setResult] = useState<DatagateImportResponse | null>(null)
   const [busy, setBusy] = useState<BusyAction>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -183,6 +192,7 @@ export function DataGatePage() {
       setStep('preview')
       setMessage(
         `Preview ready: ${res.matched.length} matched, ${res.new_servers.length} new` +
+          (res.removed_local?.length ? `, ${res.removed_local.length} removed from DataGate` : '') +
           (res.unmatched_local.length ? `, ${res.unmatched_local.length} unmatched local` : '') +
           '.',
       )
@@ -213,11 +223,17 @@ export function DataGatePage() {
         sync_names: syncNames,
         refresh_configs: refreshConfigs,
         import_new: importNew,
+        deactivate_removed: deactivateRemoved,
+        delete_removed: deleteRemoved,
         server_ids: [...selectedIds],
       })
       setResult(res)
       setStep('result')
-      const summary = `Import finished: ${res.created} created, ${res.updated} updated, ${res.skipped} skipped, ${res.errors} errors.`
+      const summary =
+        `Import finished: ${res.created} created, ${res.updated} updated, ${res.skipped} skipped` +
+        (res.deactivated ? `, ${res.deactivated} deactivated` : '') +
+        (res.deleted ? `, ${res.deleted} deleted` : '') +
+        `, ${res.errors} errors.`
       if (res.errors > 0) {
         setError(summary)
         setMessage(null)
@@ -507,6 +523,23 @@ export function DataGatePage() {
             </>
           )}
 
+          {preview.removed_local?.length > 0 && (
+            <>
+              <h3>Removed from DataGate ({preview.removed_local.length})</h3>
+              <p className="muted">
+                These VPN services are still in StatusGate but their DataGate server id no longer exists in
+                Monitor. On import you can deactivate them (keeps history) or delete permanently.
+              </p>
+              <ul className="muted">
+                {preview.removed_local.map((c) => (
+                  <li key={c.id}>
+                    {c.name} <code>{c.slug}</code> ({c.check_type}, was #{c.datagate_server_id})
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
           {preview.unmatched_local.length > 0 && (
             <>
               <h3>Unmatched local VPN services ({preview.unmatched_local.length})</h3>
@@ -549,6 +582,30 @@ export function DataGatePage() {
               />
               Импортировать новые серверы (создаёт сервисы без истории — только если их ещё нет)
             </label>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={deactivateRemoved}
+                onChange={(e) => {
+                  setDeactivateRemoved(e.target.checked)
+                  if (e.target.checked) setDeleteRemoved(false)
+                }}
+                disabled={busy !== null || !(preview.removed_local?.length ?? 0)}
+              />
+              Деактивировать сервисы, удалённые из DataGate (история сохранится)
+            </label>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={deleteRemoved}
+                onChange={(e) => {
+                  setDeleteRemoved(e.target.checked)
+                  if (e.target.checked) setDeactivateRemoved(false)
+                }}
+                disabled={busy !== null || !(preview.removed_local?.length ?? 0)}
+              />
+              Удалить сервисы, удалённые из DataGate (без восстановления истории)
+            </label>
             {canEdit && (
               <button
                 type="button"
@@ -572,6 +629,12 @@ export function DataGatePage() {
             <span className="datagate-pill is-ok">created {result.created}</span>
             <span className="datagate-pill is-ok">updated {result.updated}</span>
             <span className="datagate-pill is-warn">skipped {result.skipped}</span>
+            {(result.deactivated ?? 0) > 0 && (
+              <span className="datagate-pill is-warn">deactivated {result.deactivated}</span>
+            )}
+            {(result.deleted ?? 0) > 0 && (
+              <span className="datagate-pill is-error">deleted {result.deleted}</span>
+            )}
             <span className={`datagate-pill ${result.errors ? 'is-error' : 'is-muted'}`}>
               errors {result.errors}
             </span>
