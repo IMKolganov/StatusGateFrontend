@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
-import { brandConfig, hasBrandLogo, resolveBrandLogoUrl } from '../brand/config'
+import { useEffect, useState } from 'react'
+import { brandConfig, resolveBrandLogoUrl } from '../brand/config'
 import { useTheme } from '../brand/useTheme'
+
+const FAVICON_FALLBACK = '/favicon.svg'
 
 type BrandLogoProps = {
   to?: string
@@ -10,23 +12,28 @@ type BrandLogoProps = {
 
 export function BrandLogo({ to = '/', className = '' }: BrandLogoProps) {
   const { theme } = useTheme()
-  const logoUrl = resolveBrandLogoUrl(theme)
-  const [logoOk, setLogoOk] = useState(true)
-  const showLogo = hasBrandLogo() && Boolean(logoUrl) && logoOk
+  const configuredUrl = resolveBrandLogoUrl(theme).trim()
+  const [src, setSrc] = useState(configuredUrl || FAVICON_FALLBACK)
   const showLabel = Boolean(brandConfig.headerLabel)
+
+  useEffect(() => {
+    setSrc(configuredUrl || FAVICON_FALLBACK)
+  }, [configuredUrl])
 
   return (
     <Link to={to} className={`brand-logo ${className}`.trim()}>
-      {showLogo && (
+      {src ? (
         <img
-          src={logoUrl}
+          src={src}
           alt={brandConfig.name}
           className="brand-logo__img"
-          onError={() => setLogoOk(false)}
+          onError={() => {
+            setSrc((current) => (current !== FAVICON_FALLBACK ? FAVICON_FALLBACK : ''))
+          }}
         />
-      )}
+      ) : null}
       {showLabel && <span className="brand-logo__text">{brandConfig.headerLabel}</span>}
-      {!showLogo && !showLabel && (
+      {!src && !showLabel && (
         <span className="brand-logo__text">{brandConfig.name}</span>
       )}
     </Link>
