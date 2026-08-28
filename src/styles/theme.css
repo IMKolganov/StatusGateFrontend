@@ -251,6 +251,8 @@ p {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Keep enough room that short brand names are not reduced to a single letter. */
+  min-width: 4.5ch;
   font-size: 1.3125rem;
   font-weight: 700;
   letter-spacing: -0.03em;

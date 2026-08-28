@@ -14,14 +14,15 @@ export function BrandLogo({ to = '/', className = '' }: BrandLogoProps) {
   const { theme } = useTheme()
   const configuredUrl = resolveBrandLogoUrl(theme).trim()
   const [src, setSrc] = useState(configuredUrl || FAVICON_FALLBACK)
-  const showLabel = Boolean(brandConfig.headerLabel)
+  // Avoid "D…" ellipsis beside the mark: when a logo image is shown, skip the text label.
+  const showLabel = Boolean(brandConfig.headerLabel) && !src
 
   useEffect(() => {
     setSrc(configuredUrl || FAVICON_FALLBACK)
   }, [configuredUrl])
 
   return (
-    <Link to={to} className={`brand-logo ${className}`.trim()}>
+    <Link to={to} className={`brand-logo ${className}`.trim()} title={brandConfig.name}>
       {src ? (
         <img
           src={src}
