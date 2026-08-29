@@ -241,19 +241,23 @@ p {
 
 .brand-logo__img {
   display: block;
-  max-height: 42px;
-  max-width: 220px;
-  width: auto;
+  flex: 0 0 auto;
+  height: 32px;
+  width: 32px;
+  max-height: 32px;
+  max-width: 32px;
   object-fit: contain;
 }
 
 .brand-logo__text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  /* Keep enough room that short brand names are not reduced to a single letter. */
-  min-width: 4.5ch;
-  font-size: 1.3125rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Show the full brand name; wrap instead of collapsing to "D…". */
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  line-height: 1.15;
+  font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: -0.03em;
 }
