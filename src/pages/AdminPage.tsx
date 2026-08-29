@@ -2,33 +2,34 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, type Account } from '../api/client'
 import { AdminLayout } from '../components/AdminLayout'
+import { navIcons, sectionIcons } from '../components/icons'
 import './admin.css'
 
 const quickLinks = [
   {
-    title: 'Monitoring',
+    title: 'Monitoring' as const,
     items: [
-      { to: '/admin/projects', label: 'Projects' },
-      { to: '/admin/components', label: 'Services' },
-      { to: '/admin/monitoring', label: 'Polling settings' },
-      { to: '/admin/incidents', label: 'Incidents' },
+      { to: '/admin/projects' as const, label: 'Projects' },
+      { to: '/admin/components' as const, label: 'Services' },
+      { to: '/admin/monitoring' as const, label: 'Polling settings' },
+      { to: '/admin/incidents' as const, label: 'Incidents' },
     ],
   },
   {
-    title: 'Reference',
+    title: 'Reference' as const,
     items: [
-      { to: '/admin/reference', label: 'All catalogs' },
-      { to: '/admin/component-kinds', label: 'Service types' },
+      { to: '/admin/reference' as const, label: 'All catalogs' },
+      { to: '/admin/component-kinds' as const, label: 'Service types' },
     ],
   },
   {
-    title: 'Administration',
+    title: 'Administration' as const,
     items: [
-      { to: '/admin/datagate', label: 'DataGate import' },
-      { to: '/admin/accounts', label: 'Accounts' },
+      { to: '/admin/datagate' as const, label: 'DataGate import' },
+      { to: '/admin/accounts' as const, label: 'Accounts' },
     ],
   },
-] as const
+]
 
 export function AdminPage() {
   const [dashboard, setDashboard] = useState<{ message: string; account: Account } | null>(null)
@@ -50,20 +51,30 @@ export function AdminPage() {
       </section>
 
       <div className="dashboard-sections">
-        {quickLinks.map((section) => (
-          <section key={section.title} className="panel dashboard-section">
-            <h2>{section.title}</h2>
-            <ul className="dashboard-link-list">
-              {section.items.map((item) => (
-                <li key={item.to}>
-                  <Link to={item.to} className="dashboard-link">
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+        {quickLinks.map((section) => {
+          const SectionIcon = sectionIcons[section.title]
+          return (
+            <section key={section.title} className="panel dashboard-section">
+              <h2 className="dashboard-section-title">
+                <SectionIcon className="dashboard-section-icon" />
+                <span>{section.title}</span>
+              </h2>
+              <ul className="dashboard-link-list">
+                {section.items.map((item) => {
+                  const ItemIcon = navIcons[item.to]
+                  return (
+                    <li key={item.to}>
+                      <Link to={item.to} className="dashboard-link">
+                        <ItemIcon className="dashboard-link-icon" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )
+        })}
       </div>
     </AdminLayout>
   )

@@ -219,6 +219,7 @@ export type DatagatePreview = {
   matched: DatagateMatchedPair[]
   new_servers: DatagateServerSummary[]
   unmatched_local: DatagateLocalComponent[]
+  removed_local: DatagateLocalComponent[]
   sync_names_question?: string | null
 }
 
@@ -233,6 +234,8 @@ export type DatagateImportResponse = {
   created: number
   updated: number
   skipped: number
+  deactivated: number
+  deleted: number
   errors: number
 }
 
@@ -436,6 +439,8 @@ export const api = {
       sync_names: boolean
       refresh_configs: boolean
       import_new: boolean
+      deactivate_removed?: boolean
+      delete_removed?: boolean
       server_ids?: number[] | null
     },
   ): Promise<DatagateImportResponse> =>
